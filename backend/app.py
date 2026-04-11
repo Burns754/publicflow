@@ -42,7 +42,11 @@ logger = logging.getLogger(__name__)
 # ── DB ────────────────────────────────────────────────────────────────
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./publicflow.db")
-engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+# Railway liefert postgres:// URLs - SQLAlchemy braucht postgresql://
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+_connect_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
+engine = create_engine(DATABASE_URL, connect_args=_connect_args)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:8000")
