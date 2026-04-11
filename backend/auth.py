@@ -11,7 +11,8 @@ from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
-SECRET_KEY = os.getenv("SECRET_KEY", "publicflow-dev-secret-change-in-prod-please")
+# Unterstützt JWT_SECRET (Railway .env.example) und SECRET_KEY (Legacy-Fallback)
+SECRET_KEY = os.getenv("JWT_SECRET") or os.getenv("SECRET_KEY", "publicflow-dev-secret-change-in-prod-please")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_HOURS = 24 * 7  # 7 Tage
 

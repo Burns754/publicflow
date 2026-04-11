@@ -35,7 +35,7 @@ PLAN_INFO = {
     "professional": {
         "name": "Professional",
         "monthly_price": 175,
-        "yearly_price": 149,
+        "yearly_price": 157,
         "features": [
             "Unbegrenzte Ausschreibungen",
             "bund.de + TED (EU) + weitere",
