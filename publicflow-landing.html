@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PublicFlow - Intelligentes Ausschreibungs-Monitoring</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        
+        body { font-family: 'Inter', sans-serif; }
+        
+        .gradient-text {
+            background: linear-gradient(90deg, #2D3FE2, #9E49E6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .pricing-toggle-active {
+            background: #2D3FE2;
+            color: white;
+            box-shadow: 0 4px 12px rgba(45, 63, 226, 0.2);
+        }
+
+        .hero-glow {
+            position: absolute;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(45, 63, 226, 0.1) 0%, transparent 70%);
+            z-index: -1;
+            filter: blur(80px);
+        }
+    </style>
+</head>
+<body class="bg-[#F8FAFC] text-slate-900 selection:bg-blue-100">
+
+    <!-- Header -->
+    <nav class="fixed w-full z-[100] bg-white/80 backdrop-blur-md border-b border-slate-100">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-20 items-center">
+                <div class="flex items-center gap-3">
+                    <img src="logo.jpg" alt="PublicFlow Logo" class="h-10">
+                </div>
+                <div class="hidden lg:flex items-center gap-10 text-sm font-semibold text-slate-600">
+                    <a href="#how-it-works" class="hover:text-[#2D3FE2] transition">Technologie</a>
+                    <a href="#benefits" class="hover:text-[#2D3FE2] transition">Vorteile</a>
+                    <a href="#pricing" class="hover:text-[#2D3FE2] transition">Preise</a>
+                </div>
+                <div class="flex items-center gap-4">
+                    <a href="#pricing" class="hidden sm:block text-sm font-bold text-slate-900 hover:text-[#2D3FE2] transition">Login</a>
+                    <a href="#pricing" class="bg-[#2D3FE2] hover:bg-[#1a2bc0] text-white px-6 py-3 rounded-xl text-sm font-extrabold transition shadow-lg shadow-blue-200 uppercase tracking-tight">
+                        Jetzt Starten
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <section class="relative pt-40 pb-24 overflow-hidden">
+        <div class="hero-glow top-0 right-0"></div>
+        <div class="hero-glow bottom-0 left-0"></div>
+        
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative">
+            <div class="inline-flex items-center gap-3 px-4 py-2 rounded-full bg-white shadow-sm border border-slate-100 text-[#2D3FE2] text-xs font-bold uppercase tracking-widest mb-10">
+                <span class="flex h-2 w-2 rounded-full bg-green-500 animate-pulse"></span>
+                LIVE: Automatischer EU-Scan Aktiv
+            </div>
+            
+            <h1 class="text-6xl md:text-8xl font-black tracking-tighter mb-8 leading-[0.95]">
+                Sichern Sie sich Aufträge,<br>
+                <span class="gradient-text text-7xl md:text-9xl">bevor andere sie sehen.</span>
+            </h1>
+            
+            <p class="text-xl md:text-2xl text-slate-500 max-w-3xl mx-auto mb-12 font-medium leading-relaxed">
+                Der 2-Billionen-Euro-Markt ist zu groß für manuelle Suche. PublicFlow nutzt KI-Monitoring, um passende Ausschreibungen direkt in Ihr Postfach zu liefern.
+            </p>
+
+            <div class="flex flex-col sm:flex-row justify-center gap-5">
+                <a href="#onboarding" class="bg-slate-900 hover:bg-black text-white px-10 py-5 rounded-2xl font-bold text-lg transition shadow-2xl shadow-slate-300 flex items-center justify-center gap-3">
+                    Gratis Analyse starten <i class="fa-solid fa-arrow-right text-sm"></i>
+                </a>
+                <div class="flex items-center justify-center gap-2 text-slate-400 text-sm font-semibold">
+                    <i class="fa-solid fa-shield-check text-green-500 text-lg"></i> DSGVO Konform & Sicher
+                </div>
+            </div>
+
+            <!-- Dashboard Mockup -->
+            <div class="mt-24 relative max-w-6xl mx-auto">
+                <div class="absolute -inset-2 bg-gradient-to-r from-[#2D3FE2] to-[#9E49E6] rounded-[3rem] blur-2xl opacity-10"></div>
+                <div class="relative glass-card rounded-[2.5rem] p-4 shadow-2xl">
+                    <div class="bg-slate-900 rounded-[2rem] overflow-hidden aspect-video relative">
+                        <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=1200&q=80" class="w-full h-full object-cover opacity-60">
+                        <div class="absolute inset-0 flex items-center justify-center p-8">
+                            <div class="max-w-2xl w-full bg-white rounded-3xl p-8 shadow-2xl text-left border border-white/50">
+                                <div class="flex justify-between items-center mb-6">
+                                    <div class="flex gap-2">
+                                        <div class="w-3 h-3 rounded-full bg-red-400"></div>
+                                        <div class="w-3 h-3 rounded-full bg-yellow-400"></div>
+                                        <div class="w-3 h-3 rounded-full bg-green-400"></div>
+                                    </div>
+                                    <span class="text-[10px] font-black bg-blue-50 text-blue-600 px-3 py-1 rounded-full tracking-widest uppercase">Echtzeit Analyse</span>
+                                </div>
+                                <h3 class="text-2xl font-black mb-2 tracking-tight">Match Gefunden: IT-Sicherheit Stadt Berlin</h3>
+                                <p class="text-slate-500 text-sm mb-6">"Implementierung eines SOC für die öffentliche Verwaltung..."</p>
+                                <div class="flex items-center gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                                    <div class="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center text-white font-black text-2xl">98%</div>
+                                    <div>
+                                        <h4 class="font-bold text-slate-800">KI-Score: Exzellent</h4>
+                                        <p class="text-xs text-slate-500">Profil-Übereinstimmung basiert auf Ihren Kernkompetenzen.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Social Proof -->
+    <section class="py-12 border-y border-slate-100 bg-white">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-8">Datenquellen & Integrationen</p>
+            <div class="flex flex-wrap justify-center gap-12 opacity-30 grayscale">
+                <span class="text-2xl font-black italic">bund.de</span>
+                <span class="text-2xl font-black italic">TED EU</span>
+                <span class="text-2xl font-black italic">Vergabe24</span>
+                <span class="text-2xl font-black italic">STRIFE</span>
+                <span class="text-2xl font-black italic">DTVP</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- How it works (Onboarding) -->
+    <section id="onboarding" class="py-32 bg-white">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="text-center mb-20">
+                <h2 class="text-4xl md:text-6xl font-black tracking-tighter mb-4">In 3 Schritten zum Auftrag.</h2>
+                <p class="text-slate-500 max-w-xl mx-auto font-medium">Wir brauchen keine lange Einarbeitung. Ihr Erfolg ist automatisiert.</p>
+            </div>
+            
+            <div class="grid lg:grid-cols-3 gap-10">
+                <div class="group p-10 rounded-3xl bg-slate-50 border border-slate-100 hover:bg-white hover:shadow-2xl transition duration-500">
+                    <span class="text-7xl font-black text-slate-200 group-hover:text-blue-100 transition mb-6 block">01</span>
+                    <h3 class="text-2xl font-bold mb-4 tracking-tight">Kostenlos Analysieren</h3>
+                    <p class="text-slate-500 leading-relaxed mb-8">Wir scannen den Markt sofort nach Ihren ersten Keywords – ganz ohne Account-Zwang.</p>
+                    <button class="text-blue-600 font-bold flex items-center gap-2 group-hover:gap-4 transition-all">Jetzt Testen <i class="fa-solid fa-arrow-right"></i></button>
+                </div>
+                <div class="group p-10 rounded-3xl bg-slate-50 border border-slate-100 hover:bg-white hover:shadow-2xl transition duration-500">
+                    <span class="text-7xl font-black text-slate-200 group-hover:text-purple-100 transition mb-6 block">02</span>
+                    <h3 class="text-2xl font-bold mb-4 tracking-tight">Profil Schärfen</h3>
+                    <p class="text-slate-500 leading-relaxed mb-8">Hinterlegen Sie Region, Budget und Fachbereiche. Unsere KI lernt, was für Sie profitabel ist.</p>
+                </div>
+                <div class="group p-10 rounded-3xl bg-slate-50 border border-slate-100 hover:bg-white hover:shadow-2xl transition duration-500">
+                    <span class="text-7xl font-black text-slate-200 group-hover:text-green-100 transition mb-6 block">03</span>
+                    <h3 class="text-2xl font-bold mb-4 tracking-tight">Wachstum genießen</h3>
+                    <p class="text-slate-500 leading-relaxed mb-8">Erhalten Sie täglich qualifizierte Leads direkt in Ihr Postfach. Kein Suchen, nur Gewinnen.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing -->
+    <section id="pricing" class="py-32 bg-[#F8FAFC]">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl md:text-6xl font-black tracking-tighter mb-10">Faire Preise. Maximale ROI.</h2>
+                
+                <!-- Toggle -->
+                <div class="inline-flex items-center p-1 bg-white border border-slate-200 rounded-2xl mb-12">
+                    <button onclick="togglePricing('monthly')" id="btn-monthly" class="px-8 py-3 rounded-xl text-sm font-bold transition pricing-toggle-active">Monatlich</button>
+                    <button onclick="togglePricing('yearly')" id="btn-yearly" class="px-8 py-3 rounded-xl text-sm font-bold transition flex items-center gap-2">
+                        Jährlich <span class="bg-green-100 text-green-600 text-[10px] px-2 py-0.5 rounded-full">-10%</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-10 max-w-4xl mx-auto">
+                <!-- Starter -->
+                <div class="bg-white p-12 rounded-[3rem] shadow-xl border border-slate-100 relative group overflow-hidden">
+                    <h3 class="text-sm font-black text-slate-400 uppercase tracking-[0.2em] mb-6">Starter</h3>
+                    <div class="flex items-baseline gap-2 mb-10">
+                        <span class="text-6xl font-black tracking-tighter" id="price-starter">€99</span>
+                        <span class="text-slate-400 font-bold" id="period-starter">/Monat</span>
+                    </div>
+                    <ul class="space-y-6 mb-12">
+                        <li class="flex items-center gap-4 font-semibold text-slate-600"><i class="fa-solid fa-circle-check text-blue-600 text-xl"></i> 5 Matches / Woche</li>
+                        <li class="flex items-center gap-4 font-semibold text-slate-600"><i class="fa-solid fa-circle-check text-blue-600 text-xl"></i> Daily E-Mail Update</li>
+                        <li class="flex items-center gap-4 font-semibold text-slate-600"><i class="fa-solid fa-circle-check text-blue-600 text-xl"></i> 1 Unternehmensprofil</li>
+                    </ul>
+                    <button onclick="openCheckout('Starter')" class="w-full py-5 rounded-2xl border-2 border-slate-100 font-black hover:border-blue-600 hover:text-blue-600 transition uppercase tracking-widest text-xs">
+                        Jetzt Testen
+                    </button>
+                </div>
+
+                <!-- Pro -->
+                <div class="bg-slate-900 p-12 rounded-[3rem] shadow-2xl border-[3px] border-blue-600 relative group overflow-hidden transform md:-translate-y-4">
+                    <div class="absolute top-0 right-12 -translate-y-1/2 bg-blue-600 text-white text-[10px] font-black uppercase tracking-[0.2em] px-5 py-2 rounded-full shadow-xl">Empfehlung</div>
+                    <h3 class="text-sm font-black text-blue-400 uppercase tracking-[0.2em] mb-6">Professional</h3>
+                    <div class="flex items-baseline gap-2 mb-10 text-white">
+                        <span class="text-6xl font-black tracking-tighter" id="price-pro">€175</span>
+                        <span class="text-slate-500 font-bold" id="period-pro">/Monat</span>
+                    </div>
+                    <ul class="space-y-6 mb-12">
+                        <li class="flex items-center gap-4 font-semibold text-slate-300"><i class="fa-solid fa-circle-check text-blue-400 text-xl"></i> Unbegrenzte Matches</li>
+                        <li class="flex items-center gap-4 font-semibold text-slate-300"><i class="fa-solid fa-circle-check text-blue-400 text-xl"></i> Real-time Push & Mail</li>
+                        <li class="flex items-center gap-4 font-semibold text-slate-300"><i class="fa-solid fa-circle-check text-blue-400 text-xl"></i> KI-Matching (GPT-4)</li>
+                        <li class="flex items-center gap-4 font-semibold text-slate-300"><i class="fa-solid fa-circle-check text-blue-400 text-xl"></i> 3 Unternehmensprofile</li>
+                    </ul>
+                    <button onclick="openCheckout('Professional')" class="w-full py-6 rounded-2xl bg-blue-600 text-white font-black hover:bg-blue-500 transition shadow-xl shadow-blue-900/40 uppercase tracking-widest text-sm">
+                        Plan Wählen
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-100 py-24">
+        <div class="max-w-7xl mx-auto px-4 grid md:grid-cols-4 gap-16">
+            <div class="col-span-2">
+                <img src="logo.jpg" alt="PublicFlow Logo" class="h-10 mb-8">
+                <p class="text-slate-400 font-medium max-w-sm mb-10">Wir automatisieren den Weg zu Ihrem nächsten Großauftrag. Intelligent, schnell und rechtssicher.</p>
+                <div class="flex gap-6 text-slate-300">
+                    <i class="fa-brands fa-linkedin text-2xl hover:text-blue-600 cursor-pointer"></i>
+                    <i class="fa-brands fa-twitter text-2xl hover:text-blue-400 cursor-pointer"></i>
+                    <i class="fa-brands fa-github text-2xl hover:text-slate-900 cursor-pointer"></i>
+                </div>
+            </div>
+            <div>
+                <h4 class="font-black text-xs uppercase tracking-widest mb-8">Rechtliches</h4>
+                <ul class="space-y-4 text-sm font-semibold text-slate-500">
+                    <li><a href="#" class="hover:text-blue-600">Impressum</a></li>
+                    <li><a href="#" class="hover:text-blue-600">Datenschutz</a></li>
+                    <li><a href="#" class="hover:text-blue-600">AGB</a></li>
+                    <li><a href="#" class="hover:text-blue-600">Widerruf</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="font-black text-xs uppercase tracking-widest mb-8">Kontakt</h4>
+                <ul class="space-y-4 text-sm font-semibold text-slate-500">
+                    <li>support@publicflow.de</li>
+                    <li>Nicolas Osel</li>
+                    <li>Berlin, Deutschland</li>
+                </ul>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Full Onboarding & Checkout Modal -->
+    <div id="modal" class="fixed inset-0 z-[1000] bg-slate-900/90 backdrop-blur-xl hidden items-center justify-center p-4">
+        <div class="bg-white rounded-[3rem] shadow-2xl max-w-2xl w-full p-10 relative overflow-hidden flex flex-col md:flex-row gap-10">
+            
+            <div class="flex-1">
+                <div class="flex items-center gap-2 mb-8">
+                    <span class="text-[10px] font-black bg-blue-600 text-white px-3 py-1 rounded-full uppercase tracking-widest">Schritt 1/2</span>
+                    <h2 class="text-2xl font-black tracking-tight" id="modalTitle">Konfiguration</h2>
+                </div>
+                
+                <form id="checkoutForm" class="space-y-6">
+                    <input type="hidden" id="selectedPlan" name="plan">
+                    <input type="hidden" id="selectedPeriod" name="period" value="monthly">
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-[10px] font-black uppercase text-slate-400 mb-2 tracking-widest">Firmenname</label>
+                            <input type="text" placeholder="GmbH / KG" required class="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-blue-100 outline-none transition font-semibold">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-black uppercase text-slate-400 mb-2 tracking-widest">Branche</label>
+                            <select required class="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-blue-100 outline-none transition font-semibold">
+                                <option value="it">IT & Software</option>
+                                <option value="bau">Bauwesen</option>
+                                <option value="beratung">Beratung</option>
+                                <option value="dienstleistung">Dienstleistung</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-[10px] font-black uppercase text-slate-400 mb-2 tracking-widest">Suchbegriffe (KI-Fokus)</label>
+                        <textarea placeholder="z.B. Softwareentwicklung, Solar, Beratung..." required class="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-blue-100 outline-none transition font-semibold min-h-[100px]"></textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-[10px] font-black uppercase text-slate-400 mb-2 tracking-widest">E-Mail für Aufträge</label>
+                        <input type="email" placeholder="ihre@mail.de" required class="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-blue-100 outline-none transition font-semibold">
+                    </div>
+
+                    <div class="p-6 bg-blue-50 rounded-[2rem] border border-blue-100">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-sm font-bold text-blue-900" id="summary-plan">Starter Plan</span>
+                            <span class="text-xl font-black text-blue-600" id="summary-price">€99</span>
+                        </div>
+                        <p class="text-[10px] text-blue-500 font-semibold leading-relaxed">
+                            <i class="fa-solid fa-lock mr-2"></i> Sichere 256-Bit Verschlüsselung. Monatlich kündbar.
+                        </p>
+                    </div>
+
+                    <button type="submit" class="w-full py-6 rounded-2xl bg-[#2D3FE2] text-white font-black hover:bg-[#1a2bc0] transition shadow-xl shadow-blue-200 uppercase tracking-widest">
+                        Jetzt Zahlspflichtig Bestellen
+                    </button>
+                </form>
+                <button onclick="closeModal()" class="mt-6 w-full text-slate-300 text-[10px] font-black uppercase tracking-widest hover:text-slate-900 transition">Abbrechen</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentPeriod = 'monthly';
+
+        function togglePricing(period) {
+            currentPeriod = period;
+            const btnMonthly = document.getElementById('btn-monthly');
+            const btnYearly = document.getElementById('btn-yearly');
+            
+            if(period === 'monthly') {
+                btnMonthly.classList.add('pricing-toggle-active');
+                btnYearly.classList.remove('pricing-toggle-active');
+                document.getElementById('price-starter').innerText = '€99';
+                document.getElementById('price-pro').innerText = '€175';
+                document.getElementById('period-starter').innerText = '/Monat';
+                document.getElementById('period-pro').innerText = '/Monat';
+            } else {
+                btnYearly.classList.add('pricing-toggle-active');
+                btnMonthly.classList.remove('pricing-toggle-active');
+                // 10% Rabatt
+                document.getElementById('price-starter').innerText = '€89';
+                document.getElementById('price-pro').innerText = '€157';
+                document.getElementById('period-starter').innerText = '/Monat (jährlich)';
+                document.getElementById('period-pro').innerText = '/Monat (jährlich)';
+            }
+        }
+
+        function openCheckout(plan) {
+            document.getElementById('selectedPlan').value = plan;
+            document.getElementById('selectedPeriod').value = currentPeriod;
+            document.getElementById('summary-plan').innerText = `${plan} Plan (${currentPeriod === 'monthly' ? 'Monatlich' : 'Jährlich'})`;
+            
+            let price = plan === 'Starter' ? (currentPeriod === 'monthly' ? 99 : 89) : (currentPeriod === 'monthly' ? 175 : 157);
+            document.getElementById('summary-price').innerText = `€${price}`;
+            
+            document.getElementById('modal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('modal').style.display = 'none';
+        }
+
+        document.getElementById('checkoutForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const plan = document.getElementById('selectedPlan').value;
+            const period = document.getElementById('selectedPeriod').value;
+            alert(`✅ Erfolg! Ihr ${plan}-Abonnement (${period}) wurde aktiviert.\n\nDas Geld wird über Ihren hinterlegten Account abgebucht.\n\nWillkommen bei PublicFlow!`);
+            closeModal();
+        });
+    </script>
+</body>
+</html>

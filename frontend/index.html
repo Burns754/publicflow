@@ -1,0 +1,1457 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PublicFlow – Ausschreibungs-Monitor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --indigo:     #7c3aed;
+      --indigo-d:   #6d28d9;
+      --indigo-l:   rgba(124,58,237,.15);
+      --indigo-mid: #a78bfa;
+      --accent:     #8b5cf6;
+      --accent2:    #ec4899;
+      --sidebar-bg: #0a0a12;
+      --sidebar-hover: rgba(255,255,255,.06);
+      --sidebar-active: rgba(124,58,237,.25);
+      --green:      #10b981;
+      --green-l:    rgba(16,185,129,.15);
+      --orange:     #f59e0b;
+      --orange-l:   rgba(245,158,11,.15);
+      --red:        #ef4444;
+      --red-l:      rgba(239,68,68,.15);
+      --surface:    #0d0d1a;
+      --card:       #13131f;
+      --card-hover: #17172a;
+      --border:     rgba(255,255,255,.07);
+      --border-light: rgba(255,255,255,.12);
+      --txt:        #f1f5f9;
+      --txt-muted:  rgba(255,255,255,.55);
+      --txt-light:  rgba(255,255,255,.3);
+      --radius-sm:  8px;
+      --radius:     12px;
+      --radius-lg:  16px;
+      --shadow-sm:  0 1px 3px rgba(0,0,0,.4);
+      --shadow:     0 2px 8px rgba(0,0,0,.4);
+      --shadow-md:  0 4px 20px rgba(0,0,0,.5);
+      --shadow-lg:  0 12px 40px rgba(0,0,0,.6);
+      --glow:       0 0 20px rgba(124,58,237,.35);
+      --glow-sm:    0 0 12px rgba(124,58,237,.25);
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--surface);
+      color: var(--txt);
+      font-size: 14px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Ambient background glow */
+    body::before {
+      content: '';
+      position: fixed;
+      top: -30%;
+      left: -10%;
+      width: 60%;
+      height: 60%;
+      background: radial-gradient(ellipse, rgba(124,58,237,.08) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+    body::after {
+      content: '';
+      position: fixed;
+      bottom: -20%;
+      right: -10%;
+      width: 50%;
+      height: 50%;
+      background: radial-gradient(ellipse, rgba(236,72,153,.06) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ════════════════════════════════════════════
+       AUTH
+    ════════════════════════════════════════════ */
+    #auth-screen {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #070710;
+      background-image:
+        radial-gradient(ellipse 80% 60% at 20% 20%, rgba(124,58,237,.18) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 50% at 80% 80%, rgba(236,72,153,.12) 0%, transparent 60%),
+        radial-gradient(ellipse 40% 40% at 50% 50%, rgba(99,102,241,.08) 0%, transparent 70%);
+      padding: 20px;
+      position: relative;
+    }
+    .auth-wrap {
+      display: flex;
+      gap: 60px;
+      align-items: center;
+      max-width: 920px;
+      width: 100%;
+      position: relative;
+      z-index: 1;
+    }
+    .auth-hero {
+      flex: 1;
+      color: #fff;
+      display: none;
+    }
+    @media (min-width: 768px) { .auth-hero { display: block; } }
+    .auth-hero h1 { font-size: 38px; font-weight: 800; line-height: 1.2; margin-bottom: 16px; letter-spacing: -.5px; }
+    .auth-hero h1 span { background: linear-gradient(135deg, #a78bfa, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .auth-hero p  { font-size: 15px; color: rgba(255,255,255,.55); line-height: 1.8; margin-bottom: 28px; }
+    .hero-pills { display: flex; flex-direction: column; gap: 10px; }
+    .hero-pill {
+      display: flex; align-items: center; gap: 10px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 12px; padding: 11px 16px; font-size: 13px; color: rgba(255,255,255,.7);
+      backdrop-filter: blur(8px);
+    }
+    .hero-pill .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--indigo-mid); flex-shrink: 0; box-shadow: 0 0 8px var(--accent); }
+
+    .auth-card {
+      background: rgba(20,20,35,.85);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 20px;
+      padding: 36px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 24px 60px rgba(0,0,0,.6), 0 0 0 1px rgba(124,58,237,.15);
+      flex-shrink: 0;
+    }
+    .auth-logo {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 22px; font-weight: 800; color: var(--txt);
+      margin-bottom: 6px;
+    }
+    .auth-logo .logo-icon {
+      width: 38px; height: 38px; border-radius: 11px;
+      background: linear-gradient(135deg, var(--indigo), var(--accent2));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      box-shadow: 0 4px 16px rgba(124,58,237,.4);
+    }
+    .auth-tagline { color: var(--txt-muted); font-size: 13px; margin-bottom: 28px; }
+
+    .auth-tabs {
+      display: flex; background: rgba(255,255,255,.04); border-radius: 10px; padding: 3px;
+      margin-bottom: 22px; gap: 3px;
+      border: 1px solid var(--border);
+    }
+    .auth-tab {
+      flex: 1; padding: 8px; text-align: center; border-radius: 8px;
+      font-size: 13px; font-weight: 500; color: var(--txt-muted); cursor: pointer;
+      transition: all .15s;
+    }
+    .auth-tab.active {
+      background: linear-gradient(135deg, rgba(124,58,237,.3), rgba(236,72,153,.2));
+      color: var(--txt);
+      border: 1px solid rgba(124,58,237,.35);
+      box-shadow: 0 2px 8px rgba(124,58,237,.2);
+    }
+
+    /* ════════════════════════════════════════════
+       FORMS
+    ════════════════════════════════════════════ */
+    .field { margin-bottom: 14px; }
+    .field label { display: block; font-size: 11px; font-weight: 600; color: var(--txt-muted); text-transform: uppercase; letter-spacing: .8px; margin-bottom: 6px; }
+    .field input, .field select, .field textarea {
+      width: 100%; padding: 10px 13px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 14px; font-family: inherit;
+      color: var(--txt); background: rgba(255,255,255,.04);
+      transition: border-color .15s, box-shadow .15s; outline: none;
+    }
+    .field input::placeholder { color: var(--txt-light); }
+    .field input:focus, .field select:focus, .field textarea:focus {
+      border-color: rgba(124,58,237,.5);
+      box-shadow: 0 0 0 3px rgba(124,58,237,.12), 0 0 16px rgba(124,58,237,.1);
+    }
+    .field select option { background: #1a1a2e; color: var(--txt); }
+    .field textarea { resize: vertical; min-height: 80px; }
+    .field-hint { font-size: 11px; color: var(--txt-light); margin-top: 4px; }
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      padding: 9px 18px; border-radius: var(--radius-sm);
+      font-size: 13px; font-weight: 600; font-family: inherit;
+      cursor: pointer; transition: all .18s; border: none; text-decoration: none;
+      white-space: nowrap; position: relative; overflow: hidden;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--indigo), #9333ea);
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(124,58,237,.35);
+    }
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #6d28d9, #7c3aed);
+      box-shadow: 0 6px 20px rgba(124,58,237,.5), 0 0 0 1px rgba(124,58,237,.3);
+      transform: translateY(-1px);
+    }
+    .btn-ghost {
+      background: rgba(255,255,255,.04);
+      border: 1px solid var(--border-light);
+      color: var(--txt-muted);
+    }
+    .btn-ghost:hover {
+      border-color: rgba(124,58,237,.4);
+      color: var(--indigo-mid);
+      background: rgba(124,58,237,.08);
+    }
+    .btn-danger  { background: linear-gradient(135deg, #dc2626, #ef4444); color: #fff; box-shadow: 0 4px 12px rgba(239,68,68,.3); }
+    .btn-success { background: linear-gradient(135deg, #059669, #10b981); color: #fff; box-shadow: 0 4px 12px rgba(16,185,129,.3); }
+    .btn-full    { width: 100%; }
+    .btn-sm      { padding: 6px 12px; font-size: 12px; }
+    .btn-xs      { padding: 4px 9px; font-size: 11px; border-radius: 6px; }
+    .btn:disabled { opacity: .4; cursor: not-allowed; transform: none !important; }
+
+    .msg-error   { background: var(--red-l); border: 1px solid rgba(239,68,68,.3); color: #fca5a5; border-radius: var(--radius-sm); padding: 10px 14px; font-size: 13px; margin-bottom: 14px; }
+    .msg-success { background: var(--green-l); border: 1px solid rgba(16,185,129,.3); color: #6ee7b7; border-radius: var(--radius-sm); padding: 10px 14px; font-size: 13px; margin-bottom: 14px; }
+    .msg-info    { background: var(--indigo-l); border: 1px solid rgba(124,58,237,.3); color: #a78bfa; border-radius: var(--radius-sm); padding: 10px 14px; font-size: 13px; margin-bottom: 14px; }
+
+    /* ════════════════════════════════════════════
+       APP SHELL — Sidebar + Main
+    ════════════════════════════════════════════ */
+    #app-screen { display: none; min-height: 100vh; }
+    #app-screen.visible { display: flex; }
+
+    /* SIDEBAR */
+    .sidebar {
+      width: 228px;
+      background: var(--sidebar-bg);
+      border-right: 1px solid rgba(255,255,255,.05);
+      display: flex; flex-direction: column;
+      position: fixed; top: 0; left: 0; height: 100vh;
+      z-index: 200; overflow: hidden;
+      transition: width .2s;
+      flex-shrink: 0;
+    }
+    .sidebar-logo {
+      display: flex; align-items: center; gap: 10px;
+      padding: 22px 18px 16px;
+      border-bottom: 1px solid rgba(255,255,255,.05);
+    }
+    .sidebar-logo .icon {
+      width: 34px; height: 34px; border-radius: 10px;
+      background: linear-gradient(135deg, var(--indigo), var(--accent2));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; flex-shrink: 0;
+      box-shadow: 0 4px 12px rgba(124,58,237,.35);
+    }
+    .sidebar-logo .name { font-size: 15px; font-weight: 700; color: #fff; letter-spacing: -.2px; }
+
+    .sidebar-nav { flex: 1; padding: 14px 10px; overflow-y: auto; }
+    .nav-section-label {
+      font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.2px;
+      color: rgba(255,255,255,.22); padding: 8px 10px 4px;
+    }
+    .nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 12px; border-radius: 10px;
+      font-size: 13px; font-weight: 500; color: rgba(255,255,255,.5);
+      cursor: pointer; transition: all .15s; margin-bottom: 2px;
+    }
+    .nav-item:hover   { background: var(--sidebar-hover); color: rgba(255,255,255,.85); }
+    .nav-item.active  {
+      background: rgba(124,58,237,.2);
+      color: #fff;
+      border: 1px solid rgba(124,58,237,.25);
+    }
+    .nav-item .nav-icon { font-size: 15px; width: 20px; text-align: center; flex-shrink: 0; }
+    .nav-item .nav-badge {
+      margin-left: auto;
+      background: linear-gradient(135deg, var(--indigo), var(--accent2));
+      color: #fff;
+      border-radius: 10px; padding: 1px 7px; font-size: 11px; font-weight: 700;
+    }
+
+    .sidebar-footer {
+      padding: 12px 10px;
+      border-top: 1px solid rgba(255,255,255,.05);
+    }
+    .user-card {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 12px; border-radius: 10px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.06);
+    }
+    .user-avatar {
+      width: 30px; height: 30px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--indigo), var(--accent2));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 700; color: #fff; flex-shrink: 0;
+      box-shadow: 0 2px 8px rgba(124,58,237,.3);
+    }
+    .user-info { flex: 1; min-width: 0; }
+    .user-name { font-size: 12px; font-weight: 600; color: #fff; truncate: ellipsis; overflow: hidden; white-space: nowrap; }
+    .user-plan { font-size: 11px; color: rgba(255,255,255,.35); }
+    .user-logout { color: rgba(255,255,255,.25); cursor: pointer; font-size: 14px; transition: color .15s; }
+    .user-logout:hover { color: var(--indigo-mid); }
+
+    /* MAIN */
+    .main {
+      margin-left: 228px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      position: relative;
+      z-index: 1;
+    }
+    .topbar {
+      background: rgba(13,13,26,.8);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 28px;
+      height: 54px;
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 100;
+    }
+    .page-title { font-size: 15px; font-weight: 700; color: var(--txt); letter-spacing: -.2px; }
+    .topbar-actions { display: flex; align-items: center; gap: 10px; }
+    .status-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      display: inline-block; margin-right: 5px;
+    }
+    .status-dot.green { background: var(--green); box-shadow: 0 0 8px rgba(16,185,129,.6); }
+    .status-dot.gray  { background: var(--txt-light); }
+
+    .content { padding: 26px 28px; flex: 1; }
+
+    /* ════════════════════════════════════════════
+       CARDS & GRIDS
+    ════════════════════════════════════════════ */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 22px;
+      box-shadow: var(--shadow-sm);
+      position: relative;
+    }
+    .card::before {
+      content: '';
+      position: absolute; inset: 0;
+      border-radius: var(--radius-lg);
+      background: linear-gradient(135deg, rgba(124,58,237,.03), transparent);
+      pointer-events: none;
+    }
+    .card-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 18px;
+    }
+    .card-title { font-size: 14px; font-weight: 700; color: var(--txt); }
+    .card-sub   { font-size: 12px; color: var(--txt-muted); margin-top: 2px; }
+
+    .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+    @media (max-width: 900px) { .stats-row { grid-template-columns: 1fr 1fr; } }
+
+    .stat-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 20px 22px;
+      box-shadow: var(--shadow-sm);
+      position: relative; overflow: hidden;
+      transition: border-color .2s, transform .2s;
+    }
+    .stat-card:hover { border-color: rgba(124,58,237,.3); transform: translateY(-2px); }
+    .stat-card::before {
+      content: ''; position: absolute; top: 0; left: 0;
+      width: 100%; height: 2px;
+      background: linear-gradient(90deg, var(--indigo), transparent);
+    }
+    .stat-card.green::before { background: linear-gradient(90deg, var(--green), transparent); }
+    .stat-card.orange::before { background: linear-gradient(90deg, var(--orange), transparent); }
+    .stat-card.purple::before { background: linear-gradient(90deg, #a855f7, transparent); }
+    .stat-card::after {
+      content: '';
+      position: absolute; top: -30px; right: -20px;
+      width: 80px; height: 80px;
+      background: radial-gradient(circle, rgba(124,58,237,.08), transparent);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+    .stat-label { font-size: 11px; font-weight: 600; color: var(--txt-muted); text-transform: uppercase; letter-spacing: .8px; }
+    .stat-value { font-size: 30px; font-weight: 800; color: var(--txt); margin: 6px 0 3px; line-height: 1; }
+    .stat-hint  { font-size: 11px; color: var(--txt-light); }
+
+    /* ════════════════════════════════════════════
+       MATCH CARDS
+    ════════════════════════════════════════════ */
+    .match-list { display: flex; flex-direction: column; gap: 10px; }
+    .match-item {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 18px 20px;
+      display: flex; gap: 16px; align-items: flex-start;
+      box-shadow: var(--shadow-sm);
+      transition: border-color .2s, box-shadow .2s, transform .15s;
+      cursor: default; position: relative; overflow: hidden;
+    }
+    .match-item::before {
+      content: '';
+      position: absolute; left: 0; top: 0; bottom: 0;
+      width: 3px;
+      background: linear-gradient(180deg, var(--indigo), var(--accent2));
+      opacity: 0; transition: opacity .2s;
+    }
+    .match-item:hover {
+      border-color: rgba(124,58,237,.35);
+      box-shadow: 0 4px 24px rgba(124,58,237,.15);
+      transform: translateY(-2px);
+    }
+    .match-item:hover::before { opacity: 1; }
+    .score-ring {
+      width: 52px; height: 52px; border-radius: 14px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 16px; flex-shrink: 0;
+      line-height: 1;
+    }
+    .score-ring .score-label { font-size: 9px; font-weight: 600; margin-top: 2px; opacity: .7; }
+    .score-high   { background: rgba(16,185,129,.18); color: #34d399; border: 1px solid rgba(16,185,129,.25); }
+    .score-mid    { background: rgba(245,158,11,.18);  color: #fbbf24; border: 1px solid rgba(245,158,11,.25); }
+    .score-low    { background: rgba(255,255,255,.06); color: var(--txt-muted); border: 1px solid var(--border); }
+
+    .match-content { flex: 1; min-width: 0; }
+    .match-title   { font-size: 14px; font-weight: 700; color: var(--txt); margin-bottom: 6px; line-height: 1.45; }
+    .match-chips   { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+    .chip {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 9px; border-radius: 20px;
+      font-size: 11px; font-weight: 600;
+    }
+    .chip-blue   { background: rgba(124,58,237,.18); color: #a78bfa; border: 1px solid rgba(124,58,237,.2); }
+    .chip-green  { background: rgba(16,185,129,.15);  color: #34d399; border: 1px solid rgba(16,185,129,.2); }
+    .chip-orange { background: rgba(245,158,11,.15);  color: #fbbf24; border: 1px solid rgba(245,158,11,.2); }
+    .chip-gray   { background: rgba(255,255,255,.06); color: var(--txt-muted); border: 1px solid var(--border); }
+    .chip-new    { background: rgba(236,72,153,.15);  color: #f472b6; border: 1px solid rgba(236,72,153,.2); }
+
+    .match-reasoning { font-size: 12px; color: var(--txt-muted); line-height: 1.7; margin-bottom: 10px; }
+    .match-actions   { display: flex; gap: 6px; }
+
+    /* ════════════════════════════════════════════
+       TABLE / SEARCH RESULTS
+    ════════════════════════════════════════════ */
+    .search-bar {
+      display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap;
+    }
+    .search-input {
+      flex: 1; min-width: 200px; padding: 10px 14px 10px 38px;
+      border: 1px solid var(--border); border-radius: var(--radius-sm);
+      font-size: 14px; font-family: inherit; color: var(--txt);
+      background: var(--card);
+      outline: none; transition: border-color .15s, box-shadow .15s;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='%2394a3b8' viewBox='0 0 24 24'%3E%3Cpath d='M21 21l-4.35-4.35M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16z' stroke='%2364748b' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: 13px center;
+    }
+    .search-input::placeholder { color: var(--txt-light); }
+    .search-input:focus { border-color: rgba(124,58,237,.5); box-shadow: 0 0 0 3px rgba(124,58,237,.12); }
+    .filter-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+    .filter-select {
+      padding: 8px 11px; border: 1px solid var(--border); border-radius: var(--radius-sm);
+      font-size: 12px; font-family: inherit; color: var(--txt-muted);
+      background: var(--card);
+      cursor: pointer; outline: none;
+    }
+    .filter-select:focus { border-color: rgba(124,58,237,.5); }
+    .filter-select option { background: #1a1a2e; color: var(--txt); }
+
+    .tender-row {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 15px 18px;
+      margin-bottom: 8px; box-shadow: var(--shadow-sm);
+      transition: border-color .2s, transform .15s;
+    }
+    .tender-row:hover { border-color: rgba(124,58,237,.3); transform: translateY(-1px); }
+    .tender-row-title { font-size: 13px; font-weight: 700; margin-bottom: 6px; color: var(--txt); }
+    .tender-row-meta  { display: flex; flex-wrap: wrap; gap: 12px; font-size: 11px; color: var(--txt-muted); }
+
+    /* ════════════════════════════════════════════
+       ONBOARDING STEPS
+    ════════════════════════════════════════════ */
+    .onboard-wrap { max-width: 540px; margin: 0 auto; padding: 32px 0; }
+    .steps {
+      display: flex; align-items: center; gap: 0;
+      margin-bottom: 32px; position: relative;
+    }
+    .step {
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+      flex: 1; position: relative; z-index: 1;
+    }
+    .step-num {
+      width: 34px; height: 34px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700;
+      border: 1px solid var(--border); color: var(--txt-light);
+      background: var(--card);
+      transition: all .2s;
+    }
+    .step.done   .step-num { background: linear-gradient(135deg, #059669, #10b981); border-color: transparent; color: #fff; box-shadow: 0 0 12px rgba(16,185,129,.3); }
+    .step.active .step-num { background: linear-gradient(135deg, var(--indigo), #9333ea); border-color: transparent; color: #fff; box-shadow: 0 0 16px rgba(124,58,237,.4); }
+    .step-text { font-size: 11px; font-weight: 600; color: var(--txt-light); }
+    .step.done .step-text, .step.active .step-text { color: var(--txt-muted); }
+    .step-line {
+      position: absolute; top: 17px; left: calc(50% + 20px); right: calc(-50% + 20px);
+      height: 1px; background: var(--border); z-index: 0;
+    }
+    .step-line.done { background: linear-gradient(90deg, #10b981, rgba(16,185,129,.3)); }
+
+    .onboard-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 30px; box-shadow: var(--shadow-md); }
+    .onboard-title { font-size: 20px; font-weight: 800; margin-bottom: 6px; letter-spacing: -.3px; }
+    .onboard-sub   { font-size: 13px; color: var(--txt-muted); margin-bottom: 24px; }
+
+    /* ════════════════════════════════════════════
+       PRICING
+    ════════════════════════════════════════════ */
+    .pricing-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 600px) { .pricing-grid { grid-template-columns: 1fr; } }
+    .pricing-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 26px;
+      position: relative; transition: border-color .2s, box-shadow .2s, transform .2s;
+    }
+    .pricing-card:hover { transform: translateY(-2px); }
+    .pricing-card.popular {
+      border-color: rgba(124,58,237,.4);
+      box-shadow: 0 0 0 1px rgba(124,58,237,.2), 0 8px 32px rgba(124,58,237,.2);
+      background: linear-gradient(135deg, rgba(124,58,237,.06), rgba(236,72,153,.04));
+    }
+    .popular-tag {
+      position: absolute; top: -11px; left: 50%; transform: translateX(-50%);
+      background: linear-gradient(135deg, var(--indigo), var(--accent2));
+      color: #fff; border-radius: 20px;
+      padding: 3px 14px; font-size: 11px; font-weight: 700; letter-spacing: .5px;
+      white-space: nowrap;
+      box-shadow: 0 4px 12px rgba(124,58,237,.4);
+    }
+    .plan-name  { font-size: 16px; font-weight: 800; margin-bottom: 4px; }
+    .plan-price { font-size: 34px; font-weight: 900; color: var(--txt); line-height: 1; }
+    .plan-price span { font-size: 14px; font-weight: 400; color: var(--txt-muted); }
+    .plan-features { list-style: none; margin: 16px 0 22px; display: flex; flex-direction: column; gap: 9px; }
+    .plan-features li {
+      display: flex; gap: 8px; align-items: flex-start;
+      font-size: 13px; color: var(--txt-muted);
+    }
+    .plan-features li::before { content: "✓"; color: var(--green); font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+
+    /* ════════════════════════════════════════════
+       PROFILE PAGE
+    ════════════════════════════════════════════ */
+    .section-title {
+      font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .8px;
+      color: var(--txt-muted); margin-bottom: 14px; padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    .profile-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    @media (max-width: 600px) { .profile-grid { grid-template-columns: 1fr; } }
+
+    /* ════════════════════════════════════════════
+       SPINNER / EMPTY
+    ════════════════════════════════════════════ */
+    .spinner {
+      width: 32px; height: 32px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      margin: 40px auto;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .empty {
+      text-align: center; padding: 52px 20px;
+      color: var(--txt-light);
+    }
+    .empty-icon { font-size: 40px; margin-bottom: 14px; opacity: .6; }
+    .empty h3   { font-size: 15px; font-weight: 700; color: var(--txt-muted); margin-bottom: 6px; }
+    .empty p    { font-size: 13px; }
+
+    /* ════════════════════════════════════════════
+       TOAST
+    ════════════════════════════════════════════ */
+    #toast {
+      position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+      background: rgba(26,26,46,.95);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(124,58,237,.25);
+      color: var(--txt);
+      padding: 12px 20px; border-radius: var(--radius);
+      font-size: 13px; font-weight: 500;
+      box-shadow: 0 8px 32px rgba(0,0,0,.5), 0 0 0 1px rgba(124,58,237,.1);
+      opacity: 0; transform: translateY(10px);
+      transition: all .2s; pointer-events: none;
+      max-width: 320px;
+    }
+    #toast.show { opacity: 1; transform: translateY(0); }
+
+    /* ════════════════════════════════════════════
+       ACTION BAR
+    ════════════════════════════════════════════ */
+    .action-bar {
+      display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap;
+      align-items: center;
+    }
+    .action-bar .divider { width: 1px; height: 20px; background: var(--border); margin: 0 4px; }
+
+    /* ════════════════════════════════════════════
+       SCROLLBAR
+    ════════════════════════════════════════════ */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,.2); }
+
+    /* ════════════════════════════════════════════
+       RESPONSIVE
+    ════════════════════════════════════════════ */
+    @media (max-width: 768px) {
+      .sidebar { width: 58px; }
+      .sidebar-logo .name, .nav-item span, .user-info, .nav-section-label { display: none; }
+      .nav-item { justify-content: center; }
+      .main { margin-left: 58px; }
+      .content { padding: 16px; }
+      .stats-row { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════
+     AUTH
+══════════════════════════════════════════ -->
+<div id="auth-screen">
+  <div class="auth-wrap">
+    <!-- Hero Left -->
+    <div class="auth-hero">
+      <h1>Öffentliche Ausschreibungen.<br><span>Automatisch gefunden.</span></h1>
+      <p>PublicFlow scannt täglich TED EU, bund.de und deutsche Vergabeplattformen — und liefert dir nur die Treffer, die wirklich zu deinem Unternehmen passen.</p>
+      <div class="hero-pills">
+        <div class="hero-pill"><div class="dot"></div> KI-Matching via Claude AI</div>
+        <div class="hero-pill"><div class="dot"></div> TED EU + bund.de + 5 weitere Quellen</div>
+        <div class="hero-pill"><div class="dot"></div> Tägliche E-Mail-Alerts um 07:00 Uhr</div>
+      </div>
+    </div>
+
+    <!-- Card Right -->
+    <div class="auth-card">
+      <div class="auth-logo">
+        <div class="logo-icon">🎯</div>
+        PublicFlow
+      </div>
+      <div class="auth-tagline">Melde dich an oder erstelle ein Konto</div>
+
+      <div class="auth-tabs">
+        <div class="auth-tab active" onclick="switchAuthTab('login')">Anmelden</div>
+        <div class="auth-tab"        onclick="switchAuthTab('register')">Registrieren</div>
+      </div>
+
+      <div id="auth-error" class="msg-error" style="display:none"></div>
+
+      <!-- Login -->
+      <div id="login-form">
+        <div class="field">
+          <label>E-Mail</label>
+          <input type="email" id="login-email" placeholder="name@firma.de" autocomplete="email">
+        </div>
+        <div class="field">
+          <label>Passwort</label>
+          <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password">
+        </div>
+        <button class="btn btn-primary btn-full" style="margin-top:4px" onclick="doLogin()">Anmelden →</button>
+      </div>
+
+      <!-- Register -->
+      <div id="register-form" style="display:none">
+        <div class="field">
+          <label>Vollständiger Name</label>
+          <input type="text" id="reg-name" placeholder="Max Mustermann">
+        </div>
+        <div class="field">
+          <label>E-Mail</label>
+          <input type="email" id="reg-email" placeholder="name@firma.de" autocomplete="email">
+        </div>
+        <div class="field">
+          <label>Passwort</label>
+          <input type="password" id="reg-password" placeholder="Mind. 6 Zeichen" autocomplete="new-password">
+        </div>
+        <button class="btn btn-primary btn-full" style="margin-top:4px" onclick="doRegister()">Konto erstellen →</button>
+      </div>
+
+      <div style="text-align:center;margin-top:16px;font-size:12px;color:var(--txt-light)">
+        Teste kostenlos · Keine Kreditkarte nötig
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     APP
+══════════════════════════════════════════ -->
+<div id="app-screen">
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="sidebar-logo">
+      <div class="icon">🎯</div>
+      <div class="name">PublicFlow</div>
+    </div>
+
+    <div class="sidebar-nav">
+      <div class="nav-section-label">Hauptmenü</div>
+      <div class="nav-item active" data-tab="dashboard" onclick="switchTab('dashboard')">
+        <span class="nav-icon">📊</span><span>Dashboard</span>
+      </div>
+      <div class="nav-item" data-tab="matches" onclick="switchTab('matches')">
+        <span class="nav-icon">🎯</span><span>Matches</span>
+        <span class="nav-badge" id="nav-badge-matches" style="display:none">0</span>
+      </div>
+      <div class="nav-item" data-tab="search" onclick="switchTab('search')">
+        <span class="nav-icon">🔍</span><span>Suche</span>
+      </div>
+
+      <div class="nav-section-label" style="margin-top:8px">Einstellungen</div>
+      <div class="nav-item" data-tab="profile" onclick="switchTab('profile')">
+        <span class="nav-icon">👤</span><span>Profil</span>
+      </div>
+      <div class="nav-item" data-tab="pricing" onclick="switchTab('pricing')">
+        <span class="nav-icon">💳</span><span>Abo</span>
+      </div>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="user-card">
+        <div class="user-avatar" id="user-avatar">N</div>
+        <div class="user-info">
+          <div class="user-name"  id="user-name-sidebar">Nutzer</div>
+          <div class="user-plan"  id="user-plan-sidebar">Kein Abo</div>
+        </div>
+        <div class="user-logout" onclick="doLogout()" title="Abmelden">⎋</div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <div class="main">
+
+    <!-- Topbar -->
+    <div class="topbar">
+      <div class="page-title" id="page-title">Dashboard</div>
+      <div class="topbar-actions">
+        <span id="ai-status" style="font-size:12px;color:var(--txt-muted)"></span>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- ── ONBOARDING ─────────────────────────── -->
+      <div id="tab-onboarding" style="display:none">
+        <div class="onboard-wrap">
+          <div class="steps">
+            <div class="step done" id="step1">
+              <div class="step-num">✓</div>
+              <div class="step-text">Registriert</div>
+              <div class="step-line done" id="line1"></div>
+            </div>
+            <div class="step active" id="step2">
+              <div class="step-num">2</div>
+              <div class="step-text">Profil</div>
+              <div class="step-line" id="line2"></div>
+            </div>
+            <div class="step" id="step3">
+              <div class="step-num">3</div>
+              <div class="step-text">Abo</div>
+            </div>
+          </div>
+
+          <!-- Step 2: Profil -->
+          <div id="onboard-profile">
+            <div class="onboard-card">
+              <div class="onboard-title">Unternehmensprofil anlegen</div>
+              <div class="onboard-sub">Damit der KI-Matcher die richtigen Ausschreibungen findet.</div>
+              <div id="onboard-error" class="msg-error" style="display:none"></div>
+              <div class="field"><label>Unternehmensname *</label><input type="text" id="ob-name" placeholder="Mustermann GmbH"></div>
+              <div class="field"><label>Branche *</label>
+                <select id="ob-industry">
+                  <option value="">Auswählen...</option>
+                  <option>IT &amp; Software</option><option>Bau &amp; Architektur</option>
+                  <option>Beratung &amp; Dienstleistung</option><option>Gesundheit &amp; Pflege</option>
+                  <option>Bildung &amp; Forschung</option><option>Umwelt &amp; Energie</option>
+                  <option>Marketing &amp; Kommunikation</option><option>Transport &amp; Logistik</option>
+                  <option>Sicherheit</option><option>Sonstiges</option>
+                </select>
+              </div>
+              <div class="field"><label>Kompetenzen / Keywords *</label>
+                <input type="text" id="ob-keywords" placeholder="z.B. Cloud, DevOps, Python, KI">
+                <div class="field-hint">Kommagetrennt · Fließen direkt in die TED-Suchanfrage ein</div>
+              </div>
+              <div class="field-row">
+                <div class="field"><label>Min. Budget €</label><input type="number" id="ob-min" placeholder="10.000"></div>
+                <div class="field"><label>Max. Budget €</label><input type="number" id="ob-max" placeholder="500.000"></div>
+              </div>
+              <div class="field"><label>Regionen</label><input type="text" id="ob-regions" value="Deutschland,EU"></div>
+              <button class="btn btn-primary btn-full" style="margin-top:8px" onclick="saveOnboardProfile()">Weiter zum Abo →</button>
+            </div>
+          </div>
+
+          <!-- Step 3: Abo -->
+          <div id="onboard-pricing" style="display:none">
+            <div class="onboard-card">
+              <div class="onboard-title">Plan auswählen</div>
+              <div class="onboard-sub">Starte im Testmodus oder wähle direkt deinen Plan.</div>
+              <div id="onboard-pay-error" class="msg-error" style="display:none"></div>
+              <div class="pricing-grid" style="margin-bottom:20px">
+                <div class="pricing-card">
+                  <div class="plan-name">Starter</div>
+                  <div class="plan-price">€99<span>/Monat</span></div>
+                  <ul class="plan-features">
+                    <li>5 Ausschreibungen/Woche</li>
+                    <li>Tägl. E-Mail-Alerts</li>
+                    <li>Basis-Matching</li>
+                  </ul>
+                  <button class="btn btn-ghost btn-full" onclick="doCheckout('starter','monthly')">Starter wählen</button>
+                </div>
+                <div class="pricing-card popular">
+                  <div class="popular-tag">EMPFOHLEN</div>
+                  <div class="plan-name" style="background:linear-gradient(135deg,#a78bfa,#ec4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">Professional</div>
+                  <div class="plan-price">€175<span>/Monat</span></div>
+                  <ul class="plan-features">
+                    <li>Unbegrenzte Ausschreibungen</li>
+                    <li>KI-Matching (Claude AI)</li>
+                    <li>Sofort-Alerts &amp; Digest</li>
+                    <li>Manuelle Suche</li>
+                  </ul>
+                  <button class="btn btn-primary btn-full" onclick="doCheckout('professional','monthly')">Professional wählen</button>
+                </div>
+              </div>
+              <div style="text-align:center">
+                <button class="btn btn-ghost btn-sm" onclick="activateMock()">🧪 Testmodus aktivieren (ohne Zahlung)</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── DASHBOARD ───────────────────────────── -->
+      <div id="tab-dashboard" style="display:none">
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="stat-label">Matches gesamt</div>
+            <div class="stat-value" id="stat-matches">–</div>
+            <div class="stat-hint">KI-bewertete Treffer</div>
+          </div>
+          <div class="stat-card green">
+            <div class="stat-label">Ausschreibungen</div>
+            <div class="stat-value" id="stat-tenders">–</div>
+            <div class="stat-hint">In Datenbank</div>
+          </div>
+          <div class="stat-card orange">
+            <div class="stat-label">Letzter Scan</div>
+            <div class="stat-value" id="stat-last-scan" style="font-size:15px;margin-top:8px">–</div>
+            <div class="stat-hint">Tägl. 07:00 Uhr</div>
+          </div>
+          <div class="stat-card purple">
+            <div class="stat-label">Dein Plan</div>
+            <div class="stat-value" id="stat-plan" style="font-size:17px;margin-top:8px">–</div>
+            <div class="stat-hint" id="stat-plan-sub"></div>
+          </div>
+        </div>
+
+        <div class="action-bar">
+          <button class="btn btn-primary" onclick="triggerScrape()">🔄 Jetzt scannen</button>
+          <button class="btn btn-success" onclick="triggerMatch()">🎯 Matching starten</button>
+          <div class="divider"></div>
+          <button class="btn btn-ghost btn-sm" onclick="switchTab('search')">🔍 Manuell suchen</button>
+        </div>
+
+        <div id="scrape-status" style="margin-bottom:16px"></div>
+
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Neueste Matches</div>
+              <div class="card-sub">Top 5 zuletzt gefundene Treffer</div>
+            </div>
+            <button class="btn btn-ghost btn-sm" onclick="switchTab('matches')">Alle ansehen →</button>
+          </div>
+          <div id="dashboard-matches"><div class="spinner"></div></div>
+        </div>
+      </div>
+
+      <!-- ── MATCHES ────────────────────────────── -->
+      <div id="tab-matches" style="display:none">
+        <div class="action-bar">
+          <button class="btn btn-primary btn-sm" onclick="triggerMatch()">🎯 Neu matchen</button>
+          <div class="divider"></div>
+          <select class="filter-select" id="filter-score" onchange="renderMatches()">
+            <option value="0">Alle Scores</option>
+            <option value="70">Score ≥ 70%</option>
+            <option value="50">Score ≥ 50%</option>
+          </select>
+          <select class="filter-select" id="filter-source" onchange="renderMatches()">
+            <option value="">Alle Quellen</option>
+            <option value="ted">TED EU</option>
+            <option value="bund">bund.de</option>
+          </select>
+        </div>
+        <div id="matches-list"><div class="spinner"></div></div>
+      </div>
+
+      <!-- ── SEARCH ──────────────────────────────── -->
+      <div id="tab-search" style="display:none">
+        <div class="search-bar">
+          <input class="search-input" type="text" id="search-query"
+                 placeholder="Suchbegriff eingeben..." onkeydown="if(event.key==='Enter') doSearch()">
+          <select class="filter-select" id="search-source">
+            <option value="">Alle Quellen</option>
+            <option value="ted.europa.eu">TED EU</option>
+            <option value="service.bund.de">bund.de</option>
+          </select>
+          <button class="btn btn-primary" onclick="doSearch()">Suchen</button>
+        </div>
+        <div class="filter-bar">
+          <input type="number" class="filter-select" id="search-min" placeholder="Min. Budget €" style="width:130px">
+          <input type="number" class="filter-select" id="search-max" placeholder="Max. Budget €" style="width:130px">
+        </div>
+        <div id="search-results"></div>
+      </div>
+
+      <!-- ── PROFIL ──────────────────────────────── -->
+      <div id="tab-profile" style="display:none">
+        <div class="card">
+          <div id="profile-msg" style="display:none"></div>
+          <div class="section-title">Unternehmen</div>
+          <div class="profile-grid" style="margin-bottom:20px">
+            <div class="field"><label>Unternehmensname</label><input type="text" id="p-name"></div>
+            <div class="field"><label>Branche</label>
+              <select id="p-industry">
+                <option>IT &amp; Software</option><option>Bau &amp; Architektur</option>
+                <option>Beratung &amp; Dienstleistung</option><option>Gesundheit &amp; Pflege</option>
+                <option>Bildung &amp; Forschung</option><option>Umwelt &amp; Energie</option>
+                <option>Marketing &amp; Kommunikation</option><option>Transport &amp; Logistik</option>
+                <option>Sicherheit</option><option>Sonstiges</option>
+              </select>
+            </div>
+            <div class="field" style="grid-column:1/-1">
+              <label>Beschreibung</label>
+              <textarea id="p-desc" placeholder="Was macht dein Unternehmen? Welche Stärken habt ihr?"></textarea>
+            </div>
+          </div>
+
+          <div class="section-title">Matching-Kriterien</div>
+          <div class="field"><label>Kompetenzen / Keywords</label>
+            <input type="text" id="p-keywords" placeholder="Cloud, DevOps, Python, KI, Beratung">
+            <div class="field-hint">Kommagetrennt · Fließen direkt in TED-Suchanfrage und KI-Matching ein</div>
+          </div>
+          <div class="field"><label>CPV-Codes (optional)</label>
+            <input type="text" id="p-cpv" placeholder="72000000, 71000000">
+            <div class="field-hint">EU-Vergabeklassen · Kommagetrennt</div>
+          </div>
+          <div class="profile-grid" style="margin-bottom:20px">
+            <div class="field"><label>Min. Budget €</label><input type="number" id="p-min"></div>
+            <div class="field"><label>Max. Budget €</label><input type="number" id="p-max"></div>
+            <div class="field" style="grid-column:1/-1"><label>Regionen</label>
+              <input type="text" id="p-regions" placeholder="Deutschland,EU,Bayern">
+            </div>
+          </div>
+
+          <div style="display:flex;justify-content:flex-end">
+            <button class="btn btn-primary" onclick="saveProfile()">Änderungen speichern</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── ABO ────────────────────────────────── -->
+      <div id="tab-pricing" style="display:none">
+        <div id="sub-status-card" style="margin-bottom:24px"></div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Pläne vergleichen</div>
+          </div>
+          <div class="pricing-grid">
+            <div class="pricing-card">
+              <div class="plan-name">Starter</div>
+              <div class="plan-price" style="margin:8px 0">€99<span>/Monat</span></div>
+              <ul class="plan-features">
+                <li>5 Ausschreibungen/Woche</li>
+                <li>Tägl. E-Mail-Alerts</li>
+                <li>Basis-Matching (Regel-basiert)</li>
+                <li>Deutscher Support</li>
+              </ul>
+              <button class="btn btn-ghost btn-full" onclick="doCheckout('starter','monthly')">Starter wählen</button>
+              <div style="text-align:center;margin-top:8px;font-size:11px;color:var(--txt-light);cursor:pointer" onclick="doCheckout('starter','yearly')">Jährlich: €79/Monat (–20%)</div>
+            </div>
+            <div class="pricing-card popular">
+              <div class="popular-tag">EMPFOHLEN</div>
+              <div class="plan-name" style="background:linear-gradient(135deg,#a78bfa,#ec4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">Professional</div>
+              <div class="plan-price" style="margin:8px 0">€175<span>/Monat</span></div>
+              <ul class="plan-features">
+                <li>Unbegrenzte Ausschreibungen</li>
+                <li>KI-Matching via Claude AI</li>
+                <li>Sofort-Alerts bei neuen Matches</li>
+                <li>Wöchentlicher Digest</li>
+                <li>Profil-basiertes TED-Scraping</li>
+                <li>Manuelle Freitext-Suche</li>
+              </ul>
+              <button class="btn btn-primary btn-full" onclick="doCheckout('professional','monthly')">Professional wählen</button>
+              <div style="text-align:center;margin-top:8px;font-size:11px;color:var(--txt-light);cursor:pointer" onclick="doCheckout('professional','yearly')">Jährlich: €140/Monat (–20%)</div>
+            </div>
+          </div>
+          <div style="text-align:center;margin-top:20px">
+            <button class="btn btn-ghost btn-sm" onclick="activateMock()">🧪 Testmodus aktivieren (ohne Zahlung)</button>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /app-screen -->
+
+<div id="toast"></div>
+
+<script>
+const API = window.location.origin;
+let authToken = localStorage.getItem('pf_token');
+let currentUser = null;
+let allMatches = [];
+let scrapeRunning = false;
+
+/* ── UTILS ──────────────────────────────────────────── */
+function toast(msg, ms = 3200) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), ms);
+}
+async function apiFetch(path, opts = {}) {
+  const h = { 'Content-Type': 'application/json', ...(opts.headers || {}) };
+  if (authToken) h['Authorization'] = 'Bearer ' + authToken;
+  const r = await fetch(API + path, { ...opts, headers: h });
+  if (r.status === 401) { doLogout(); throw new Error('Session abgelaufen'); }
+  return r;
+}
+function fmt(n) { return n != null ? Number(n).toLocaleString('de-DE') : '–'; }
+function scClass(s) { return s >= 70 ? 'score-high' : s >= 50 ? 'score-mid' : 'score-low'; }
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function initials(name) { return (name||'?').split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase(); }
+
+/* ── AUTH ───────────────────────────────────────────── */
+function switchAuthTab(tab) {
+  document.getElementById('login-form').style.display    = tab === 'login'    ? '' : 'none';
+  document.getElementById('register-form').style.display = tab === 'register' ? '' : 'none';
+  document.querySelectorAll('.auth-tab').forEach((el, i) =>
+    el.classList.toggle('active', (i === 0) === (tab === 'login')));
+  document.getElementById('auth-error').style.display = 'none';
+}
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  const err = document.getElementById('auth-error');
+  err.style.display = 'none';
+  if (!email || !password) { err.textContent = 'Bitte alle Felder ausfüllen.'; err.style.display = ''; return; }
+  try {
+    const r = await fetch(API + '/auth/login', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+    const d = await r.json();
+    if (!r.ok) { err.textContent = d.detail || 'Login fehlgeschlagen'; err.style.display = ''; return; }
+    authToken = d.token;
+    localStorage.setItem('pf_token', authToken);
+    currentUser = d;
+    enterApp();
+  } catch(e) { err.textContent = 'Server nicht erreichbar.'; err.style.display = ''; }
+}
+async function doRegister() {
+  const name = document.getElementById('reg-name').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
+  const password = document.getElementById('reg-password').value;
+  const err = document.getElementById('auth-error');
+  err.style.display = 'none';
+  if (!name || !email || !password) { err.textContent = 'Alle Felder ausfüllen.'; err.style.display = ''; return; }
+  if (password.length < 6) { err.textContent = 'Passwort mind. 6 Zeichen.'; err.style.display = ''; return; }
+  try {
+    const r = await fetch(API + '/auth/register', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password, full_name: name })
+    });
+    const d = await r.json();
+    if (!r.ok) { err.textContent = d.detail || 'Registrierung fehlgeschlagen'; err.style.display = ''; return; }
+    authToken = d.token;
+    localStorage.setItem('pf_token', authToken);
+    currentUser = d;
+    enterApp();
+  } catch(e) { err.textContent = 'Server nicht erreichbar.'; err.style.display = ''; }
+}
+function doLogout() {
+  authToken = null; currentUser = null;
+  localStorage.removeItem('pf_token');
+  document.getElementById('auth-screen').style.display = '';
+  document.getElementById('app-screen').classList.remove('visible');
+}
+
+/* ── APP INIT ───────────────────────────────────────── */
+async function enterApp() {
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('app-screen').classList.add('visible');
+  try {
+    const r = await apiFetch('/auth/me');
+    if (r.ok) currentUser = await r.json();
+  } catch(e) {}
+
+  // Sidebar user info
+  const name = currentUser?.full_name || currentUser?.email || 'Nutzer';
+  document.getElementById('user-name-sidebar').textContent = name;
+  document.getElementById('user-avatar').textContent = initials(name);
+  document.getElementById('user-plan-sidebar').textContent =
+    currentUser?.has_subscription
+      ? (currentUser.plan === 'professional' ? 'Professional ✓' : 'Starter ✓')
+      : 'Kein Abo';
+
+  // AI status indicator
+  document.getElementById('ai-status').innerHTML =
+    '<span class="status-dot green"></span> Claude AI aktiv';
+
+  // Routing
+  if (!currentUser?.has_profile) {
+    showOnboarding('profile');
+  } else if (!currentUser?.has_subscription) {
+    showOnboarding('pricing');
+  } else {
+    switchTab('dashboard');
+    loadDashboard();
+  }
+}
+
+async function init() {
+  if (authToken) {
+    try {
+      const r = await apiFetch('/auth/me');
+      if (r.ok) { currentUser = await r.json(); enterApp(); return; }
+    } catch(e) {}
+    authToken = null; localStorage.removeItem('pf_token');
+  }
+}
+
+/* ── ONBOARDING ─────────────────────────────────────── */
+function showOnboarding(step) {
+  document.querySelectorAll('[id^=tab-]').forEach(el => el.style.display = 'none');
+  document.getElementById('tab-onboarding').style.display = '';
+  const isProfile = step === 'profile';
+  document.getElementById('onboard-profile').style.display  = isProfile ? '' : 'none';
+  document.getElementById('onboard-pricing').style.display  = isProfile ? 'none' : '';
+  document.getElementById('step2').className = 'step ' + (isProfile ? 'active' : 'done');
+  document.getElementById('step3').className = 'step ' + (isProfile ? '' : 'active');
+  document.getElementById('line2').className = 'step-line' + (isProfile ? '' : ' done');
+  if (!isProfile) document.getElementById('step2').querySelector('.step-num').textContent = '✓';
+  setPageTitle(isProfile ? 'Profil anlegen' : 'Plan auswählen');
+}
+
+async function saveOnboardProfile() {
+  const err = document.getElementById('onboard-error');
+  err.style.display = 'none';
+  const name = document.getElementById('ob-name').value.trim();
+  const ind  = document.getElementById('ob-industry').value;
+  const kw   = document.getElementById('ob-keywords').value.trim();
+  if (!name || !ind || !kw) { err.textContent = 'Bitte alle Pflichtfelder ausfüllen.'; err.style.display = ''; return; }
+  try {
+    const r = await apiFetch('/profile', {
+      method: 'POST',
+      body: JSON.stringify({
+        company_name: name, industry: ind, experience_keywords: kw,
+        min_budget: parseFloat(document.getElementById('ob-min').value) || null,
+        max_budget: parseFloat(document.getElementById('ob-max').value) || null,
+        regions: document.getElementById('ob-regions').value || 'Deutschland,EU'
+      })
+    });
+    if (!r.ok) { const d = await r.json(); err.textContent = d.detail || 'Fehler'; err.style.display = ''; return; }
+    currentUser.has_profile = true;
+    showOnboarding('pricing');
+  } catch(e) { err.textContent = 'Fehler beim Speichern.'; err.style.display = ''; }
+}
+
+async function activateMock() {
+  try {
+    const r = await apiFetch('/subscription/activate-mock?plan=professional&interval=monthly', { method: 'POST' });
+    if (r.ok) {
+      currentUser.has_subscription = true; currentUser.plan = 'professional';
+      document.getElementById('user-plan-sidebar').textContent = 'Professional ✓';
+      toast('✅ Testmodus aktiviert!');
+      switchTab('dashboard'); loadDashboard();
+    }
+  } catch(e) { toast('Fehler beim Aktivieren'); }
+}
+
+async function doCheckout(plan, interval) {
+  try {
+    const r = await apiFetch('/checkout', { method: 'POST', body: JSON.stringify({ plan, interval }) });
+    const d = await r.json();
+    if (d.checkout_url) window.location.href = d.checkout_url;
+    else toast('Stripe nicht konfiguriert — nutze Testmodus');
+  } catch(e) { toast('Checkout Fehler'); }
+}
+
+/* ── TAB ROUTING ────────────────────────────────────── */
+const PAGE_TITLES = {
+  dashboard: 'Dashboard', matches: 'Matches', search: 'Suche',
+  profile: 'Unternehmensprofil', pricing: 'Abo & Pläne'
+};
+function setPageTitle(t) { document.getElementById('page-title').textContent = t; }
+
+function switchTab(name) {
+  document.querySelectorAll('[id^=tab-]').forEach(el => el.style.display = 'none');
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + name).style.display = '';
+  document.querySelector('[data-tab="' + name + '"]')?.classList.add('active');
+  setPageTitle(PAGE_TITLES[name] || name);
+  if (name === 'matches') loadMatches();
+  if (name === 'profile') loadProfile();
+  if (name === 'pricing') loadSubStatus();
+}
+
+/* ── DASHBOARD ──────────────────────────────────────── */
+async function loadDashboard() {
+  try {
+    const r = await apiFetch('/tenders?limit=1');
+    if (r.ok) { const d = await r.json(); document.getElementById('stat-tenders').textContent = fmt(d.total); }
+  } catch(e) {}
+  try {
+    const r = await apiFetch('/matches');
+    if (r.ok) {
+      const d = await r.json();
+      const total = d.total || 0;
+      document.getElementById('stat-matches').textContent = fmt(total);
+      const badge = document.getElementById('nav-badge-matches');
+      if (total > 0) { badge.textContent = total; badge.style.display = ''; }
+      renderDashboardMatches(d.matches?.slice(0, 5) || []);
+    }
+  } catch(e) {}
+  document.getElementById('stat-last-scan').textContent = new Date().toLocaleDateString('de-DE');
+  document.getElementById('stat-plan').textContent = (currentUser?.plan || '–').replace('professional','Pro').replace('starter','Starter');
+  document.getElementById('stat-plan-sub').textContent = currentUser?.has_subscription ? 'Aktiv ✓' : 'Kein Abo';
+}
+
+async function triggerScrape() {
+  if (scrapeRunning) { toast('Scan läuft bereits...'); return; }
+  scrapeRunning = true;
+  const el = document.getElementById('scrape-status');
+  el.innerHTML = '<div class="msg-info">🔄 Scan läuft im Hintergrund (~30 Sek.)...</div>';
+  try {
+    await apiFetch('/scrape', { method: 'POST' });
+    setTimeout(() => {
+      el.innerHTML = '<div class="msg-success">✅ Scan abgeschlossen! Starte Matching...</div>';
+      triggerMatch(true);
+    }, 20000);
+  } catch(e) {
+    el.innerHTML = '<div class="msg-error">❌ Scan Fehler. Server erreichbar?</div>';
+    scrapeRunning = false;
+  }
+}
+
+async function triggerMatch(fromScrape = false) {
+  const el = document.getElementById('scrape-status');
+  if (!fromScrape) el.innerHTML = '<div class="msg-info">🎯 Matching läuft...</div>';
+  try {
+    const r = await apiFetch('/match', { method: 'POST' });
+    const d = await r.json();
+    if (r.ok) {
+      el.innerHTML = '<div class="msg-success">✅ ' + (d.new_matches || d.matches_found) + ' neue Matches gefunden!</div>';
+      allMatches = []; loadDashboard();
+    } else {
+      el.innerHTML = '<div class="msg-error">' + esc(d.detail || 'Matching fehlgeschlagen') + '</div>';
+    }
+  } catch(e) { el.innerHTML = '<div class="msg-error">❌ Matching Fehler.</div>'; }
+  scrapeRunning = false;
+}
+
+function renderDashboardMatches(matches) {
+  const el = document.getElementById('dashboard-matches');
+  if (!matches.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">🎯</div><h3>Noch keine Matches</h3><p>Klicke "Jetzt scannen" und dann "Matching starten".</p></div>';
+    return;
+  }
+  el.innerHTML = '<div class="match-list">' + matches.map(matchCard).join('') + '</div>';
+}
+
+/* ── MATCHES ────────────────────────────────────────── */
+async function loadMatches() {
+  if (allMatches.length) { renderMatches(); return; }
+  document.getElementById('matches-list').innerHTML = '<div class="spinner"></div>';
+  try {
+    const r = await apiFetch('/matches');
+    if (r.ok) { const d = await r.json(); allMatches = d.matches || []; }
+  } catch(e) {}
+  renderMatches();
+}
+
+function renderMatches() {
+  const el = document.getElementById('matches-list');
+  const minScore = parseInt(document.getElementById('filter-score')?.value || 0);
+  const src = (document.getElementById('filter-source')?.value || '').toLowerCase();
+  let list = allMatches.filter(m => m.match_score >= minScore);
+  if (src) list = list.filter(m => (m.tender_source||'').toLowerCase().includes(src));
+  if (!list.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">🔍</div><h3>Keine Matches</h3><p>Zuerst scannen und matchen.</p></div>';
+    return;
+  }
+  el.innerHTML = '<div class="match-list">' + list.map(matchCard).join('') + '</div>';
+}
+
+function matchCard(m) {
+  const s = m.match_score || 0;
+  const dl = m.tender_deadline ? m.tender_deadline.substring(0, 10) : '';
+  const rsn = (m.reasoning || '').replace(/\n/g, ' · ').substring(0, 180);
+  const src = m.tender_source || '';
+  return `<div class="match-item">
+    <div class="score-ring ${scClass(s)}">
+      <div>${s.toFixed(0)}</div>
+      <div class="score-label">%</div>
+    </div>
+    <div class="match-content">
+      <div class="match-title">${esc(m.tender_title || 'Ausschreibung')}</div>
+      <div class="match-chips">
+        <span class="chip chip-blue">${esc(src)}</span>
+        ${dl ? `<span class="chip chip-gray">⏰ ${dl}</span>` : ''}
+        ${m.notified ? '<span class="chip chip-green">📧 Alert gesendet</span>' : '<span class="chip chip-new">✨ Neu</span>'}
+      </div>
+      <div class="match-reasoning">${esc(rsn)}</div>
+      <div class="match-actions">
+        ${m.tender_url ? `<a href="${esc(m.tender_url)}" target="_blank" class="btn btn-primary btn-xs">Ansehen →</a>` : ''}
+        <span class="btn btn-ghost btn-xs" style="cursor:default">Score: ${s.toFixed(0)}%</span>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ── SEARCH ─────────────────────────────────────────── */
+async function doSearch() {
+  const query = document.getElementById('search-query').value.trim();
+  const source = document.getElementById('search-source').value;
+  const minB = parseFloat(document.getElementById('search-min').value) || null;
+  const maxB = parseFloat(document.getElementById('search-max').value) || null;
+  const el = document.getElementById('search-results');
+  if (!query) { toast('Bitte Suchbegriff eingeben'); return; }
+  el.innerHTML = '<div class="spinner"></div>';
+  try {
+    const body = { query, limit: 30 };
+    if (source) body.source = source;
+    if (minB) body.min_budget = minB;
+    if (maxB) body.max_budget = maxB;
+    const r = await apiFetch('/search', { method: 'POST', body: JSON.stringify(body) });
+    const d = await r.json();
+    if (!r.ok) { el.innerHTML = `<div class="msg-error">${esc(d.detail || 'Fehler')}</div>`; return; }
+    if (!d.tenders?.length) {
+      el.innerHTML = '<div class="empty"><div class="empty-icon">🔍</div><h3>Keine Ergebnisse</h3><p>Anderen Begriff versuchen oder zuerst scannen.</p></div>';
+      return;
+    }
+    el.innerHTML = `<p style="font-size:12px;color:var(--txt-muted);margin-bottom:12px">${d.total} Ergebnisse</p>` +
+      d.tenders.map(t => `<div class="tender-row">
+        <div class="tender-row-title">${esc(t.title)}</div>
+        <div class="tender-row-meta">
+          <span>📡 ${esc(t.source)}</span>
+          <span>🏢 ${esc(t.buyer_name||'–')}</span>
+          ${t.deadline ? `<span>⏰ ${t.deadline.substring(0,10)}</span>` : ''}
+          ${t.budget_max ? `<span>💰 bis €${fmt(t.budget_max)}</span>` : ''}
+        </div>
+        ${t.description ? `<p style="font-size:12px;color:var(--txt-muted);margin-top:8px;line-height:1.5">${esc(t.description.substring(0,200))}…</p>` : ''}
+        ${t.source_url ? `<a href="${esc(t.source_url)}" target="_blank" class="btn btn-ghost btn-xs" style="margin-top:10px">Ansehen →</a>` : ''}
+      </div>`).join('');
+  } catch(e) { el.innerHTML = '<div class="msg-error">Fehler bei der Suche.</div>'; }
+}
+
+/* ── PROFILE ────────────────────────────────────────── */
+async function loadProfile() {
+  try {
+    const r = await apiFetch('/profile');
+    if (!r.ok) return;
+    const d = await r.json();
+    document.getElementById('p-name').value     = d.name || '';
+    document.getElementById('p-industry').value = d.industry || '';
+    document.getElementById('p-keywords').value = d.experience_keywords || '';
+    document.getElementById('p-cpv').value      = d.cpv_focus || '';
+    document.getElementById('p-min').value      = d.min_budget || '';
+    document.getElementById('p-max').value      = d.max_budget || '';
+    document.getElementById('p-regions').value  = d.regions || 'Deutschland,EU';
+    document.getElementById('p-desc').value     = d.description || '';
+  } catch(e) {}
+}
+
+async function saveProfile() {
+  const msgEl = document.getElementById('profile-msg');
+  msgEl.style.display = 'none';
+  const name = document.getElementById('p-name').value.trim();
+  const kw   = document.getElementById('p-keywords').value.trim();
+  if (!name || !kw) {
+    msgEl.className = 'msg-error'; msgEl.textContent = 'Name und Keywords sind erforderlich.';
+    msgEl.style.display = ''; return;
+  }
+  try {
+    const r = await apiFetch('/profile', {
+      method: 'POST',
+      body: JSON.stringify({
+        company_name: name, industry: document.getElementById('p-industry').value,
+        experience_keywords: kw, cpv_focus: document.getElementById('p-cpv').value || null,
+        min_budget: parseFloat(document.getElementById('p-min').value) || null,
+        max_budget: parseFloat(document.getElementById('p-max').value) || null,
+        regions: document.getElementById('p-regions').value || 'Deutschland,EU',
+        description: document.getElementById('p-desc').value || null,
+      })
+    });
+    if (r.ok) {
+      msgEl.className = 'msg-success'; msgEl.textContent = '✅ Profil gespeichert!';
+      msgEl.style.display = ''; toast('Profil gespeichert ✅');
+    } else {
+      const d = await r.json(); msgEl.className = 'msg-error';
+      msgEl.textContent = d.detail || 'Fehler'; msgEl.style.display = '';
+    }
+  } catch(e) { msgEl.className = 'msg-error'; msgEl.textContent = 'Fehler.'; msgEl.style.display = ''; }
+}
+
+/* ── SUBSCRIPTION ───────────────────────────────────── */
+async function loadSubStatus() {
+  const el = document.getElementById('sub-status-card');
+  if (!currentUser?.has_subscription) {
+    el.innerHTML = '<div class="msg-info" style="margin:0"><strong>Kein aktives Abo</strong> — Wähle einen Plan um loszulegen.</div>';
+    return;
+  }
+  const plan = (currentUser.plan||'').replace('professional','Professional').replace('starter','Starter');
+  el.innerHTML = `<div class="msg-success" style="margin:0;display:flex;align-items:center;justify-content:space-between">
+    <span><strong>Aktives Abo: ${esc(plan)}</strong></span>
+    <button class="btn btn-danger btn-sm" onclick="cancelSub()">Kündigen</button>
+  </div>`;
+}
+
+async function cancelSub() {
+  if (!confirm('Abo wirklich kündigen? Es läuft bis zum Periodenende weiter.')) return;
+  try {
+    const r = await apiFetch('/subscription', { method: 'DELETE' });
+    if (r.ok) { toast('Abo wird zum Periodenende gekündigt.'); loadSubStatus(); }
+    else toast('Kündigung fehlgeschlagen.');
+  } catch(e) { toast('Fehler'); }
+}
+
+/* ── BOOT ───────────────────────────────────────────── */
+document.addEventListener('DOMContentLoaded', init);
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('login-password').addEventListener('keydown', e => {
+    if (e.key === 'Enter') doLogin();
+  });
+});
+</script>
+</body>
+</html>

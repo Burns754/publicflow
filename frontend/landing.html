@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PublicFlow - Intelligentes Ausschreibungs-Monitoring</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+        body { font-family: 'Inter', sans-serif; background: #0d0d1a; color: #f1f5f9; }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #a78bfa, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .gradient-text-blue {
+            background: linear-gradient(135deg, #818cf8, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .glass-card {
+            background: rgba(19,19,31,.8);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255,255,255,.08);
+        }
+        .glass-nav {
+            background: rgba(10,10,18,.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255,255,255,.06);
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #7c3aed, #9333ea);
+            box-shadow: 0 8px 24px rgba(124,58,237,.35);
+            transition: all .2s;
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #6d28d9, #7c3aed);
+            box-shadow: 0 12px 32px rgba(124,58,237,.5);
+            transform: translateY(-2px);
+        }
+        .card-dark {
+            background: rgba(19,19,31,.9);
+            border: 1px solid rgba(255,255,255,.07);
+            transition: all .3s;
+        }
+        .card-dark:hover {
+            border-color: rgba(124,58,237,.3);
+            box-shadow: 0 8px 32px rgba(124,58,237,.12);
+            transform: translateY(-4px);
+        }
+        .hero-glow {
+            position: absolute;
+            width: 700px; height: 700px;
+            background: radial-gradient(circle, rgba(124,58,237,.12) 0%, transparent 70%);
+            z-index: 0;
+            filter: blur(60px);
+            pointer-events: none;
+        }
+        .hero-glow-pink {
+            position: absolute;
+            width: 500px; height: 500px;
+            background: radial-gradient(circle, rgba(236,72,153,.08) 0%, transparent 70%);
+            z-index: 0;
+            filter: blur(60px);
+            pointer-events: none;
+        }
+        .pricing-toggle-active {
+            background: linear-gradient(135deg, #7c3aed, #9333ea);
+            color: white;
+            box-shadow: 0 4px 12px rgba(124,58,237,.35);
+        }
+        .popular-glow {
+            box-shadow: 0 0 0 1px rgba(124,58,237,.3), 0 16px 48px rgba(124,58,237,.2);
+        }
+        #cookie-banner {
+            position: fixed; bottom: 0; left: 0; right: 0; z-index: 9999;
+            background: rgba(10,10,18,.95);
+            backdrop-filter: blur(16px);
+            border-top: 1px solid rgba(255,255,255,.08);
+            color: white; padding: 1.25rem 2rem;
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 2rem; font-size: .85rem;
+        }
+        #cookie-banner.hidden { display: none; }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0a0a12; }
+        ::-webkit-scrollbar-thumb { background: rgba(124,58,237,.4); border-radius: 3px; }
+
+        .step-num {
+            background: linear-gradient(135deg, rgba(124,58,237,.2), rgba(236,72,153,.1));
+            border: 1px solid rgba(124,58,237,.25);
+        }
+        .icon-box-purple { background: rgba(124,58,237,.15); border: 1px solid rgba(124,58,237,.2); }
+        .icon-box-pink   { background: rgba(236,72,153,.12); border: 1px solid rgba(236,72,153,.2); }
+        .icon-box-green  { background: rgba(16,185,129,.12); border: 1px solid rgba(16,185,129,.2); }
+        .icon-box-orange { background: rgba(245,158,11,.12); border: 1px solid rgba(245,158,11,.2); }
+        .icon-box-sky    { background: rgba(14,165,233,.12);  border: 1px solid rgba(14,165,233,.2); }
+        .icon-box-gray   { background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1); }
+
+        .modal-card {
+            background: #13131f;
+            border: 1px solid rgba(255,255,255,.1);
+        }
+        .field-dark {
+            background: rgba(255,255,255,.04);
+            border: 1px solid rgba(255,255,255,.1);
+            color: #f1f5f9;
+        }
+        .field-dark:focus {
+            border-color: rgba(124,58,237,.5);
+            box-shadow: 0 0 0 3px rgba(124,58,237,.12);
+            outline: none;
+        }
+        .field-dark::placeholder { color: rgba(255,255,255,.3); }
+        .field-dark option { background: #1a1a2e; }
+
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 6px rgba(16,185,129,.6); }
+            50% { box-shadow: 0 0 12px rgba(16,185,129,.9); }
+        }
+        .pulse-dot { animation: pulse-glow 2s ease-in-out infinite; }
+
+        .source-badge {
+            background: rgba(255,255,255,.04);
+            border: 1px solid rgba(255,255,255,.08);
+            color: rgba(255,255,255,.4);
+            transition: all .2s;
+        }
+        .source-badge:hover {
+            border-color: rgba(124,58,237,.3);
+            color: rgba(255,255,255,.7);
+        }
+    </style>
+</head>
+<body class="text-slate-100 selection:bg-purple-900/50">
+
+<!-- Cookie Banner -->
+<div id="cookie-banner">
+    <p class="font-medium text-slate-400 max-w-2xl">
+        <i class="fa-solid fa-cookie-bite text-yellow-400 mr-2"></i>
+        Wir verwenden ausschließlich technisch notwendige Cookies. Kein Tracking, keine Werbung.
+        <a href="#datenschutz" class="text-purple-400 underline ml-1">Datenschutzerklärung</a>
+    </p>
+    <button onclick="document.getElementById('cookie-banner').classList.add('hidden');localStorage.setItem('cookie-ok','1')"
+        class="btn-primary text-white px-6 py-2 rounded-xl font-bold text-xs uppercase tracking-widest whitespace-nowrap">
+        Verstanden
+    </button>
+</div>
+
+<!-- Nav -->
+<nav class="fixed w-full z-[100] glass-nav">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-20 items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl flex items-center justify-center text-white font-black text-lg" style="background:linear-gradient(135deg,#7c3aed,#ec4899);box-shadow:0 4px 12px rgba(124,58,237,.35)">🎯</div>
+                <span class="font-black text-lg text-white">PublicFlow</span>
+            </div>
+            <div class="hidden lg:flex items-center gap-10 text-sm font-semibold text-slate-400">
+                <a href="#how-it-works" class="hover:text-white transition">Technologie</a>
+                <a href="#benefits" class="hover:text-white transition">Vorteile</a>
+                <a href="#pricing" class="hover:text-white transition">Preise</a>
+            </div>
+            <div class="flex items-center gap-4">
+                <a href="/frontend/index.html" class="hidden sm:block text-sm font-bold text-slate-400 hover:text-white transition">Login</a>
+                <a href="#pricing" class="btn-primary text-white px-6 py-3 rounded-xl text-sm font-extrabold uppercase tracking-tight">Jetzt Starten</a>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- Hero -->
+<section class="relative pt-40 pb-28 overflow-hidden">
+    <div class="hero-glow" style="top:-100px;right:-100px"></div>
+    <div class="hero-glow-pink" style="bottom:0;left:-100px"></div>
+    <div class="max-w-7xl mx-auto px-4 text-center relative z-10">
+        <div class="inline-flex items-center gap-3 px-4 py-2 rounded-full glass-card text-purple-300 text-xs font-bold uppercase tracking-widest mb-10">
+            <span class="flex h-2 w-2 rounded-full bg-green-400 pulse-dot"></span>
+            LIVE: Automatischer EU-Scan Aktiv
+        </div>
+        <h1 class="text-6xl md:text-8xl font-black tracking-tighter mb-8 leading-[0.95] text-white">
+            Sichern Sie sich Aufträge,<br>
+            <span class="gradient-text text-7xl md:text-9xl">bevor andere sie sehen.</span>
+        </h1>
+        <p class="text-xl md:text-2xl text-slate-400 max-w-3xl mx-auto mb-12 font-medium leading-relaxed">
+            Der 2-Billionen-Euro-Markt für öffentliche Vergaben ist zu groß für manuelle Suche.
+            PublicFlow scannt täglich tausende Ausschreibungen und liefert passende Treffer direkt in Ihr Postfach.
+        </p>
+        <div class="flex flex-col sm:flex-row justify-center items-center gap-5">
+            <a href="#pricing" class="btn-primary text-white px-10 py-5 rounded-2xl font-bold text-lg flex items-center gap-3">
+                Jetzt Starten <i class="fa-solid fa-arrow-right text-sm"></i>
+            </a>
+            <div class="flex items-center gap-2 text-slate-500 text-sm font-semibold">
+                <i class="fa-solid fa-shield-halved text-green-400 text-lg"></i> DSGVO-konform · Serverstandort Deutschland
+            </div>
+        </div>
+
+        <!-- Dashboard Mockup -->
+        <div class="mt-24 relative max-w-5xl mx-auto">
+            <div class="absolute -inset-4 rounded-[3rem] opacity-20" style="background:linear-gradient(135deg,#7c3aed,#ec4899);filter:blur(40px)"></div>
+            <div class="relative glass-card rounded-[2rem] p-3 shadow-2xl">
+                <!-- Fake browser chrome -->
+                <div class="bg-[#0a0a12] rounded-[1.5rem] overflow-hidden">
+                    <div class="flex items-center gap-2 px-5 py-3 border-b border-white/5">
+                        <div class="w-3 h-3 rounded-full bg-red-500/70"></div>
+                        <div class="w-3 h-3 rounded-full bg-yellow-500/70"></div>
+                        <div class="w-3 h-3 rounded-full bg-green-500/70"></div>
+                        <div class="flex-1 mx-4 bg-white/5 rounded-lg px-3 py-1 text-xs text-slate-500 text-left">app.publicflow.io</div>
+                    </div>
+                    <!-- Fake App UI -->
+                    <div class="flex" style="height:340px">
+                        <!-- Sidebar -->
+                        <div class="w-44 border-r border-white/5 p-3 flex flex-col gap-1">
+                            <div class="flex items-center gap-2 px-2 py-1.5 mb-3">
+                                <div class="w-6 h-6 rounded-lg flex items-center justify-center text-xs" style="background:linear-gradient(135deg,#7c3aed,#ec4899)">🎯</div>
+                                <span class="text-xs font-black text-white">PublicFlow</span>
+                            </div>
+                            <div class="px-2 py-1.5 rounded-lg text-[10px] font-semibold text-white flex items-center gap-2" style="background:rgba(124,58,237,.2);border:1px solid rgba(124,58,237,.25)">📊 Dashboard</div>
+                            <div class="px-2 py-1.5 rounded-lg text-[10px] font-semibold text-slate-400 flex items-center gap-2 justify-between">
+                                <span>🎯 Matches</span>
+                                <span class="text-[9px] px-1.5 py-0.5 rounded-full text-white" style="background:linear-gradient(135deg,#7c3aed,#ec4899)">14</span>
+                            </div>
+                            <div class="px-2 py-1.5 rounded-lg text-[10px] font-semibold text-slate-400 flex items-center gap-2">🔍 Suche</div>
+                            <div class="px-2 py-1.5 rounded-lg text-[10px] font-semibold text-slate-400 flex items-center gap-2">👤 Profil</div>
+                        </div>
+                        <!-- Main content -->
+                        <div class="flex-1 p-4 overflow-hidden">
+                            <!-- Stats -->
+                            <div class="grid grid-cols-4 gap-2 mb-4">
+                                <div class="p-2.5 rounded-xl border border-white/5 bg-white/3">
+                                    <div class="text-[9px] text-slate-500 uppercase tracking-wide mb-1">Matches</div>
+                                    <div class="text-2xl font-black text-white">47</div>
+                                </div>
+                                <div class="p-2.5 rounded-xl border border-white/5 bg-white/3">
+                                    <div class="text-[9px] text-slate-500 uppercase tracking-wide mb-1">Ausschr.</div>
+                                    <div class="text-2xl font-black text-white">1.2k</div>
+                                </div>
+                                <div class="p-2.5 rounded-xl border border-white/5 bg-white/3">
+                                    <div class="text-[9px] text-slate-500 uppercase tracking-wide mb-1">Letzter Scan</div>
+                                    <div class="text-sm font-black text-white mt-1">07:00</div>
+                                </div>
+                                <div class="p-2.5 rounded-xl border border-white/5 bg-white/3">
+                                    <div class="text-[9px] text-slate-500 uppercase tracking-wide mb-1">Plan</div>
+                                    <div class="text-sm font-black text-purple-400 mt-1">Pro</div>
+                                </div>
+                            </div>
+                            <!-- Match cards -->
+                            <div class="space-y-2">
+                                <div class="flex items-center gap-3 p-2.5 rounded-xl border border-white/5 bg-white/3 hover:border-purple-500/30 transition">
+                                    <div class="w-10 h-10 rounded-lg flex items-center justify-center text-xs font-black text-green-400 flex-shrink-0" style="background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.2)">94%</div>
+                                    <div class="flex-1 min-w-0">
+                                        <div class="text-xs font-bold text-white truncate">IT-Sicherheit Implementierung – Stadt Berlin</div>
+                                        <div class="text-[10px] text-slate-500">TED EU · Frist: 15.05.2026</div>
+                                    </div>
+                                    <div class="text-[9px] px-2 py-0.5 rounded-full text-purple-300" style="background:rgba(124,58,237,.2);border:1px solid rgba(124,58,237,.25)">NEU</div>
+                                </div>
+                                <div class="flex items-center gap-3 p-2.5 rounded-xl border border-white/5 bg-white/3">
+                                    <div class="w-10 h-10 rounded-lg flex items-center justify-center text-xs font-black text-yellow-400 flex-shrink-0" style="background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.2)">78%</div>
+                                    <div class="flex-1 min-w-0">
+                                        <div class="text-xs font-bold text-white truncate">Cloud-Migration Bundesministerium</div>
+                                        <div class="text-[10px] text-slate-500">bund.de · Frist: 22.05.2026</div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-3 p-2.5 rounded-xl border border-white/5 bg-white/3">
+                                    <div class="w-10 h-10 rounded-lg flex items-center justify-center text-xs font-black text-yellow-400 flex-shrink-0" style="background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.2)">71%</div>
+                                    <div class="flex-1 min-w-0">
+                                        <div class="text-xs font-bold text-white truncate">DevOps Plattform – Landkreis München</div>
+                                        <div class="text-[10px] text-slate-500">DTVP · Frist: 30.05.2026</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Datenquellen -->
+<section class="py-10 border-y" style="border-color:rgba(255,255,255,.06);background:rgba(10,10,18,.5)">
+    <div class="max-w-7xl mx-auto px-4 text-center">
+        <p class="text-[10px] font-black text-slate-600 uppercase tracking-[0.3em] mb-8">Verifizierte Datenquellen</p>
+        <div class="flex flex-wrap justify-center gap-4">
+            <span class="source-badge px-5 py-2.5 rounded-xl text-sm font-black">TED EU</span>
+            <span class="source-badge px-5 py-2.5 rounded-xl text-sm font-black">bund.de</span>
+            <span class="source-badge px-5 py-2.5 rounded-xl text-sm font-black">DTVP</span>
+            <span class="source-badge px-5 py-2.5 rounded-xl text-sm font-black">Vergabe NRW</span>
+            <span class="source-badge px-5 py-2.5 rounded-xl text-sm font-black">Vergabe24</span>
+            <span class="source-badge px-5 py-2.5 rounded-xl text-sm font-black">Subreport</span>
+        </div>
+    </div>
+</section>
+
+<!-- Wie es funktioniert -->
+<section id="how-it-works" class="py-32">
+    <div class="max-w-7xl mx-auto px-4">
+        <div class="text-center mb-20">
+            <h2 class="text-4xl md:text-6xl font-black tracking-tighter mb-4 text-white">In 3 Schritten zum Auftrag.</h2>
+            <p class="text-slate-500 max-w-xl mx-auto font-medium">Kein manuelles Suchen mehr. Ihr Auftragsfinder läuft vollautomatisch.</p>
+        </div>
+        <div class="grid lg:grid-cols-3 gap-8">
+            <div class="card-dark rounded-3xl p-10">
+                <div class="step-num w-16 h-16 rounded-2xl flex items-center justify-center mb-6">
+                    <span class="text-3xl font-black gradient-text-blue">01</span>
+                </div>
+                <h3 class="text-2xl font-bold mb-4 tracking-tight text-white">Profil anlegen</h3>
+                <p class="text-slate-500 leading-relaxed mb-8">Hinterlegen Sie Branche, Region und Ihre Kernkompetenzen. Die KI lernt, welche Ausschreibungen für Sie profitabel sind.</p>
+                <a href="#pricing" class="text-purple-400 font-bold flex items-center gap-2 hover:gap-4 transition-all">Jetzt starten <i class="fa-solid fa-arrow-right"></i></a>
+            </div>
+            <div class="card-dark rounded-3xl p-10">
+                <div class="step-num w-16 h-16 rounded-2xl flex items-center justify-center mb-6">
+                    <span class="text-3xl font-black gradient-text-blue">02</span>
+                </div>
+                <h3 class="text-2xl font-bold mb-4 tracking-tight text-white">KI scannt täglich</h3>
+                <p class="text-slate-500 leading-relaxed">PublicFlow durchsucht täglich tausende EU- und deutschlandweite Ausschreibungen aus verifizierten Quellen — vollautomatisch, rund um die Uhr.</p>
+            </div>
+            <div class="card-dark rounded-3xl p-10">
+                <div class="step-num w-16 h-16 rounded-2xl flex items-center justify-center mb-6">
+                    <span class="text-3xl font-black gradient-text-blue">03</span>
+                </div>
+                <h3 class="text-2xl font-bold mb-4 tracking-tight text-white">Treffer ins Postfach</h3>
+                <p class="text-slate-500 leading-relaxed">Passende Ausschreibungen mit KI-Score landen täglich in Ihrer E-Mail. Kein Suchen — nur qualifizierte Leads, die zu Ihnen passen.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Vorteile -->
+<section id="benefits" class="py-32" style="background:rgba(10,10,18,.5)">
+    <div class="max-w-7xl mx-auto px-4">
+        <div class="text-center mb-20">
+            <h2 class="text-4xl md:text-6xl font-black tracking-tighter mb-4 text-white">Warum PublicFlow?</h2>
+        </div>
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="card-dark p-8 rounded-3xl">
+                <div class="icon-box-purple w-14 h-14 rounded-2xl flex items-center justify-center mb-6"><i class="fa-solid fa-bolt text-purple-400 text-2xl"></i></div>
+                <h3 class="font-bold text-lg mb-3 text-white">Täglich aktuell</h3>
+                <p class="text-slate-500 text-sm leading-relaxed">Neue Ausschreibungen werden automatisch gefunden und bewertet — ohne manuelle Suche auf Vergabeportalen.</p>
+            </div>
+            <div class="card-dark p-8 rounded-3xl">
+                <div class="icon-box-pink w-14 h-14 rounded-2xl flex items-center justify-center mb-6"><i class="fa-solid fa-brain text-pink-400 text-2xl"></i></div>
+                <h3 class="font-bold text-lg mb-3 text-white">KI-Matching mit Score</h3>
+                <p class="text-slate-500 text-sm leading-relaxed">Modernste KI analysiert jede Ausschreibung und vergleicht sie mit Ihrem Profil — mit klarem Relevanz-Score von 0–100 %.</p>
+            </div>
+            <div class="card-dark p-8 rounded-3xl">
+                <div class="icon-box-green w-14 h-14 rounded-2xl flex items-center justify-center mb-6"><i class="fa-solid fa-shield-halved text-green-400 text-2xl"></i></div>
+                <h3 class="font-bold text-lg mb-3 text-white">DSGVO-konform</h3>
+                <p class="text-slate-500 text-sm leading-relaxed">Serverstandort Deutschland. Ihre Daten werden nicht an Dritte weitergegeben. Kein Tracking, keine Werbung.</p>
+            </div>
+            <div class="card-dark p-8 rounded-3xl">
+                <div class="icon-box-orange w-14 h-14 rounded-2xl flex items-center justify-center mb-6"><i class="fa-solid fa-magnifying-glass-chart text-orange-400 text-2xl"></i></div>
+                <h3 class="font-bold text-lg mb-3 text-white">Verifizierte Quellen</h3>
+                <p class="text-slate-500 text-sm leading-relaxed">Ausschließlich offizielle Vergabeplattformen: TED EU, DTVP, Vergabe NRW, Vergabe24 und weitere.</p>
+            </div>
+            <div class="card-dark p-8 rounded-3xl">
+                <div class="icon-box-sky w-14 h-14 rounded-2xl flex items-center justify-center mb-6"><i class="fa-solid fa-envelope text-sky-400 text-2xl"></i></div>
+                <h3 class="font-bold text-lg mb-3 text-white">Täglicher E-Mail-Report</h3>
+                <p class="text-slate-500 text-sm leading-relaxed">Jeden Morgen ein übersichtlicher Report mit allen neuen Matches — direkt in Ihr Postfach, ohne täglichen Login.</p>
+            </div>
+            <div class="card-dark p-8 rounded-3xl">
+                <div class="icon-box-gray w-14 h-14 rounded-2xl flex items-center justify-center mb-6"><i class="fa-solid fa-euro-sign text-slate-300 text-2xl"></i></div>
+                <h3 class="font-bold text-lg mb-3 text-white">Transparent & kündbar</h3>
+                <p class="text-slate-500 text-sm leading-relaxed">Monatlich oder jährlich kündbar. Keine versteckten Kosten, keine automatische Vertragsverlängerung ohne Ankündigung.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Pricing -->
+<section id="pricing" class="py-32">
+    <div class="max-w-7xl mx-auto px-4">
+        <div class="text-center mb-16">
+            <h2 class="text-4xl md:text-6xl font-black tracking-tighter mb-4 text-white">Faire Preise. Maximaler ROI.</h2>
+            <p class="text-slate-500 max-w-xl mx-auto font-medium mb-10">Ein gewonnener Auftrag deckt Ihren Jahresbeitrag vielfach.</p>
+            <div class="inline-flex items-center p-1 rounded-2xl mb-12 glass-card">
+                <button onclick="togglePricing('monthly')" id="btn-monthly" class="px-8 py-3 rounded-xl text-sm font-bold transition pricing-toggle-active">Monatlich</button>
+                <button onclick="togglePricing('yearly')" id="btn-yearly" class="px-8 py-3 rounded-xl text-sm font-bold transition text-slate-500 flex items-center gap-2">
+                    Jährlich <span class="text-[10px] font-black px-2 py-0.5 rounded-full text-green-300" style="background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.25)">−10%</span>
+                </button>
+            </div>
+        </div>
+        <div class="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            <!-- Starter -->
+            <div class="card-dark p-10 rounded-[2.5rem] relative">
+                <h3 class="text-xs font-black text-slate-500 uppercase tracking-[0.2em] mb-6">Starter</h3>
+                <div class="flex items-baseline gap-2 mb-1">
+                    <span class="text-6xl font-black tracking-tighter text-white" id="price-starter">€99</span>
+                    <span class="text-slate-500 font-bold" id="period-starter">/Monat</span>
+                </div>
+                <p class="text-xs text-slate-600 font-semibold mb-10 h-5" id="yearly-note-starter"></p>
+                <ul class="space-y-5 mb-12">
+                    <li class="flex items-center gap-4 font-semibold text-slate-400"><i class="fa-solid fa-circle-check text-purple-400 text-lg"></i> Bis zu 10 Matches pro Woche</li>
+                    <li class="flex items-center gap-4 font-semibold text-slate-400"><i class="fa-solid fa-circle-check text-purple-400 text-lg"></i> Täglicher E-Mail-Report</li>
+                    <li class="flex items-center gap-4 font-semibold text-slate-400"><i class="fa-solid fa-circle-check text-purple-400 text-lg"></i> 1 Unternehmensprofil</li>
+                    <li class="flex items-center gap-4 font-semibold text-slate-400"><i class="fa-solid fa-circle-check text-purple-400 text-lg"></i> TED EU + nationale Quellen</li>
+                    <li class="flex items-center gap-4 font-semibold text-slate-600"><i class="fa-solid fa-circle-xmark text-slate-700 text-lg"></i> <span class="text-slate-600">Mehrere Profile</span></li>
+                </ul>
+                <button onclick="openCheckout('Starter')" class="w-full py-5 rounded-2xl font-black transition uppercase tracking-widest text-xs text-slate-300 hover:text-white" style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1)">
+                    Jetzt Starten
+                </button>
+            </div>
+            <!-- Professional -->
+            <div class="rounded-[2.5rem] relative popular-glow md:-translate-y-4" style="background:linear-gradient(135deg,rgba(124,58,237,.12),rgba(236,72,153,.08));border:1px solid rgba(124,58,237,.3);padding:2.5rem">
+                <div class="absolute top-0 right-10 -translate-y-1/2 text-white text-[10px] font-black uppercase tracking-[0.2em] px-5 py-2 rounded-full" style="background:linear-gradient(135deg,#7c3aed,#ec4899);box-shadow:0 4px 16px rgba(124,58,237,.4)">Empfehlung</div>
+                <h3 class="text-xs font-black uppercase tracking-[0.2em] mb-6 gradient-text">Professional</h3>
+                <div class="flex items-baseline gap-2 mb-1 text-white">
+                    <span class="text-6xl font-black tracking-tighter" id="price-pro">€175</span>
+                    <span class="text-slate-500 font-bold" id="period-pro">/Monat</span>
+                </div>
+                <p class="text-xs font-semibold mb-10 h-5 text-purple-400" id="yearly-note-pro"></p>
+                <ul class="space-y-5 mb-12">
+                    <li class="flex items-center gap-4 font-semibold text-slate-300"><i class="fa-solid fa-circle-check text-purple-400 text-lg"></i> Unbegrenzte Matches</li>
+                    <li class="flex items-center gap-4 font-semibold text-slate-300"><i class="fa-solid fa-circle-check text-purple-400 text-lg"></i> Täglicher E-Mail-Report</li>
+                    <li class="flex items-center gap-4 font-semibold text-slate-300"><i class="fa-solid fa-circle-check text-purple-400 text-lg"></i> KI-Matching mit Relevanz-Score</li>
+                    <li class="flex items-center gap-4 font-semibold text-slate-300"><i class="fa-solid fa-circle-check text-purple-400 text-lg"></i> 3 Unternehmensprofile</li>
+                    <li class="flex items-center gap-4 font-semibold text-slate-300"><i class="fa-solid fa-circle-check text-purple-400 text-lg"></i> Priority Support</li>
+                </ul>
+                <button onclick="openCheckout('Professional')" class="btn-primary w-full py-6 rounded-2xl text-white font-black uppercase tracking-widest text-sm">
+                    Plan Wählen
+                </button>
+            </div>
+        </div>
+        <p class="text-center text-xs text-slate-600 font-semibold mt-10">
+            Alle Preise zzgl. gesetzlicher MwSt. (19 %) · Monatlich kündbar · Jahresabo: Abrechnung im Voraus
+        </p>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer id="datenschutz" class="py-24" style="background:#0a0a12;border-top:1px solid rgba(255,255,255,.06)">
+    <div class="max-w-7xl mx-auto px-4 grid md:grid-cols-4 gap-16">
+        <div class="col-span-2">
+            <div class="flex items-center gap-3 mb-8">
+                <div class="w-9 h-9 rounded-xl flex items-center justify-center text-white font-black text-lg" style="background:linear-gradient(135deg,#7c3aed,#ec4899)">🎯</div>
+                <span class="font-black text-xl text-white">PublicFlow</span>
+            </div>
+            <p class="text-slate-500 font-medium max-w-sm mb-4">KI-gestütztes Monitoring für öffentliche Ausschreibungen. Täglich aktuelle Treffer aus verifizierten EU- und Bundesquellen.</p>
+            <p class="text-slate-700 text-xs font-semibold mb-10">Serverstandort Deutschland · Keine Datenweitergabe · DSGVO-konform gem. Art. 6 Abs. 1 lit. b</p>
+            <div class="flex gap-6 text-slate-600">
+                <i class="fa-brands fa-linkedin text-2xl hover:text-purple-400 cursor-pointer transition"></i>
+                <i class="fa-brands fa-twitter text-2xl hover:text-sky-400 cursor-pointer transition"></i>
+            </div>
+        </div>
+        <div>
+            <h4 class="font-black text-xs uppercase tracking-widest mb-8 text-slate-600">Rechtliches</h4>
+            <ul class="space-y-4 text-sm font-semibold text-slate-600">
+                <li><a href="#" class="hover:text-white transition">Impressum</a></li>
+                <li><a href="#" class="hover:text-white transition">Datenschutzerklärung</a></li>
+                <li><a href="#" class="hover:text-white transition">AGB</a></li>
+                <li><a href="#" class="hover:text-white transition">Widerrufsrecht</a></li>
+            </ul>
+        </div>
+        <div>
+            <h4 class="font-black text-xs uppercase tracking-widest mb-8 text-slate-600">Kontakt</h4>
+            <ul class="space-y-4 text-sm font-semibold text-slate-600">
+                <li><a href="mailto:support@publicflow.de" class="hover:text-white transition">support@publicflow.de</a></li>
+                <li>Nicolas Osel</li>
+                <li>Berlin, Deutschland</li>
+                <li class="pt-4 text-xs text-slate-700 leading-relaxed">Verantwortlicher i.S.d. DSGVO:<br>Nicolas Osel, Berlin<br>Angaben gem. § 5 TMG</li>
+            </ul>
+        </div>
+    </div>
+    <div class="max-w-7xl mx-auto px-4 mt-16 pt-8 text-xs text-slate-700 font-semibold flex flex-col sm:flex-row justify-between gap-4" style="border-top:1px solid rgba(255,255,255,.05)">
+        <span>© 2026 PublicFlow. Alle Rechte vorbehalten.</span>
+        <span>Keine Garantie für Vollständigkeit der Ausschreibungsdaten. Angaben ohne Gewähr.</span>
+    </div>
+</footer>
+
+<!-- Checkout Modal -->
+<div id="modal" class="fixed inset-0 z-[1000] hidden items-center justify-center p-4" style="background:rgba(0,0,0,.8);backdrop-filter:blur(20px)">
+    <div class="modal-card rounded-[2.5rem] shadow-2xl max-w-lg w-full p-10 relative overflow-y-auto max-h-[90vh]">
+        <button onclick="closeModal()" class="absolute top-6 right-6 text-slate-600 hover:text-white transition text-xl"><i class="fa-solid fa-xmark"></i></button>
+        <div class="flex items-center gap-3 mb-8">
+            <span class="text-[10px] font-black text-white px-3 py-1 rounded-full uppercase tracking-widest" style="background:linear-gradient(135deg,#7c3aed,#ec4899)">Bestellung</span>
+            <h2 class="text-2xl font-black tracking-tight text-white">Plan konfigurieren</h2>
+        </div>
+        <form id="checkoutForm" class="space-y-5">
+            <input type="hidden" id="selectedPlan" name="plan">
+            <input type="hidden" id="selectedPeriod" name="period" value="monthly">
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-[10px] font-black uppercase text-slate-500 mb-2 tracking-widest">Firmenname *</label>
+                    <input type="text" placeholder="Muster GmbH" required class="field-dark w-full px-4 py-3 rounded-2xl font-semibold text-sm">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-black uppercase text-slate-500 mb-2 tracking-widest">Branche *</label>
+                    <select required class="field-dark w-full px-4 py-3 rounded-2xl font-semibold text-sm">
+                        <option value="">Bitte wählen</option>
+                        <option value="it">IT &amp; Software</option>
+                        <option value="bau">Bauwesen</option>
+                        <option value="beratung">Beratung &amp; Consulting</option>
+                        <option value="dienstleistung">Facility &amp; Dienstleistung</option>
+                        <option value="gesundheit">Gesundheit &amp; Soziales</option>
+                        <option value="sonstige">Sonstige</option>
+                    </select>
+                </div>
+            </div>
+            <div>
+                <label class="block text-[10px] font-black uppercase text-slate-500 mb-2 tracking-widest">Kompetenzen / Suchbegriffe *</label>
+                <textarea placeholder="z.B. Rohbau, Sanierung, IT-Sicherheit, Facility Management..." required class="field-dark w-full px-4 py-3 rounded-2xl font-semibold text-sm min-h-[90px]"></textarea>
+            </div>
+            <div>
+                <label class="block text-[10px] font-black uppercase text-slate-500 mb-2 tracking-widest">E-Mail für Reports *</label>
+                <input type="email" placeholder="ihre@firma.de" required class="field-dark w-full px-4 py-3 rounded-2xl font-semibold text-sm">
+            </div>
+            <!-- Preisübersicht -->
+            <div class="p-5 rounded-2xl" style="background:rgba(124,58,237,.1);border:1px solid rgba(124,58,237,.2)">
+                <div class="flex justify-between items-center mb-1">
+                    <span class="text-sm font-bold text-purple-200" id="summary-plan">—</span>
+                    <span class="text-xl font-black text-purple-400" id="summary-price">—</span>
+                </div>
+                <p class="text-[10px] text-purple-500 font-semibold" id="summary-period-note">—</p>
+                <p class="text-[10px] text-purple-700 mt-1">Alle Preise zzgl. 19 % MwSt.</p>
+            </div>
+            <!-- DSGVO -->
+            <div class="flex items-start gap-3 p-4 rounded-2xl" style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07)">
+                <input type="checkbox" id="dsgvo-check" required class="mt-1 accent-purple-500 w-4 h-4 flex-shrink-0">
+                <label for="dsgvo-check" class="text-xs text-slate-500 font-semibold leading-relaxed cursor-pointer">
+                    Ich habe die <a href="#datenschutz" onclick="closeModal()" class="text-purple-400 underline">Datenschutzerklärung</a> und
+                    <a href="#" class="text-purple-400 underline">AGB</a> gelesen und stimme zu.
+                    Meine Daten werden zur Vertragsabwicklung gemäß DSGVO Art. 6 Abs. 1 lit. b verarbeitet. *
+                </label>
+            </div>
+            <button type="submit" class="btn-primary w-full py-5 rounded-2xl text-white font-black uppercase tracking-widest text-xs">
+                Zahlungspflichtig bestellen
+            </button>
+            <p class="text-center text-[10px] text-slate-600 font-semibold">
+                <i class="fa-solid fa-lock mr-1"></i> 256-Bit SSL · Monatlich kündbar (bei monatl. Abo)
+            </p>
+        </form>
+    </div>
+</div>
+
+<script>
+    if(localStorage.getItem('cookie-ok')) document.getElementById('cookie-banner').classList.add('hidden');
+
+    let currentPeriod = 'monthly';
+
+    function togglePricing(period) {
+        currentPeriod = period;
+        const isY = period === 'yearly';
+        document.getElementById('btn-monthly').classList.toggle('pricing-toggle-active', !isY);
+        document.getElementById('btn-yearly').classList.toggle('pricing-toggle-active', isY);
+        document.getElementById('price-starter').innerText = isY ? '€89' : '€99';
+        document.getElementById('price-pro').innerText     = isY ? '€157' : '€175';
+        document.getElementById('yearly-note-starter').innerText = isY ? '€1.069 /Jahr · Sie sparen €119' : '';
+        document.getElementById('yearly-note-pro').innerText     = isY ? '€1.884 /Jahr · Sie sparen €216' : '';
+    }
+
+    function openCheckout(plan) {
+        const prices = { Starter: {m:99, y:89, yt:1069}, Professional: {m:175, y:157, yt:1884} };
+        const p = prices[plan];
+        const isY = currentPeriod === 'yearly';
+        document.getElementById('selectedPlan').value   = plan;
+        document.getElementById('selectedPeriod').value = currentPeriod;
+        document.getElementById('summary-plan').innerText  = plan + ' · ' + (isY ? 'Jährlich' : 'Monatlich');
+        document.getElementById('summary-price').innerText = '€' + (isY ? p.y : p.m) + '/Monat';
+        document.getElementById('summary-period-note').innerText = isY
+            ? 'Fälliger Betrag: €' + p.yt + ' (netto) — einmalig pro Jahr'
+            : 'Fälliger Betrag: €' + p.m + ' (netto) — monatlich kündbar';
+        document.getElementById('dsgvo-check').checked = false;
+        document.getElementById('modal').style.display = 'flex';
+    }
+
+    function closeModal() { document.getElementById('modal').style.display = 'none'; }
+
+    document.getElementById('checkoutForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        if(!document.getElementById('dsgvo-check').checked) { alert('Bitte stimmen Sie der Datenschutzerklärung zu.'); return; }
+        const plan = document.getElementById('selectedPlan').value;
+        const period = document.getElementById('selectedPeriod').value === 'yearly' ? 'Jährlich' : 'Monatlich';
+        alert('Vielen Dank!\n\nIhr ' + plan + '-Abonnement (' + period + ') wurde registriert.\nSie erhalten eine Bestätigungs-E-Mail.\n\nWillkommen bei PublicFlow!');
+        closeModal();
+    });
+</script>
+</body>
+</html>
