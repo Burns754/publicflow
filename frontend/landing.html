@@ -382,7 +382,7 @@
             <div class="inline-flex items-center p-1 rounded-2xl mb-12 glass-card">
                 <button onclick="togglePricing('monthly')" id="btn-monthly" class="px-8 py-3 rounded-xl text-sm font-bold transition pricing-toggle-active">Monatlich</button>
                 <button onclick="togglePricing('yearly')" id="btn-yearly" class="px-8 py-3 rounded-xl text-sm font-bold transition text-slate-500 flex items-center gap-2">
-                    Jährlich <span class="text-[10px] font-black px-2 py-0.5 rounded-full text-green-300" style="background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.25)">−10%</span>
+                    Jährlich <span class="text-[10px] font-black px-2 py-0.5 rounded-full text-green-300" style="background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.25)">−15%</span>
                 </button>
             </div>
         </div>
@@ -391,7 +391,7 @@
             <div class="card-dark p-10 rounded-[2.5rem] relative">
                 <h3 class="text-xs font-black text-slate-500 uppercase tracking-[0.2em] mb-6">Starter</h3>
                 <div class="flex items-baseline gap-2 mb-1">
-                    <span class="text-6xl font-black tracking-tighter text-white" id="price-starter">€99</span>
+                    <span class="text-6xl font-black tracking-tighter text-white" id="price-starter">€170</span>
                     <span class="text-slate-500 font-bold" id="period-starter">/Monat</span>
                 </div>
                 <p class="text-xs text-slate-600 font-semibold mb-10 h-5" id="yearly-note-starter"></p>
@@ -411,7 +411,7 @@
                 <div class="absolute top-0 right-10 -translate-y-1/2 text-white text-[10px] font-black uppercase tracking-[0.2em] px-5 py-2 rounded-full" style="background:linear-gradient(135deg,#7c3aed,#ec4899);box-shadow:0 4px 16px rgba(124,58,237,.4)">Empfehlung</div>
                 <h3 class="text-xs font-black uppercase tracking-[0.2em] mb-6 gradient-text">Professional</h3>
                 <div class="flex items-baseline gap-2 mb-1 text-white">
-                    <span class="text-6xl font-black tracking-tighter" id="price-pro">€175</span>
+                    <span class="text-6xl font-black tracking-tighter" id="price-pro">€349</span>
                     <span class="text-slate-500 font-bold" id="period-pro">/Monat</span>
                 </div>
                 <p class="text-xs font-semibold mb-10 h-5 text-purple-400" id="yearly-note-pro"></p>
@@ -548,10 +548,10 @@
         const isY = period === 'yearly';
         document.getElementById('btn-monthly').classList.toggle('pricing-toggle-active', !isY);
         document.getElementById('btn-yearly').classList.toggle('pricing-toggle-active', isY);
-        document.getElementById('price-starter').innerText = isY ? '€89' : '€99';
-        document.getElementById('price-pro').innerText     = isY ? '€157' : '€175';
+        document.getElementById('price-starter').innerText = isY ? '€144' : '€170';
+        document.getElementById('price-pro').innerText     = isY ? '€297' : '€349';
         document.getElementById('yearly-note-starter').innerText = isY ? '€1.069 /Jahr · Sie sparen €119' : '';
-        document.getElementById('yearly-note-pro').innerText     = isY ? '€1.884 /Jahr · Sie sparen €216' : '';
+        document.getElementById('yearly-note-pro').innerText     = isY ? '€3.560 /Jahr · Sie sparen €216' : '';
     }
 
     function openCheckout(plan) {
