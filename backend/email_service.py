@@ -11,6 +11,7 @@ logger = logging.getLogger(__name__)
 RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
 FROM_EMAIL = os.getenv("FROM_EMAIL", "PublicFlow <noreply@publicflow.io>")
 RESEND_URL = "https://api.resend.com/emails"
+FRONTEND_URL = os.getenv("FRONTEND_URL", "https://publicflow.up.railway.app")
 
 
 def _send(to: str, subject: str, html: str) -> bool:
@@ -116,8 +117,8 @@ def send_match_notification(
         <div style="padding:20px 32px;border-top:1px solid #f0f0f0;
                     font-size:12px;color:#999">
           Du erhältst diese Mail weil du bei PublicFlow registriert bist.<br>
-          <a href="#" style="color:#2563eb">Profil anpassen</a> &nbsp;·&nbsp;
-          <a href="#" style="color:#2563eb">Abmelden</a>
+          <a href="{FRONTEND_URL}/app/index.html#profile" style="color:#2563eb">Profil anpassen</a> &nbsp;·&nbsp;
+          <a href="{FRONTEND_URL}/app/index.html#settings" style="color:#2563eb">Einstellungen</a>
         </div>
       </div>
     </body>
@@ -152,7 +153,7 @@ def send_welcome_email(to_email: str, full_name: str) -> bool:
             <strong>Nächster Schritt:</strong> Erstelle dein Unternehmensprofil
             damit wir wissen wonach wir suchen sollen.
           </p>
-          <a href="#" style="display:inline-block;background:#2563eb;color:#fff;
+          <a href="{FRONTEND_URL}/app/index.html" style="display:inline-block;background:#2563eb;color:#fff;
                              padding:12px 24px;border-radius:8px;font-size:15px;
                              text-decoration:none;font-weight:600">
             Profil erstellen →

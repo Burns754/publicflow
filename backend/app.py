@@ -56,7 +56,7 @@ FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:8000")
 app = FastAPI(
     title="PublicFlow API",
     description="KI-gestütztes Ausschreibungs-Monitoring",
-    version="0.3.0"
+    version="0.3.1"
 )
 
 app.add_middleware(
@@ -140,7 +140,7 @@ async def root():
 
 @app.get("/api")
 async def api_root():
-    return {"status": "✅ PublicFlow API läuft", "version": "0.3.0", "docs": "/docs"}
+    return {"status": "✅ PublicFlow API läuft", "version": "0.3.1", "docs": "/docs"}
 
 @app.get("/health")
 async def health():
@@ -447,6 +447,19 @@ async def stripe_webhook(request: Request):
                 sub.status = stripe_sub["status"]
                 db.commit()
 
+        elif event["type"] == "invoice.payment_failed":
+            # Zahlung fehlgeschlagen → Abo als past_due markieren
+            invoice = event["data"]["object"]
+            stripe_sub_id = invoice.get("subscription", "")
+            if stripe_sub_id:
+                sub = db.query(Subscription).filter(
+                    Subscription.id == stripe_sub_id
+                ).first()
+                if sub:
+                    sub.status = "past_due"
+                    db.commit()
+                    logger.warning(f"⚠️ Zahlung fehlgeschlagen für Abo: {stripe_sub_id}")
+
     finally:
         db.close()
 
@@ -696,7 +709,7 @@ async def trigger_match(
                 threading.Thread(
                     target=_send_instant_alert,
                     args=(user.email, company.name, new_matches_for_alert,
-                          company.id, db.bind),
+                          company.id, engine),
                     daemon=True
                 ).start()
                 logger.info(f"📧 Sofort-Alert für {len(new_matches_for_alert)} neue Matches gestartet")
@@ -819,7 +832,7 @@ async def search_tenders(
 
 @app.on_event("startup")
 async def startup():
-    logger.info("🚀 PublicFlow v0.3 startet...")
+    logger.info("🚀 PublicFlow v0.3.1 startet...")
     Base.metadata.create_all(bind=engine)
     logger.info("✅ Datenbank bereit")
 
