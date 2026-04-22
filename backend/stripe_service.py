@@ -23,26 +23,28 @@ PRICES = {
 PLAN_INFO = {
     "starter": {
         "name": "Starter",
-        "monthly_price": 99,
-        "yearly_price": 89,
+        "monthly_price": 249,
+        "yearly_price": 224,
         "features": [
-            "Bis zu 10 Ausschreibungen/Woche",
-            "bund.de + TED (EU)",
-            "Email-Benachrichtigung täglich",
-            "Basis-Matching",
+            "1 Unternehmensprofil",
+            "Tägl. E-Mail-Digest (7:00 Uhr)",
+            "EU + BRD Monitoring",
+            "Bis zu 10 Treffer pro Tag",
+            "Frist-Erinnerungen (7d + 48h)",
+            "E-Mail-Support",
         ]
     },
     "professional": {
         "name": "Professional",
-        "monthly_price": 175,
-        "yearly_price": 149,
+        "monthly_price": 499,
+        "yearly_price": 449,
         "features": [
-            "Unbegrenzte Ausschreibungen",
-            "bund.de + TED (EU) + weitere",
-            "Email-Benachrichtigung täglich",
-            "KI-Matching mit Claude",
-            "Manuelle Suche",
-            "Prioritäts-Support",
+            "3 Unternehmensprofile",
+            "EU + BRD + alle 16 Bundesländer",
+            "Unbegrenzte Treffer täglich",
+            "KI-Relevanzbewertung mit Score",
+            "Wöchentlicher Marktreport",
+            "Prioritäts-Support (24h)",
         ]
     }
 }
