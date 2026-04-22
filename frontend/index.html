@@ -3,1455 +3,1550 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PublicFlow – Ausschreibungs-Monitor</title>
+  <title>PublicFlow – KI-Pressemitteilungen</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
+    /* ── Reset & Base ── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
-      --indigo:     #7c3aed;
-      --indigo-d:   #6d28d9;
-      --indigo-l:   rgba(124,58,237,.15);
-      --indigo-mid: #a78bfa;
-      --accent:     #8b5cf6;
-      --accent2:    #ec4899;
-      --sidebar-bg: #0a0a12;
-      --sidebar-hover: rgba(255,255,255,.06);
-      --sidebar-active: rgba(124,58,237,.25);
-      --green:      #10b981;
-      --green-l:    rgba(16,185,129,.15);
-      --orange:     #f59e0b;
-      --orange-l:   rgba(245,158,11,.15);
-      --red:        #ef4444;
-      --red-l:      rgba(239,68,68,.15);
-      --surface:    #0d0d1a;
-      --card:       #13131f;
-      --card-hover: #17172a;
-      --border:     rgba(255,255,255,.07);
-      --border-light: rgba(255,255,255,.12);
-      --txt:        #f1f5f9;
-      --txt-muted:  rgba(255,255,255,.55);
-      --txt-light:  rgba(255,255,255,.3);
-      --radius-sm:  8px;
-      --radius:     12px;
-      --radius-lg:  16px;
-      --shadow-sm:  0 1px 3px rgba(0,0,0,.4);
-      --shadow:     0 2px 8px rgba(0,0,0,.4);
-      --shadow-md:  0 4px 20px rgba(0,0,0,.5);
-      --shadow-lg:  0 12px 40px rgba(0,0,0,.6);
-      --glow:       0 0 20px rgba(124,58,237,.35);
-      --glow-sm:    0 0 12px rgba(124,58,237,.25);
+      --c-bg: #080818;
+      --c-bg2: #0d0d22;
+      --c-surface: rgba(255,255,255,.04);
+      --c-surface2: rgba(255,255,255,.07);
+      --c-border: rgba(255,255,255,.08);
+      --c-border2: rgba(255,255,255,.13);
+      --c-text: #f1f0ff;
+      --c-muted: rgba(241,240,255,.5);
+      --c-dim: rgba(241,240,255,.3);
+      --c-purple: #7c3aed;
+      --c-violet: #a855f7;
+      --c-pink: #ec4899;
+      --c-cyan: #06b6d4;
+      --fc-c: #a855f7;
+      --fc-b: #06b6d4;
+      --fc-g: #10b981;
+      --fc-ib: #f59e0b;
+      --fc-ib2: #ec4899;
     }
-
+    html { scroll-behavior: smooth; }
     body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      background: var(--surface);
-      color: var(--txt);
-      font-size: 14px;
-      line-height: 1.5;
-      -webkit-font-smoothing: antialiased;
+      font-family: 'Inter', sans-serif;
+      background: var(--c-bg);
+      color: var(--c-text);
+      line-height: 1.6;
+      overflow-x: hidden;
+      min-height: 100vh;
     }
-
-    /* Ambient background glow */
-    body::before {
-      content: '';
-      position: fixed;
-      top: -30%;
-      left: -10%;
-      width: 60%;
-      height: 60%;
-      background: radial-gradient(ellipse, rgba(124,58,237,.08) 0%, transparent 70%);
-      pointer-events: none;
-      z-index: 0;
-    }
+    /* Noise grain */
     body::after {
       content: '';
       position: fixed;
-      bottom: -20%;
-      right: -10%;
-      width: 50%;
-      height: 50%;
-      background: radial-gradient(ellipse, rgba(236,72,153,.06) 0%, transparent 70%);
+      inset: 0;
       pointer-events: none;
-      z-index: 0;
+      z-index: 999;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+      opacity: .03;
     }
 
-    /* ════════════════════════════════════════════
-       AUTH
-    ════════════════════════════════════════════ */
-    #auth-screen {
+    /* ── Aurora Background ── */
+    .aurora {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .aurora .b {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(110px);
+      will-change: transform;
+    }
+    .aurora .b1 { width:800px;height:800px; background:radial-gradient(circle,rgba(124,58,237,.7) 0%,transparent 65%); top:-250px;left:-200px; animation:bf1 20s ease-in-out infinite; }
+    .aurora .b2 { width:700px;height:700px; background:radial-gradient(circle,rgba(236,72,153,.6) 0%,transparent 65%); bottom:-220px;right:-200px; animation:bf2 25s ease-in-out infinite; }
+    .aurora .b3 { width:550px;height:550px; background:radial-gradient(circle,rgba(6,182,212,.5) 0%,transparent 65%); top:38%;right:18%; animation:bf3 16s ease-in-out infinite; }
+    .aurora .b4 { width:420px;height:420px; background:radial-gradient(circle,rgba(168,85,247,.38) 0%,transparent 65%); top:65%;left:22%; animation:bf1 18s ease-in-out infinite reverse; }
+
+    @keyframes bf1 {
+      0%,100%{ transform:translate(0,0) scale(1); }
+      33%    { transform:translate(60px,-80px) scale(1.08); }
+      66%    { transform:translate(-40px,60px) scale(.94); }
+    }
+    @keyframes bf2 {
+      0%,100%{ transform:translate(0,0) scale(1); }
+      40%    { transform:translate(-70px,50px) scale(1.12); }
+      70%    { transform:translate(50px,-40px) scale(.92); }
+    }
+    @keyframes bf3 {
+      0%,100%{ transform:translate(0,0) scale(1); }
+      50%    { transform:translate(-60px,80px) scale(1.15); }
+    }
+
+    /* ── Grid overlay ── */
+    .grid-bg {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px);
+      background-size: 60px 60px;
+    }
+
+    /* ── Animated conic border property ── */
+    @property --ba {
+      syntax: '<angle>';
+      initial-value: 0deg;
+      inherits: false;
+    }
+    @keyframes baSpin { to { --ba: 360deg; } }
+
+    /* ── Layout ── */
+    .page { position: relative; z-index: 1; }
+
+    /* ── Nav ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 48px;
+      height: 68px;
+      background: rgba(8,8,24,.7);
+      backdrop-filter: blur(20px) saturate(180%);
+      border-bottom: 1px solid var(--c-border);
+    }
+    .nav-logo {
+      font-size: 1.25rem;
+      font-weight: 800;
+      letter-spacing: -.5px;
+      background: linear-gradient(135deg, #c084fc, #ec4899);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .nav-links { display: flex; gap: 32px; list-style: none; }
+    .nav-links a {
+      color: var(--c-muted);
+      text-decoration: none;
+      font-size: .9rem;
+      font-weight: 500;
+      transition: color .2s;
+    }
+    .nav-links a:hover { color: var(--c-text); }
+    .nav-cta { display: flex; gap: 12px; align-items: center; }
+
+    /* ── Buttons ── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 22px;
+      border-radius: 10px;
+      font-size: .9rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      text-decoration: none;
+      transition: all .2s;
+      position: relative;
+      overflow: hidden;
+    }
+    .btn-ghost {
+      background: transparent;
+      color: var(--c-muted);
+      border: 1px solid var(--c-border2);
+    }
+    .btn-ghost:hover { background: var(--c-surface2); color: var(--c-text); }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--c-purple), var(--c-pink));
+      color: #fff;
+      box-shadow: 0 0 28px rgba(124,58,237,.35);
+    }
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 36px rgba(124,58,237,.55);
+    }
+    .btn-primary::after {
+      content: '';
+      position: absolute;
+      top: -50%; left: -120%;
+      width: 50%; height: 200%;
+      background: linear-gradient(to right, transparent, rgba(255,255,255,.22), transparent);
+      transform: skewX(-20deg);
+      animation: shine 5s ease infinite;
+    }
+    @keyframes shine {
+      0%   { left: -120%; }
+      18%  { left: 140%; }
+      100% { left: 140%; }
+    }
+    .btn-lg { padding: 15px 36px; font-size: 1rem; border-radius: 14px; }
+
+    /* ── Hero ── */
+    .hero {
       min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 120px 24px 80px;
+    }
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 16px;
+      border-radius: 100px;
+      background: rgba(124,58,237,.12);
+      border: 1px solid rgba(124,58,237,.3);
+      color: #c084fc;
+      font-size: .82rem;
+      font-weight: 600;
+      margin-bottom: 32px;
+      letter-spacing: .03em;
+    }
+    .badge-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: #a855f7;
+      box-shadow: 0 0 8px #a855f7;
+      animation: pulse 2s ease infinite;
+    }
+    @keyframes pulse {
+      0%,100%{ opacity:1; transform:scale(1); }
+      50%{ opacity:.5; transform:scale(1.4); }
+    }
+    .hero h1 {
+      font-size: clamp(2.8rem, 7vw, 5.5rem);
+      font-weight: 900;
+      line-height: 1.07;
+      letter-spacing: -2px;
+      max-width: 820px;
+      margin-bottom: 28px;
+    }
+    .hero h1 .grad {
+      background: linear-gradient(135deg, #c084fc 0%, #ec4899 40%, #22d3ee 80%, #c084fc 100%);
+      background-size: 300% 300%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: gf 5s ease infinite;
+    }
+    @keyframes gf {
+      0%  { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100%{ background-position: 0% 50%; }
+    }
+    .hero p {
+      font-size: clamp(1rem, 2vw, 1.22rem);
+      color: var(--c-muted);
+      max-width: 560px;
+      margin-bottom: 44px;
+      line-height: 1.75;
+    }
+    .hero-cta { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; }
+    .hero-stats {
+      display: flex;
+      gap: 40px;
+      margin-top: 72px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .stat { text-align: center; }
+    .stat-n {
+      font-size: 2rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #c084fc, #ec4899);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .stat-l { font-size: .82rem; color: var(--c-dim); margin-top: 2px; }
+
+    /* ── Section helpers ── */
+    section { position: relative; z-index: 1; }
+    .section-inner { max-width: 1160px; margin: 0 auto; padding: 100px 24px; }
+    .section-tag {
+      display: inline-block;
+      padding: 4px 14px;
+      border-radius: 100px;
+      background: rgba(168,85,247,.1);
+      border: 1px solid rgba(168,85,247,.25);
+      color: #c084fc;
+      font-size: .78rem;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+    .section-title {
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      font-weight: 800;
+      letter-spacing: -1px;
+      line-height: 1.12;
+      margin-bottom: 18px;
+    }
+    .section-sub {
+      color: var(--c-muted);
+      font-size: 1.05rem;
+      max-width: 540px;
+      line-height: 1.7;
+    }
+    .text-center { text-align: center; }
+    .mx-auto { margin-left: auto; margin-right: auto; }
+
+    /* ── Reveal animation ── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(32px);
+      transition: opacity .65s ease, transform .65s ease;
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ── Features grid ── */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 24px;
+      margin-top: 64px;
+    }
+    .feat-card {
+      background: var(--c-surface);
+      border: 1px solid var(--c-border);
+      border-radius: 20px;
+      padding: 36px 32px;
+      transition: all .3s;
+      position: relative;
+      overflow: hidden;
+    }
+    .feat-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(168,85,247,.5), transparent);
+      opacity: 0;
+      transition: opacity .3s;
+    }
+    .feat-card:hover { transform: translateY(-4px); border-color: var(--c-border2); background: var(--c-surface2); }
+    .feat-card:hover::before { opacity: 1; }
+    .feat-icon {
+      width: 52px; height: 52px;
+      border-radius: 14px;
       display: flex;
       align-items: center;
       justify-content: center;
-      background: #070710;
-      background-image:
-        radial-gradient(ellipse 80% 60% at 20% 20%, rgba(124,58,237,.18) 0%, transparent 60%),
-        radial-gradient(ellipse 60% 50% at 80% 80%, rgba(236,72,153,.12) 0%, transparent 60%),
-        radial-gradient(ellipse 40% 40% at 50% 50%, rgba(99,102,241,.08) 0%, transparent 70%);
-      padding: 20px;
+      font-size: 1.5rem;
+      margin-bottom: 20px;
+    }
+    .feat-icon.purple { background: rgba(124,58,237,.15); }
+    .feat-icon.cyan   { background: rgba(6,182,212,.15); }
+    .feat-icon.pink   { background: rgba(236,72,153,.15); }
+    .feat-icon.amber  { background: rgba(245,158,11,.15); }
+    .feat-icon.green  { background: rgba(16,185,129,.15); }
+    .feat-icon.indigo { background: rgba(99,102,241,.15); }
+    .feat-card h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 10px; }
+    .feat-card p  { color: var(--c-muted); font-size: .9rem; line-height: 1.65; }
+
+    /* ── How it works ── */
+    .how-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 0;
+      margin-top: 64px;
       position: relative;
     }
-    .auth-wrap {
-      display: flex;
-      gap: 60px;
-      align-items: center;
-      max-width: 920px;
-      width: 100%;
-      position: relative;
-      z-index: 1;
-    }
-    .auth-hero {
-      flex: 1;
-      color: #fff;
-      display: none;
-    }
-    @media (min-width: 768px) { .auth-hero { display: block; } }
-    .auth-hero h1 { font-size: 38px; font-weight: 800; line-height: 1.2; margin-bottom: 16px; letter-spacing: -.5px; }
-    .auth-hero h1 span { background: linear-gradient(135deg, #a78bfa, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-    .auth-hero p  { font-size: 15px; color: rgba(255,255,255,.55); line-height: 1.8; margin-bottom: 28px; }
-    .hero-pills { display: flex; flex-direction: column; gap: 10px; }
-    .hero-pill {
-      display: flex; align-items: center; gap: 10px;
-      background: rgba(255,255,255,.04);
-      border: 1px solid rgba(255,255,255,.08);
-      border-radius: 12px; padding: 11px 16px; font-size: 13px; color: rgba(255,255,255,.7);
-      backdrop-filter: blur(8px);
-    }
-    .hero-pill .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--indigo-mid); flex-shrink: 0; box-shadow: 0 0 8px var(--accent); }
-
-    .auth-card {
-      background: rgba(20,20,35,.85);
-      backdrop-filter: blur(24px);
-      -webkit-backdrop-filter: blur(24px);
-      border: 1px solid rgba(255,255,255,.1);
-      border-radius: 20px;
-      padding: 36px;
-      width: 100%;
-      max-width: 400px;
-      box-shadow: 0 24px 60px rgba(0,0,0,.6), 0 0 0 1px rgba(124,58,237,.15);
-      flex-shrink: 0;
-    }
-    .auth-logo {
-      display: flex; align-items: center; gap: 10px;
-      font-size: 22px; font-weight: 800; color: var(--txt);
-      margin-bottom: 6px;
-    }
-    .auth-logo .logo-icon {
-      width: 38px; height: 38px; border-radius: 11px;
-      background: linear-gradient(135deg, var(--indigo), var(--accent2));
-      display: flex; align-items: center; justify-content: center;
-      font-size: 18px;
-      box-shadow: 0 4px 16px rgba(124,58,237,.4);
-    }
-    .auth-tagline { color: var(--txt-muted); font-size: 13px; margin-bottom: 28px; }
-
-    .auth-tabs {
-      display: flex; background: rgba(255,255,255,.04); border-radius: 10px; padding: 3px;
-      margin-bottom: 22px; gap: 3px;
-      border: 1px solid var(--border);
-    }
-    .auth-tab {
-      flex: 1; padding: 8px; text-align: center; border-radius: 8px;
-      font-size: 13px; font-weight: 500; color: var(--txt-muted); cursor: pointer;
-      transition: all .15s;
-    }
-    .auth-tab.active {
-      background: linear-gradient(135deg, rgba(124,58,237,.3), rgba(236,72,153,.2));
-      color: var(--txt);
-      border: 1px solid rgba(124,58,237,.35);
-      box-shadow: 0 2px 8px rgba(124,58,237,.2);
-    }
-
-    /* ════════════════════════════════════════════
-       FORMS
-    ════════════════════════════════════════════ */
-    .field { margin-bottom: 14px; }
-    .field label { display: block; font-size: 11px; font-weight: 600; color: var(--txt-muted); text-transform: uppercase; letter-spacing: .8px; margin-bottom: 6px; }
-    .field input, .field select, .field textarea {
-      width: 100%; padding: 10px 13px;
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      font-size: 14px; font-family: inherit;
-      color: var(--txt); background: rgba(255,255,255,.04);
-      transition: border-color .15s, box-shadow .15s; outline: none;
-    }
-    .field input::placeholder { color: var(--txt-light); }
-    .field input:focus, .field select:focus, .field textarea:focus {
-      border-color: rgba(124,58,237,.5);
-      box-shadow: 0 0 0 3px rgba(124,58,237,.12), 0 0 16px rgba(124,58,237,.1);
-    }
-    .field select option { background: #1a1a2e; color: var(--txt); }
-    .field textarea { resize: vertical; min-height: 80px; }
-    .field-hint { font-size: 11px; color: var(--txt-light); margin-top: 4px; }
-    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-
-    .btn {
-      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-      padding: 9px 18px; border-radius: var(--radius-sm);
-      font-size: 13px; font-weight: 600; font-family: inherit;
-      cursor: pointer; transition: all .18s; border: none; text-decoration: none;
-      white-space: nowrap; position: relative; overflow: hidden;
-    }
-    .btn-primary {
-      background: linear-gradient(135deg, var(--indigo), #9333ea);
-      color: #fff;
-      box-shadow: 0 4px 14px rgba(124,58,237,.35);
-    }
-    .btn-primary:hover {
-      background: linear-gradient(135deg, #6d28d9, #7c3aed);
-      box-shadow: 0 6px 20px rgba(124,58,237,.5), 0 0 0 1px rgba(124,58,237,.3);
-      transform: translateY(-1px);
-    }
-    .btn-ghost {
-      background: rgba(255,255,255,.04);
-      border: 1px solid var(--border-light);
-      color: var(--txt-muted);
-    }
-    .btn-ghost:hover {
-      border-color: rgba(124,58,237,.4);
-      color: var(--indigo-mid);
-      background: rgba(124,58,237,.08);
-    }
-    .btn-danger  { background: linear-gradient(135deg, #dc2626, #ef4444); color: #fff; box-shadow: 0 4px 12px rgba(239,68,68,.3); }
-    .btn-success { background: linear-gradient(135deg, #059669, #10b981); color: #fff; box-shadow: 0 4px 12px rgba(16,185,129,.3); }
-    .btn-full    { width: 100%; }
-    .btn-sm      { padding: 6px 12px; font-size: 12px; }
-    .btn-xs      { padding: 4px 9px; font-size: 11px; border-radius: 6px; }
-    .btn:disabled { opacity: .4; cursor: not-allowed; transform: none !important; }
-
-    .msg-error   { background: var(--red-l); border: 1px solid rgba(239,68,68,.3); color: #fca5a5; border-radius: var(--radius-sm); padding: 10px 14px; font-size: 13px; margin-bottom: 14px; }
-    .msg-success { background: var(--green-l); border: 1px solid rgba(16,185,129,.3); color: #6ee7b7; border-radius: var(--radius-sm); padding: 10px 14px; font-size: 13px; margin-bottom: 14px; }
-    .msg-info    { background: var(--indigo-l); border: 1px solid rgba(124,58,237,.3); color: #a78bfa; border-radius: var(--radius-sm); padding: 10px 14px; font-size: 13px; margin-bottom: 14px; }
-
-    /* ════════════════════════════════════════════
-       APP SHELL — Sidebar + Main
-    ════════════════════════════════════════════ */
-    #app-screen { display: none; min-height: 100vh; }
-    #app-screen.visible { display: flex; }
-
-    /* SIDEBAR */
-    .sidebar {
-      width: 228px;
-      background: var(--sidebar-bg);
-      border-right: 1px solid rgba(255,255,255,.05);
-      display: flex; flex-direction: column;
-      position: fixed; top: 0; left: 0; height: 100vh;
-      z-index: 200; overflow: hidden;
-      transition: width .2s;
-      flex-shrink: 0;
-    }
-    .sidebar-logo {
-      display: flex; align-items: center; gap: 10px;
-      padding: 22px 18px 16px;
-      border-bottom: 1px solid rgba(255,255,255,.05);
-    }
-    .sidebar-logo .icon {
-      width: 34px; height: 34px; border-radius: 10px;
-      background: linear-gradient(135deg, var(--indigo), var(--accent2));
-      display: flex; align-items: center; justify-content: center;
-      font-size: 16px; flex-shrink: 0;
-      box-shadow: 0 4px 12px rgba(124,58,237,.35);
-    }
-    .sidebar-logo .name { font-size: 15px; font-weight: 700; color: #fff; letter-spacing: -.2px; }
-
-    .sidebar-nav { flex: 1; padding: 14px 10px; overflow-y: auto; }
-    .nav-section-label {
-      font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.2px;
-      color: rgba(255,255,255,.22); padding: 8px 10px 4px;
-    }
-    .nav-item {
-      display: flex; align-items: center; gap: 10px;
-      padding: 9px 12px; border-radius: 10px;
-      font-size: 13px; font-weight: 500; color: rgba(255,255,255,.5);
-      cursor: pointer; transition: all .15s; margin-bottom: 2px;
-    }
-    .nav-item:hover   { background: var(--sidebar-hover); color: rgba(255,255,255,.85); }
-    .nav-item.active  {
-      background: rgba(124,58,237,.2);
-      color: #fff;
-      border: 1px solid rgba(124,58,237,.25);
-    }
-    .nav-item .nav-icon { font-size: 15px; width: 20px; text-align: center; flex-shrink: 0; }
-    .nav-item .nav-badge {
-      margin-left: auto;
-      background: linear-gradient(135deg, var(--indigo), var(--accent2));
-      color: #fff;
-      border-radius: 10px; padding: 1px 7px; font-size: 11px; font-weight: 700;
-    }
-
-    .sidebar-footer {
-      padding: 12px 10px;
-      border-top: 1px solid rgba(255,255,255,.05);
-    }
-    .user-card {
-      display: flex; align-items: center; gap: 10px;
-      padding: 9px 12px; border-radius: 10px;
-      background: rgba(255,255,255,.04);
-      border: 1px solid rgba(255,255,255,.06);
-    }
-    .user-avatar {
-      width: 30px; height: 30px; border-radius: 50%;
-      background: linear-gradient(135deg, var(--indigo), var(--accent2));
-      display: flex; align-items: center; justify-content: center;
-      font-size: 12px; font-weight: 700; color: #fff; flex-shrink: 0;
-      box-shadow: 0 2px 8px rgba(124,58,237,.3);
-    }
-    .user-info { flex: 1; min-width: 0; }
-    .user-name { font-size: 12px; font-weight: 600; color: #fff; truncate: ellipsis; overflow: hidden; white-space: nowrap; }
-    .user-plan { font-size: 11px; color: rgba(255,255,255,.35); }
-    .user-logout { color: rgba(255,255,255,.25); cursor: pointer; font-size: 14px; transition: color .15s; }
-    .user-logout:hover { color: var(--indigo-mid); }
-
-    /* MAIN */
-    .main {
-      margin-left: 228px;
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
-      position: relative;
-      z-index: 1;
-    }
-    .topbar {
-      background: rgba(13,13,26,.8);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border-bottom: 1px solid var(--border);
-      padding: 0 28px;
-      height: 54px;
-      display: flex; align-items: center; justify-content: space-between;
-      position: sticky; top: 0; z-index: 100;
-    }
-    .page-title { font-size: 15px; font-weight: 700; color: var(--txt); letter-spacing: -.2px; }
-    .topbar-actions { display: flex; align-items: center; gap: 10px; }
-    .status-dot {
-      width: 7px; height: 7px; border-radius: 50%;
-      display: inline-block; margin-right: 5px;
-    }
-    .status-dot.green { background: var(--green); box-shadow: 0 0 8px rgba(16,185,129,.6); }
-    .status-dot.gray  { background: var(--txt-light); }
-
-    .content { padding: 26px 28px; flex: 1; }
-
-    /* ════════════════════════════════════════════
-       CARDS & GRIDS
-    ════════════════════════════════════════════ */
-    .card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg); padding: 22px;
-      box-shadow: var(--shadow-sm);
-      position: relative;
-    }
-    .card::before {
+    .how-grid::before {
       content: '';
-      position: absolute; inset: 0;
-      border-radius: var(--radius-lg);
-      background: linear-gradient(135deg, rgba(124,58,237,.03), transparent);
-      pointer-events: none;
+      position: absolute;
+      top: 40px; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(168,85,247,.3), rgba(236,72,153,.3), transparent);
     }
-    .card-header {
-      display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 18px;
-    }
-    .card-title { font-size: 14px; font-weight: 700; color: var(--txt); }
-    .card-sub   { font-size: 12px; color: var(--txt-muted); margin-top: 2px; }
-
-    .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
-    @media (max-width: 900px) { .stats-row { grid-template-columns: 1fr 1fr; } }
-
-    .stat-card {
-      background: var(--card); border: 1px solid var(--border);
-      border-radius: var(--radius-lg); padding: 20px 22px;
-      box-shadow: var(--shadow-sm);
-      position: relative; overflow: hidden;
-      transition: border-color .2s, transform .2s;
-    }
-    .stat-card:hover { border-color: rgba(124,58,237,.3); transform: translateY(-2px); }
-    .stat-card::before {
-      content: ''; position: absolute; top: 0; left: 0;
-      width: 100%; height: 2px;
-      background: linear-gradient(90deg, var(--indigo), transparent);
-    }
-    .stat-card.green::before { background: linear-gradient(90deg, var(--green), transparent); }
-    .stat-card.orange::before { background: linear-gradient(90deg, var(--orange), transparent); }
-    .stat-card.purple::before { background: linear-gradient(90deg, #a855f7, transparent); }
-    .stat-card::after {
-      content: '';
-      position: absolute; top: -30px; right: -20px;
-      width: 80px; height: 80px;
-      background: radial-gradient(circle, rgba(124,58,237,.08), transparent);
-      border-radius: 50%;
-      pointer-events: none;
-    }
-    .stat-label { font-size: 11px; font-weight: 600; color: var(--txt-muted); text-transform: uppercase; letter-spacing: .8px; }
-    .stat-value { font-size: 30px; font-weight: 800; color: var(--txt); margin: 6px 0 3px; line-height: 1; }
-    .stat-hint  { font-size: 11px; color: var(--txt-light); }
-
-    /* ════════════════════════════════════════════
-       MATCH CARDS
-    ════════════════════════════════════════════ */
-    .match-list { display: flex; flex-direction: column; gap: 10px; }
-    .match-item {
-      background: var(--card); border: 1px solid var(--border);
-      border-radius: var(--radius); padding: 18px 20px;
-      display: flex; gap: 16px; align-items: flex-start;
-      box-shadow: var(--shadow-sm);
-      transition: border-color .2s, box-shadow .2s, transform .15s;
-      cursor: default; position: relative; overflow: hidden;
-    }
-    .match-item::before {
-      content: '';
-      position: absolute; left: 0; top: 0; bottom: 0;
-      width: 3px;
-      background: linear-gradient(180deg, var(--indigo), var(--accent2));
-      opacity: 0; transition: opacity .2s;
-    }
-    .match-item:hover {
-      border-color: rgba(124,58,237,.35);
-      box-shadow: 0 4px 24px rgba(124,58,237,.15);
-      transform: translateY(-2px);
-    }
-    .match-item:hover::before { opacity: 1; }
-    .score-ring {
-      width: 52px; height: 52px; border-radius: 14px;
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      font-weight: 800; font-size: 16px; flex-shrink: 0;
-      line-height: 1;
-    }
-    .score-ring .score-label { font-size: 9px; font-weight: 600; margin-top: 2px; opacity: .7; }
-    .score-high   { background: rgba(16,185,129,.18); color: #34d399; border: 1px solid rgba(16,185,129,.25); }
-    .score-mid    { background: rgba(245,158,11,.18);  color: #fbbf24; border: 1px solid rgba(245,158,11,.25); }
-    .score-low    { background: rgba(255,255,255,.06); color: var(--txt-muted); border: 1px solid var(--border); }
-
-    .match-content { flex: 1; min-width: 0; }
-    .match-title   { font-size: 14px; font-weight: 700; color: var(--txt); margin-bottom: 6px; line-height: 1.45; }
-    .match-chips   { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
-    .chip {
-      display: inline-flex; align-items: center; gap: 4px;
-      padding: 3px 9px; border-radius: 20px;
-      font-size: 11px; font-weight: 600;
-    }
-    .chip-blue   { background: rgba(124,58,237,.18); color: #a78bfa; border: 1px solid rgba(124,58,237,.2); }
-    .chip-green  { background: rgba(16,185,129,.15);  color: #34d399; border: 1px solid rgba(16,185,129,.2); }
-    .chip-orange { background: rgba(245,158,11,.15);  color: #fbbf24; border: 1px solid rgba(245,158,11,.2); }
-    .chip-gray   { background: rgba(255,255,255,.06); color: var(--txt-muted); border: 1px solid var(--border); }
-    .chip-new    { background: rgba(236,72,153,.15);  color: #f472b6; border: 1px solid rgba(236,72,153,.2); }
-
-    .match-reasoning { font-size: 12px; color: var(--txt-muted); line-height: 1.7; margin-bottom: 10px; }
-    .match-actions   { display: flex; gap: 6px; }
-
-    /* ════════════════════════════════════════════
-       TABLE / SEARCH RESULTS
-    ════════════════════════════════════════════ */
-    .search-bar {
-      display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap;
-    }
-    .search-input {
-      flex: 1; min-width: 200px; padding: 10px 14px 10px 38px;
-      border: 1px solid var(--border); border-radius: var(--radius-sm);
-      font-size: 14px; font-family: inherit; color: var(--txt);
-      background: var(--card);
-      outline: none; transition: border-color .15s, box-shadow .15s;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='%2394a3b8' viewBox='0 0 24 24'%3E%3Cpath d='M21 21l-4.35-4.35M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16z' stroke='%2364748b' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
-      background-repeat: no-repeat; background-position: 13px center;
-    }
-    .search-input::placeholder { color: var(--txt-light); }
-    .search-input:focus { border-color: rgba(124,58,237,.5); box-shadow: 0 0 0 3px rgba(124,58,237,.12); }
-    .filter-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
-    .filter-select {
-      padding: 8px 11px; border: 1px solid var(--border); border-radius: var(--radius-sm);
-      font-size: 12px; font-family: inherit; color: var(--txt-muted);
-      background: var(--card);
-      cursor: pointer; outline: none;
-    }
-    .filter-select:focus { border-color: rgba(124,58,237,.5); }
-    .filter-select option { background: #1a1a2e; color: var(--txt); }
-
-    .tender-row {
-      background: var(--card); border: 1px solid var(--border);
-      border-radius: var(--radius); padding: 15px 18px;
-      margin-bottom: 8px; box-shadow: var(--shadow-sm);
-      transition: border-color .2s, transform .15s;
-    }
-    .tender-row:hover { border-color: rgba(124,58,237,.3); transform: translateY(-1px); }
-    .tender-row-title { font-size: 13px; font-weight: 700; margin-bottom: 6px; color: var(--txt); }
-    .tender-row-meta  { display: flex; flex-wrap: wrap; gap: 12px; font-size: 11px; color: var(--txt-muted); }
-
-    /* ════════════════════════════════════════════
-       ONBOARDING STEPS
-    ════════════════════════════════════════════ */
-    .onboard-wrap { max-width: 540px; margin: 0 auto; padding: 32px 0; }
-    .steps {
-      display: flex; align-items: center; gap: 0;
-      margin-bottom: 32px; position: relative;
-    }
-    .step {
-      display: flex; flex-direction: column; align-items: center; gap: 4px;
-      flex: 1; position: relative; z-index: 1;
+    .how-step {
+      padding: 0 32px 48px;
+      text-align: center;
+      position: relative;
     }
     .step-num {
-      width: 34px; height: 34px; border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 13px; font-weight: 700;
-      border: 1px solid var(--border); color: var(--txt-light);
-      background: var(--card);
+      width: 80px; height: 80px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, rgba(124,58,237,.2), rgba(168,85,247,.2));
+      border: 1px solid rgba(168,85,247,.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.6rem;
+      font-weight: 900;
+      color: #c084fc;
+      margin: 0 auto 28px;
+      position: relative;
+      z-index: 1;
+    }
+    .how-step h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 10px; }
+    .how-step p  { color: var(--c-muted); font-size: .9rem; line-height: 1.65; }
+
+    /* ── Pricing ── */
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 24px;
+      margin-top: 64px;
+      align-items: start;
+    }
+    .l-pricing-card {
+      border-radius: 24px;
+      padding: 40px 36px;
+      background: var(--c-surface);
+      border: 1px solid var(--c-border);
+      position: relative;
+      transition: transform .3s;
+    }
+    .l-pricing-card:hover { transform: translateY(-4px); }
+    .l-pricing-card.popular {
+      --ba: 0deg;
+      background: linear-gradient(rgba(10,10,28,.96),rgba(10,10,28,.96)) padding-box,
+        conic-gradient(from var(--ba), #7c3aed 0%, #a855f7 22%, #ec4899 45%, #06b6d4 68%, #a855f7 88%, #7c3aed 100%) border-box;
+      border: 1.5px solid transparent;
+      animation: baSpin 5s linear infinite;
+    }
+    .popular-badge {
+      display: inline-block;
+      padding: 4px 14px;
+      border-radius: 100px;
+      background: linear-gradient(135deg, var(--c-purple), var(--c-pink));
+      color: #fff;
+      font-size: .75rem;
+      font-weight: 700;
+      letter-spacing: .06em;
+      margin-bottom: 20px;
+    }
+    .pricing-name { font-size: 1.1rem; font-weight: 700; margin-bottom: 12px; }
+    .pricing-price {
+      font-size: 3rem;
+      font-weight: 900;
+      letter-spacing: -2px;
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+    .pricing-price span { font-size: 1rem; font-weight: 500; color: var(--c-muted); letter-spacing: 0; }
+    .pricing-desc { color: var(--c-muted); font-size: .9rem; margin-bottom: 32px; }
+    .pricing-features { list-style: none; margin-bottom: 36px; }
+    .pricing-features li {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 0;
+      font-size: .9rem;
+      color: var(--c-muted);
+      border-bottom: 1px solid var(--c-border);
+    }
+    .pricing-features li:last-child { border-bottom: none; }
+    .pricing-features li .check { color: #a855f7; font-size: 1rem; }
+    .pricing-cta { width: 100%; text-align: center; justify-content: center; }
+
+    /* ── Auth section ── */
+    #auth {
+      padding: 100px 24px;
+    }
+    .auth-wrap {
+      max-width: 460px;
+      margin: 0 auto;
+    }
+    .auth-card {
+      --ba: 0deg;
+      background: linear-gradient(rgba(8,8,24,.93), rgba(8,8,24,.93)) padding-box,
+        conic-gradient(from var(--ba), rgba(124,58,237,.65) 0%, rgba(168,85,247,.35) 25%, rgba(236,72,153,.35) 50%, rgba(168,85,247,.35) 75%, rgba(124,58,237,.65) 100%) border-box;
+      border: 1.5px solid transparent;
+      border-radius: 24px;
+      padding: 48px 44px;
+      animation: baSpin 8s linear infinite;
+    }
+    .auth-tabs {
+      display: flex;
+      gap: 4px;
+      background: rgba(255,255,255,.05);
+      border-radius: 12px;
+      padding: 4px;
+      margin-bottom: 36px;
+    }
+    .auth-tab {
+      flex: 1;
+      padding: 10px;
+      border-radius: 9px;
+      text-align: center;
+      cursor: pointer;
+      font-size: .9rem;
+      font-weight: 600;
+      color: var(--c-dim);
+      transition: all .2s;
+      border: none;
+      background: transparent;
+    }
+    .auth-tab.active {
+      background: linear-gradient(135deg, var(--c-purple), var(--c-pink));
+      color: #fff;
+      box-shadow: 0 2px 12px rgba(124,58,237,.4);
+    }
+    .auth-form { display: flex; flex-direction: column; gap: 18px; }
+    .auth-form.hidden { display: none; }
+    .form-group { display: flex; flex-direction: column; gap: 8px; }
+    .form-group label { font-size: .85rem; font-weight: 600; color: var(--c-muted); }
+    .form-group input {
+      background: rgba(255,255,255,.05);
+      border: 1px solid var(--c-border2);
+      border-radius: 10px;
+      padding: 13px 16px;
+      color: var(--c-text);
+      font-size: .95rem;
+      font-family: inherit;
+      outline: none;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .form-group input:focus {
+      border-color: rgba(168,85,247,.5);
+      box-shadow: 0 0 0 3px rgba(168,85,247,.12);
+    }
+    .form-group input::placeholder { color: var(--c-dim); }
+    .auth-submit {
+      margin-top: 8px;
+      width: 100%;
+      justify-content: center;
+      padding: 14px;
+      font-size: 1rem;
+    }
+    .auth-msg {
+      text-align: center;
+      font-size: .88rem;
+      margin-top: 12px;
+      min-height: 20px;
+    }
+    .auth-msg.success { color: #10b981; }
+    .auth-msg.error   { color: #f87171; }
+
+    /* ── Dashboard ── */
+    #dashboard { display: none; }
+    .dash-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 100px 48px 32px;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .dash-title { font-size: 1.6rem; font-weight: 800; }
+    .dash-title span { color: var(--c-muted); font-weight: 400; font-size: 1rem; margin-left: 12px; }
+
+    /* Quota bar */
+    .quota-bar-wrap { max-width: 1200px; margin: 0 auto 32px; padding: 0 48px; }
+    .quota-label { font-size: .85rem; color: var(--c-muted); margin-bottom: 8px; display: flex; justify-content: space-between; }
+    .quota-track { height: 6px; background: rgba(255,255,255,.08); border-radius: 100px; overflow: hidden; }
+    .quota-fill  { height: 100%; background: linear-gradient(90deg, var(--c-purple), var(--c-pink)); border-radius: 100px; transition: width .4s ease; }
+
+    /* Tabs */
+    .dash-tabs {
+      display: flex;
+      gap: 4px;
+      padding: 0 48px;
+      margin-bottom: 32px;
+      flex-wrap: wrap;
+    }
+    .dash-tab {
+      padding: 9px 20px;
+      border-radius: 10px;
+      font-size: .88rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid var(--c-border);
+      background: transparent;
+      color: var(--c-muted);
       transition: all .2s;
     }
-    .step.done   .step-num { background: linear-gradient(135deg, #059669, #10b981); border-color: transparent; color: #fff; box-shadow: 0 0 12px rgba(16,185,129,.3); }
-    .step.active .step-num { background: linear-gradient(135deg, var(--indigo), #9333ea); border-color: transparent; color: #fff; box-shadow: 0 0 16px rgba(124,58,237,.4); }
-    .step-text { font-size: 11px; font-weight: 600; color: var(--txt-light); }
-    .step.done .step-text, .step.active .step-text { color: var(--txt-muted); }
-    .step-line {
-      position: absolute; top: 17px; left: calc(50% + 20px); right: calc(-50% + 20px);
-      height: 1px; background: var(--border); z-index: 0;
-    }
-    .step-line.done { background: linear-gradient(90deg, #10b981, rgba(16,185,129,.3)); }
+    .dash-tab.active { background: linear-gradient(135deg, var(--c-purple), var(--c-pink)); border-color: transparent; color: #fff; }
+    .dash-tab:hover:not(.active) { background: var(--c-surface2); color: var(--c-text); }
 
-    .onboard-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 30px; box-shadow: var(--shadow-md); }
-    .onboard-title { font-size: 20px; font-weight: 800; margin-bottom: 6px; letter-spacing: -.3px; }
-    .onboard-sub   { font-size: 13px; color: var(--txt-muted); margin-bottom: 24px; }
+    .tab-panel { display: none; padding: 0 48px 48px; }
+    .tab-panel.active { display: block; }
 
-    /* ════════════════════════════════════════════
-       PRICING
-    ════════════════════════════════════════════ */
-    .pricing-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-    @media (max-width: 600px) { .pricing-grid { grid-template-columns: 1fr; } }
-    .pricing-card {
-      background: var(--card); border: 1px solid var(--border);
-      border-radius: var(--radius-lg); padding: 26px;
-      position: relative; transition: border-color .2s, box-shadow .2s, transform .2s;
+    /* Generate form */
+    .gen-card {
+      background: var(--c-surface);
+      border: 1px solid var(--c-border);
+      border-radius: 20px;
+      padding: 36px;
+      max-width: 820px;
     }
-    .pricing-card:hover { transform: translateY(-2px); }
-    .pricing-card.popular {
-      border-color: rgba(124,58,237,.4);
-      box-shadow: 0 0 0 1px rgba(124,58,237,.2), 0 8px 32px rgba(124,58,237,.2);
-      background: linear-gradient(135deg, rgba(124,58,237,.06), rgba(236,72,153,.04));
+    .gen-card h2 { font-size: 1.3rem; font-weight: 700; margin-bottom: 24px; }
+    .gen-form { display: flex; flex-direction: column; gap: 20px; }
+    .gen-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .gen-form label { font-size: .85rem; font-weight: 600; color: var(--c-muted); display: block; margin-bottom: 8px; }
+    .gen-form input,
+    .gen-form textarea,
+    .gen-form select {
+      width: 100%;
+      background: rgba(255,255,255,.05);
+      border: 1px solid var(--c-border2);
+      border-radius: 10px;
+      padding: 12px 16px;
+      color: var(--c-text);
+      font-size: .92rem;
+      font-family: inherit;
+      outline: none;
+      transition: border-color .2s, box-shadow .2s;
     }
-    .popular-tag {
-      position: absolute; top: -11px; left: 50%; transform: translateX(-50%);
-      background: linear-gradient(135deg, var(--indigo), var(--accent2));
-      color: #fff; border-radius: 20px;
-      padding: 3px 14px; font-size: 11px; font-weight: 700; letter-spacing: .5px;
-      white-space: nowrap;
-      box-shadow: 0 4px 12px rgba(124,58,237,.4);
+    .gen-form input:focus,
+    .gen-form textarea:focus,
+    .gen-form select:focus {
+      border-color: rgba(168,85,247,.5);
+      box-shadow: 0 0 0 3px rgba(168,85,247,.12);
     }
-    .plan-name  { font-size: 16px; font-weight: 800; margin-bottom: 4px; }
-    .plan-price { font-size: 34px; font-weight: 900; color: var(--txt); line-height: 1; }
-    .plan-price span { font-size: 14px; font-weight: 400; color: var(--txt-muted); }
-    .plan-features { list-style: none; margin: 16px 0 22px; display: flex; flex-direction: column; gap: 9px; }
-    .plan-features li {
-      display: flex; gap: 8px; align-items: flex-start;
-      font-size: 13px; color: var(--txt-muted);
-    }
-    .plan-features li::before { content: "✓"; color: var(--green); font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+    .gen-form textarea { resize: vertical; min-height: 100px; }
+    .gen-form select { cursor: pointer; }
+    .gen-form option { background: #1a1a2e; }
+    .gen-submit { align-self: flex-start; }
 
-    /* ════════════════════════════════════════════
-       PROFILE PAGE
-    ════════════════════════════════════════════ */
-    .section-title {
-      font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .8px;
-      color: var(--txt-muted); margin-bottom: 14px; padding-bottom: 10px;
-      border-bottom: 1px solid var(--border);
+    /* Result card */
+    .result-card {
+      background: var(--c-surface);
+      border: 1px solid var(--c-border);
+      border-radius: 20px;
+      padding: 36px;
+      margin-top: 24px;
+      max-width: 820px;
     }
-    .profile-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-    @media (max-width: 600px) { .profile-grid { grid-template-columns: 1fr; } }
+    .result-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .result-header h3 { font-size: 1.05rem; font-weight: 700; }
+    .result-body {
+      white-space: pre-wrap;
+      font-size: .9rem;
+      color: var(--c-muted);
+      line-height: 1.75;
+      max-height: 500px;
+      overflow-y: auto;
+    }
+    .result-body::-webkit-scrollbar { width: 6px; }
+    .result-body::-webkit-scrollbar-track { background: transparent; }
+    .result-body::-webkit-scrollbar-thumb { background: rgba(168,85,247,.3); border-radius: 3px; }
 
-    /* ════════════════════════════════════════════
-       SPINNER / EMPTY
-    ════════════════════════════════════════════ */
+    /* History */
+    .history-list { display: flex; flex-direction: column; gap: 16px; }
+    .history-item {
+      background: var(--c-surface);
+      border: 1px solid var(--c-border);
+      border-radius: 16px;
+      padding: 24px 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 24px;
+      transition: border-color .2s, background .2s;
+    }
+    .history-item:hover { border-color: var(--c-border2); background: var(--c-surface2); }
+    .history-main { flex: 1; min-width: 0; }
+    .history-meta { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+    .history-type {
+      font-size: .75rem;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 100px;
+      background: rgba(168,85,247,.1);
+      color: #c084fc;
+      border: 1px solid rgba(168,85,247,.2);
+    }
+    .history-date { font-size: .8rem; color: var(--c-dim); }
+    .history-title { font-size: .95rem; font-weight: 600; margin-bottom: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .history-preview { font-size: .85rem; color: var(--c-muted); overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+    .history-actions { display: flex; gap: 8px; flex-shrink: 0; }
+    .icon-btn {
+      width: 36px; height: 36px;
+      border-radius: 9px;
+      background: var(--c-surface2);
+      border: 1px solid var(--c-border);
+      color: var(--c-muted);
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .95rem;
+      transition: all .2s;
+    }
+    .icon-btn:hover { background: rgba(168,85,247,.1); border-color: rgba(168,85,247,.3); color: var(--c-text); }
+
+    /* Distribute */
+    .dist-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+    }
+    .dist-card {
+      background: var(--c-surface);
+      border: 1px solid var(--c-border);
+      border-radius: 16px;
+      padding: 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      transition: all .3s;
+    }
+    .dist-card:hover { border-color: var(--c-border2); transform: translateY(-2px); }
+    .dist-icon {
+      width: 48px; height: 48px;
+      border-radius: 12px;
+      background: rgba(168,85,247,.1);
+      border: 1px solid rgba(168,85,247,.2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem;
+    }
+    .dist-name { font-weight: 700; font-size: 1rem; }
+    .dist-desc { color: var(--c-muted); font-size: .88rem; line-height: 1.6; flex: 1; }
+    .dist-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: .8rem;
+    }
+    .status-dot { width: 7px; height: 7px; border-radius: 50%; }
+    .status-dot.green { background: #10b981; box-shadow: 0 0 6px #10b981; }
+    .status-dot.gray  { background: #6b7280; }
+
+    /* Account */
+    .account-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+    }
+    .account-card {
+      background: var(--c-surface);
+      border: 1px solid var(--c-border);
+      border-radius: 16px;
+      padding: 28px;
+    }
+    .account-card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 20px; color: var(--c-text); }
+    .account-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--c-border); font-size: .9rem; }
+    .account-row:last-child { border-bottom: none; }
+    .account-row .key { color: var(--c-muted); }
+    .account-row .val { font-weight: 600; }
+
+    /* Plan badge */
+    .plan-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: 100px;
+      font-size: .78rem;
+      font-weight: 700;
+    }
+    .plan-badge.free { background: rgba(107,114,128,.15); color: #9ca3af; border: 1px solid rgba(107,114,128,.2); }
+    .plan-badge.pro  { background: linear-gradient(135deg, rgba(124,58,237,.2), rgba(236,72,153,.2)); color: #c084fc; border: 1px solid rgba(168,85,247,.3); }
+
+    /* Loading spinner */
     .spinner {
-      width: 32px; height: 32px;
-      border: 2px solid var(--border);
-      border-top-color: var(--accent);
+      width: 18px; height: 18px;
+      border: 2px solid rgba(255,255,255,.3);
+      border-top-color: #fff;
       border-radius: 50%;
-      animation: spin .7s linear infinite;
-      margin: 40px auto;
+      animation: spin .6s linear infinite;
+      display: none;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    .empty {
-      text-align: center; padding: 52px 20px;
-      color: var(--txt-light);
-    }
-    .empty-icon { font-size: 40px; margin-bottom: 14px; opacity: .6; }
-    .empty h3   { font-size: 15px; font-weight: 700; color: var(--txt-muted); margin-bottom: 6px; }
-    .empty p    { font-size: 13px; }
-
-    /* ════════════════════════════════════════════
-       TOAST
-    ════════════════════════════════════════════ */
+    /* Toast */
     #toast {
-      position: fixed; bottom: 24px; right: 24px; z-index: 9999;
-      background: rgba(26,26,46,.95);
-      backdrop-filter: blur(16px);
-      border: 1px solid rgba(124,58,237,.25);
-      color: var(--txt);
-      padding: 12px 20px; border-radius: var(--radius);
-      font-size: 13px; font-weight: 500;
-      box-shadow: 0 8px 32px rgba(0,0,0,.5), 0 0 0 1px rgba(124,58,237,.1);
-      opacity: 0; transform: translateY(10px);
-      transition: all .2s; pointer-events: none;
-      max-width: 320px;
-    }
-    #toast.show { opacity: 1; transform: translateY(0); }
-
-    /* ════════════════════════════════════════════
-       ACTION BAR
-    ════════════════════════════════════════════ */
-    .action-bar {
-      display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap;
+      position: fixed;
+      bottom: 32px; right: 32px;
+      background: #1e1e3a;
+      border: 1px solid var(--c-border2);
+      border-radius: 14px;
+      padding: 16px 24px;
+      font-size: .9rem;
+      z-index: 9999;
+      transform: translateY(100px);
+      opacity: 0;
+      transition: all .3s;
+      display: flex;
       align-items: center;
+      gap: 10px;
+      max-width: 360px;
+      box-shadow: 0 8px 40px rgba(0,0,0,.5);
     }
-    .action-bar .divider { width: 1px; height: 20px; background: var(--border); margin: 0 4px; }
+    #toast.show { transform: translateY(0); opacity: 1; }
+    #toast.success { border-color: rgba(16,185,129,.3); }
+    #toast.error   { border-color: rgba(248,113,113,.3); }
 
-    /* ════════════════════════════════════════════
-       SCROLLBAR
-    ════════════════════════════════════════════ */
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); border-radius: 3px; }
-    ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,.2); }
+    /* ── Footer ── */
+    footer {
+      border-top: 1px solid var(--c-border);
+      padding: 48px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      position: relative;
+      z-index: 1;
+    }
+    .footer-logo {
+      font-size: 1.1rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #c084fc, #ec4899);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    footer p { font-size: .85rem; color: var(--c-dim); }
+    .footer-links { display: flex; gap: 24px; }
+    .footer-links a { font-size: .85rem; color: var(--c-dim); text-decoration: none; transition: color .2s; }
+    .footer-links a:hover { color: var(--c-text); }
 
-    /* ════════════════════════════════════════════
-       RESPONSIVE
-    ════════════════════════════════════════════ */
+    /* ── Divider glow ── */
+    .glow-divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(168,85,247,.4), rgba(236,72,153,.3), transparent);
+      margin: 0 48px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ── Responsive ── */
     @media (max-width: 768px) {
-      .sidebar { width: 58px; }
-      .sidebar-logo .name, .nav-item span, .user-info, .nav-section-label { display: none; }
-      .nav-item { justify-content: center; }
-      .main { margin-left: 58px; }
-      .content { padding: 16px; }
-      .stats-row { grid-template-columns: 1fr 1fr; }
+      nav { padding: 0 20px; }
+      .nav-links { display: none; }
+      .dash-header, .dash-tabs, .tab-panel, .quota-bar-wrap { padding-left: 20px; padding-right: 20px; }
+      .auth-card { padding: 32px 24px; }
+      .gen-row { grid-template-columns: 1fr; }
+      footer { padding: 32px 20px; flex-direction: column; text-align: center; }
+      .glow-divider { margin: 0 20px; }
     }
   </style>
 </head>
 <body>
 
-<!-- ══════════════════════════════════════════
-     AUTH
-══════════════════════════════════════════ -->
-<div id="auth-screen">
-  <div class="auth-wrap">
-    <!-- Hero Left -->
-    <div class="auth-hero">
-      <h1>Öffentliche Ausschreibungen.<br><span>Automatisch gefunden.</span></h1>
-      <p>PublicFlow scannt täglich TED EU, bund.de und deutsche Vergabeplattformen — und liefert dir nur die Treffer, die wirklich zu deinem Unternehmen passen.</p>
-      <div class="hero-pills">
-        <div class="hero-pill"><div class="dot"></div> KI-Matching via Claude AI</div>
-        <div class="hero-pill"><div class="dot"></div> TED EU + bund.de + 5 weitere Quellen</div>
-        <div class="hero-pill"><div class="dot"></div> Tägliche E-Mail-Alerts um 07:00 Uhr</div>
+<!-- Aurora -->
+<div class="aurora" aria-hidden="true">
+  <div class="b b1"></div>
+  <div class="b b2"></div>
+  <div class="b b3"></div>
+  <div class="b b4"></div>
+</div>
+
+<!-- Grid -->
+<div class="grid-bg" aria-hidden="true"></div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<!-- ═══════════════════════════════════════════ NAV ══ -->
+<nav>
+  <div class="nav-logo">PublicFlow</div>
+  <ul class="nav-links" id="navLinks">
+    <li><a href="#features">Features</a></li>
+    <li><a href="#how">Wie es funktioniert</a></li>
+    <li><a href="#pricing">Preise</a></li>
+  </ul>
+  <div class="nav-cta" id="navCta">
+    <button class="btn btn-ghost" onclick="showAuth('login')">Anmelden</button>
+    <button class="btn btn-primary" onclick="showAuth('register')">Kostenlos starten</button>
+  </div>
+</nav>
+
+<!-- ═══════════════════════════════════════════ LANDING ══ -->
+<div class="page" id="landingPage">
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-badge"><div class="badge-dot"></div> KI-gestützte PR-Automatisierung</div>
+    <h1>Pressemitteilungen,<br>die <span class="grad">Aufmerksamkeit</span> erzeugen</h1>
+    <p>PublicFlow erstellt, optimiert und verteilt deine Pressemitteilungen vollautomatisch — powered by AI. Spare Stunden, gewinne Reichweite.</p>
+    <div class="hero-cta">
+      <button class="btn btn-primary btn-lg" onclick="showAuth('register')">Jetzt kostenlos starten →</button>
+      <button class="btn btn-ghost btn-lg" onclick="document.getElementById('how').scrollIntoView({behavior:'smooth'})">Wie es funktioniert</button>
+    </div>
+    <div class="hero-stats">
+      <div class="stat"><div class="stat-n">10×</div><div class="stat-l">Schneller als manuell</div></div>
+      <div class="stat"><div class="stat-n">500+</div><div class="stat-l">Verteilerkanäle</div></div>
+      <div class="stat"><div class="stat-n">98%</div><div class="stat-l">Kundenzufriedenheit</div></div>
+      <div class="stat"><div class="stat-n">50k+</div><div class="stat-l">Mitteilungen generiert</div></div>
+    </div>
+  </section>
+
+  <div class="glow-divider"></div>
+
+  <!-- Features -->
+  <section id="features">
+    <div class="section-inner">
+      <div class="text-center reveal">
+        <div class="section-tag">Features</div>
+        <h2 class="section-title">Alles was du für professionelle PR brauchst</h2>
+        <p class="section-sub mx-auto">Von der Idee zur fertigen Pressemitteilung in Sekunden — mit KI, die deine Markensprache versteht.</p>
+      </div>
+      <div class="features-grid">
+        <div class="feat-card reveal">
+          <div class="feat-icon purple">✨</div>
+          <h3>KI-Textgenerierung</h3>
+          <p>Claude AI erstellt professionelle Pressemitteilungen in deiner Markensprache — präzise, überzeugend, SEO-optimiert.</p>
+        </div>
+        <div class="feat-card reveal">
+          <div class="feat-icon cyan">🎯</div>
+          <h3>Smart Targeting</h3>
+          <p>Intelligente Branchenerkennung leitet deine Mitteilungen automatisch an die relevantesten Redaktionen weiter.</p>
+        </div>
+        <div class="feat-card reveal">
+          <div class="feat-icon pink">⚡</div>
+          <h3>Sofortige Verteilung</h3>
+          <p>Verteile an hunderte Kanäle gleichzeitig — Nachrichtenportale, Fachjournalisten, Social Media — mit einem Klick.</p>
+        </div>
+        <div class="feat-card reveal">
+          <div class="feat-icon amber">📊</div>
+          <h3>Echtzeit-Analytics</h3>
+          <p>Verfolge Öffnungsraten, Medienresonanz und Reichweite deiner Mitteilungen in einem übersichtlichen Dashboard.</p>
+        </div>
+        <div class="feat-card reveal">
+          <div class="feat-icon green">🔄</div>
+          <h3>Automatisierung</h3>
+          <p>Plane Veröffentlichungen im Voraus, richte Trigger ein und lasse PublicFlow im Hintergrund für dich arbeiten.</p>
+        </div>
+        <div class="feat-card reveal">
+          <div class="feat-icon indigo">🔒</div>
+          <h3>Enterprise Security</h3>
+          <p>SOC 2 konform, DSGVO-ready, Ende-zu-Ende-verschlüsselt. Deine Daten bleiben deine Daten.</p>
+        </div>
       </div>
     </div>
+  </section>
 
-    <!-- Card Right -->
-    <div class="auth-card">
-      <div class="auth-logo">
-        <div class="logo-icon">🎯</div>
-        PublicFlow
+  <div class="glow-divider"></div>
+
+  <!-- How it works -->
+  <section id="how">
+    <div class="section-inner">
+      <div class="text-center reveal">
+        <div class="section-tag">Prozess</div>
+        <h2 class="section-title">In 3 Schritten zur perfekten Pressemitteilung</h2>
+        <p class="section-sub mx-auto">Kein kompliziertes Setup. Keine langen Onboardings. Sofort loslegen.</p>
       </div>
-      <div class="auth-tagline">Melde dich an oder erstelle ein Konto</div>
-
-      <div class="auth-tabs">
-        <div class="auth-tab active" onclick="switchAuthTab('login')">Anmelden</div>
-        <div class="auth-tab"        onclick="switchAuthTab('register')">Registrieren</div>
+      <div class="how-grid">
+        <div class="how-step reveal">
+          <div class="step-num">1</div>
+          <h3>Thema eingeben</h3>
+          <p>Beschreibe dein Thema in wenigen Sätzen. Branche, Zielgruppe, Kernbotschaft — mehr brauchst du nicht.</p>
+        </div>
+        <div class="how-step reveal">
+          <div class="step-num">2</div>
+          <h3>KI generiert</h3>
+          <p>Unsere KI erstellt innerhalb von Sekunden eine professionelle Pressemitteilung nach journalistischen Standards.</p>
+        </div>
+        <div class="how-step reveal">
+          <div class="step-num">3</div>
+          <h3>Verteilen & messen</h3>
+          <p>Mit einem Klick an hunderte Kanäle verteilen und in Echtzeit verfolgen, wie die Medien reagieren.</p>
+        </div>
       </div>
+    </div>
+  </section>
 
-      <div id="auth-error" class="msg-error" style="display:none"></div>
+  <div class="glow-divider"></div>
 
-      <!-- Login -->
-      <div id="login-form">
-        <div class="field">
-          <label>E-Mail</label>
-          <input type="email" id="login-email" placeholder="name@firma.de" autocomplete="email">
-        </div>
-        <div class="field">
-          <label>Passwort</label>
-          <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password">
-        </div>
-        <button class="btn btn-primary btn-full" style="margin-top:4px" onclick="doLogin()">Anmelden →</button>
+  <!-- Pricing -->
+  <section id="pricing">
+    <div class="section-inner">
+      <div class="text-center reveal">
+        <div class="section-tag">Preise</div>
+        <h2 class="section-title">Transparent. Fair. Skalierbar.</h2>
+        <p class="section-sub mx-auto">Starte kostenlos und wachse mit deinen Anforderungen. Keine versteckten Kosten.</p>
       </div>
-
-      <!-- Register -->
-      <div id="register-form" style="display:none">
-        <div class="field">
-          <label>Vollständiger Name</label>
-          <input type="text" id="reg-name" placeholder="Max Mustermann">
+      <div class="pricing-grid">
+        <!-- Free -->
+        <div class="l-pricing-card reveal">
+          <div class="pricing-name">Free</div>
+          <div class="pricing-price">0€ <span>/ Monat</span></div>
+          <div class="pricing-desc">Perfekt zum Ausprobieren</div>
+          <ul class="pricing-features">
+            <li><span class="check">✓</span> 3 Pressemitteilungen / Monat</li>
+            <li><span class="check">✓</span> KI-Generierung</li>
+            <li><span class="check">✓</span> 10 Verteilerkanäle</li>
+            <li><span class="check">✓</span> Basis-Analytics</li>
+            <li><span class="check">✓</span> E-Mail Support</li>
+          </ul>
+          <button class="btn btn-ghost pricing-cta" onclick="showAuth('register')">Kostenlos starten</button>
         </div>
-        <div class="field">
-          <label>E-Mail</label>
-          <input type="email" id="reg-email" placeholder="name@firma.de" autocomplete="email">
+        <!-- Pro -->
+        <div class="l-pricing-card popular reveal">
+          <div class="popular-badge">⚡ Beliebteste Wahl</div>
+          <div class="pricing-name">Pro</div>
+          <div class="pricing-price">49€ <span>/ Monat</span></div>
+          <div class="pricing-desc">Für wachsende Unternehmen</div>
+          <ul class="pricing-features">
+            <li><span class="check">✓</span> 50 Pressemitteilungen / Monat</li>
+            <li><span class="check">✓</span> Erweiterte KI-Anpassung</li>
+            <li><span class="check">✓</span> 200+ Verteilerkanäle</li>
+            <li><span class="check">✓</span> Echtzeit-Analytics</li>
+            <li><span class="check">✓</span> Prioritäts-Support</li>
+            <li><span class="check">✓</span> API-Zugang</li>
+          </ul>
+          <button class="btn btn-primary pricing-cta" onclick="showAuth('register')">Pro starten</button>
         </div>
-        <div class="field">
-          <label>Passwort</label>
-          <input type="password" id="reg-password" placeholder="Mind. 6 Zeichen" autocomplete="new-password">
+        <!-- Enterprise -->
+        <div class="l-pricing-card reveal">
+          <div class="pricing-name">Enterprise</div>
+          <div class="pricing-price">199€ <span>/ Monat</span></div>
+          <div class="pricing-desc">Für große Teams & Agenturen</div>
+          <ul class="pricing-features">
+            <li><span class="check">✓</span> Unbegrenzte Pressemitteilungen</li>
+            <li><span class="check">✓</span> Custom KI-Training</li>
+            <li><span class="check">✓</span> 500+ Verteilerkanäle</li>
+            <li><span class="check">✓</span> Dedizierter Account Manager</li>
+            <li><span class="check">✓</span> SLA-Garantie</li>
+            <li><span class="check">✓</span> White-Label Option</li>
+          </ul>
+          <button class="btn btn-ghost pricing-cta" onclick="showAuth('register')">Kontakt aufnehmen</button>
         </div>
-        <button class="btn btn-primary btn-full" style="margin-top:4px" onclick="doRegister()">Konto erstellen →</button>
       </div>
+    </div>
+  </section>
 
-      <div style="text-align:center;margin-top:16px;font-size:12px;color:var(--txt-light)">
-        Teste kostenlos · Keine Kreditkarte nötig
+  <div class="glow-divider"></div>
+
+  <!-- Auth -->
+  <section id="auth">
+    <div class="text-center reveal" style="margin-bottom:48px;">
+      <div class="section-tag">Jetzt starten</div>
+      <h2 class="section-title">Bereit für professionelle PR?</h2>
+      <p class="section-sub mx-auto">Erstelle deinen kostenlosen Account und generiere deine erste Pressemitteilung in unter 2 Minuten.</p>
+    </div>
+    <div class="auth-wrap">
+      <div class="auth-card reveal">
+        <div class="auth-tabs">
+          <button class="auth-tab active" id="tabLogin" onclick="switchAuthTab('login')">Anmelden</button>
+          <button class="auth-tab" id="tabRegister" onclick="switchAuthTab('register')">Registrieren</button>
+        </div>
+
+        <!-- Login -->
+        <form class="auth-form" id="loginForm" onsubmit="handleLogin(event)">
+          <div class="form-group">
+            <label>E-Mail</label>
+            <input type="email" id="loginEmail" placeholder="deine@email.de" required>
+          </div>
+          <div class="form-group">
+            <label>Passwort</label>
+            <input type="password" id="loginPassword" placeholder="••••••••" required>
+          </div>
+          <button type="submit" class="btn btn-primary auth-submit" id="loginBtn">
+            <span>Anmelden</span>
+            <div class="spinner" id="loginSpinner"></div>
+          </button>
+          <div class="auth-msg" id="loginMsg"></div>
+        </form>
+
+        <!-- Register -->
+        <form class="auth-form hidden" id="registerForm" onsubmit="handleRegister(event)">
+          <div class="form-group">
+            <label>Name</label>
+            <input type="text" id="regName" placeholder="Max Mustermann" required>
+          </div>
+          <div class="form-group">
+            <label>E-Mail</label>
+            <input type="email" id="regEmail" placeholder="deine@email.de" required>
+          </div>
+          <div class="form-group">
+            <label>Passwort</label>
+            <input type="password" id="regPassword" placeholder="Mindestens 8 Zeichen" minlength="8" required>
+          </div>
+          <button type="submit" class="btn btn-primary auth-submit" id="registerBtn">
+            <span>Account erstellen</span>
+            <div class="spinner" id="registerSpinner"></div>
+          </button>
+          <div class="auth-msg" id="registerMsg"></div>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="footer-logo">PublicFlow</div>
+    <p>© 2025 PublicFlow. Alle Rechte vorbehalten.</p>
+    <div class="footer-links">
+      <a href="#">Datenschutz</a>
+      <a href="#">AGB</a>
+      <a href="#">Impressum</a>
+      <a href="#">Kontakt</a>
+    </div>
+  </footer>
+</div><!-- /landingPage -->
+
+<!-- ═══════════════════════════════════════════ DASHBOARD ══ -->
+<div id="dashboard">
+  <div class="dash-header">
+    <div>
+      <div class="dash-title">Guten Tag, <span id="dashUsername">Nutzer</span> 👋</div>
+    </div>
+    <div style="display:flex;gap:12px;align-items:center;">
+      <span class="plan-badge free" id="planBadge">Free Plan</span>
+      <button class="btn btn-ghost" onclick="handleLogout()">Abmelden</button>
+    </div>
+  </div>
+
+  <div class="quota-bar-wrap">
+    <div class="quota-label">
+      <span>Monatliches Kontingent</span>
+      <span id="quotaText">0 / 3 genutzt</span>
+    </div>
+    <div class="quota-track"><div class="quota-fill" id="quotaFill" style="width:0%"></div></div>
+  </div>
+
+  <div class="dash-tabs">
+    <button class="dash-tab active" onclick="switchTab('generate')">✨ Generieren</button>
+    <button class="dash-tab" onclick="switchTab('history')">📋 Verlauf</button>
+    <button class="dash-tab" onclick="switchTab('distribute')">📡 Verteilen</button>
+    <button class="dash-tab" onclick="switchTab('account')">⚙️ Account</button>
+  </div>
+
+  <!-- Generate Tab -->
+  <div class="tab-panel active" id="tab-generate">
+    <div class="gen-card">
+      <h2>✨ Neue Pressemitteilung</h2>
+      <form class="gen-form" onsubmit="handleGenerate(event)">
+        <div class="gen-row">
+          <div>
+            <label>Unternehmen / Marke</label>
+            <input type="text" id="genCompany" placeholder="z.B. TechStartup GmbH" required>
+          </div>
+          <div>
+            <label>Branche</label>
+            <select id="genIndustry">
+              <option value="tech">Technologie & Software</option>
+              <option value="finance">Finanzen & FinTech</option>
+              <option value="health">Gesundheit & MedTech</option>
+              <option value="retail">Handel & E-Commerce</option>
+              <option value="auto">Automobil & Mobilität</option>
+              <option value="food">Lebensmittel & Gastronomie</option>
+              <option value="fashion">Mode & Lifestyle</option>
+              <option value="other">Andere</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label>Hauptthema der Pressemitteilung</label>
+          <input type="text" id="genTopic" placeholder="z.B. Produktlaunch: KI-gestütztes CRM-System" required>
+        </div>
+        <div>
+          <label>Wichtige Details & Hintergrundinformationen</label>
+          <textarea id="genDetails" placeholder="Beschreibe hier die wichtigsten Fakten, Zahlen, Zitate oder Hintergrundinformationen..." rows="5"></textarea>
+        </div>
+        <div class="gen-row">
+          <div>
+            <label>Ton / Stil</label>
+            <select id="genTone">
+              <option value="professional">Professionell & Seriös</option>
+              <option value="dynamic">Dynamisch & Modern</option>
+              <option value="friendly">Freundlich & Zugänglich</option>
+              <option value="technical">Technisch & Präzise</option>
+            </select>
+          </div>
+          <div>
+            <label>Zielgruppe</label>
+            <select id="genAudience">
+              <option value="journalist">Journalisten & Redakteure</option>
+              <option value="investor">Investoren & Analysten</option>
+              <option value="customer">Endkunden & Verbraucher</option>
+              <option value="b2b">B2B-Partner & Einkäufer</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+          <button type="submit" class="btn btn-primary gen-submit" id="genBtn">
+            <span>✨ Pressemitteilung generieren</span>
+            <div class="spinner" id="genSpinner"></div>
+          </button>
+          <span style="font-size:.85rem;color:var(--c-dim);">Ca. 5-10 Sekunden</span>
+        </div>
+      </form>
+    </div>
+
+    <div class="result-card" id="resultCard" style="display:none;">
+      <div class="result-header">
+        <h3>📄 Generierte Pressemitteilung</h3>
+        <div style="display:flex;gap:8px;">
+          <button class="icon-btn" onclick="copyResult()" title="Kopieren">📋</button>
+          <button class="icon-btn" onclick="downloadResult()" title="Download">⬇️</button>
+        </div>
+      </div>
+      <div class="result-body" id="resultBody"></div>
+    </div>
+  </div>
+
+  <!-- History Tab -->
+  <div class="tab-panel" id="tab-history">
+    <div class="history-list" id="historyList">
+      <div style="text-align:center;padding:64px;color:var(--c-dim);">
+        <div style="font-size:2.5rem;margin-bottom:16px;">📋</div>
+        <div>Noch keine Pressemitteilungen generiert.</div>
       </div>
     </div>
   </div>
-</div>
 
-<!-- ══════════════════════════════════════════
-     APP
-══════════════════════════════════════════ -->
-<div id="app-screen">
-
-  <!-- SIDEBAR -->
-  <nav class="sidebar">
-    <div class="sidebar-logo">
-      <div class="icon">🎯</div>
-      <div class="name">PublicFlow</div>
-    </div>
-
-    <div class="sidebar-nav">
-      <div class="nav-section-label">Hauptmenü</div>
-      <div class="nav-item active" data-tab="dashboard" onclick="switchTab('dashboard')">
-        <span class="nav-icon">📊</span><span>Dashboard</span>
+  <!-- Distribute Tab -->
+  <div class="tab-panel" id="tab-distribute">
+    <div class="dist-grid">
+      <div class="dist-card">
+        <div class="dist-icon">📰</div>
+        <div class="dist-name">Presseportale</div>
+        <div class="dist-desc">Automatische Verteilung an führende deutsche Presseportale wie PR Newswire, dpa und openPR.</div>
+        <div class="dist-status"><div class="status-dot green"></div><span>Verfügbar</span></div>
+        <button class="btn btn-ghost" style="font-size:.85rem;padding:8px 16px;">Konfigurieren</button>
       </div>
-      <div class="nav-item" data-tab="matches" onclick="switchTab('matches')">
-        <span class="nav-icon">🎯</span><span>Matches</span>
-        <span class="nav-badge" id="nav-badge-matches" style="display:none">0</span>
+      <div class="dist-card">
+        <div class="dist-icon">📧</div>
+        <div class="dist-name">Journalisten-Verteiler</div>
+        <div class="dist-desc">Direkter E-Mail-Versand an kuratierte Journalisten- und Redakteurslisten nach Branche und Thema.</div>
+        <div class="dist-status"><div class="status-dot green"></div><span>Verfügbar</span></div>
+        <button class="btn btn-ghost" style="font-size:.85rem;padding:8px 16px;">Konfigurieren</button>
       </div>
-      <div class="nav-item" data-tab="search" onclick="switchTab('search')">
-        <span class="nav-icon">🔍</span><span>Suche</span>
+      <div class="dist-card">
+        <div class="dist-icon">🐦</div>
+        <div class="dist-name">Social Media</div>
+        <div class="dist-desc">Automatische Kurzversionen für LinkedIn, X (Twitter) und Facebook — angepasst an die jeweilige Plattform.</div>
+        <div class="dist-status"><div class="status-dot gray"></div><span>Bald verfügbar</span></div>
+        <button class="btn btn-ghost" style="font-size:.85rem;padding:8px 16px;opacity:.5;cursor:not-allowed;">Coming Soon</button>
       </div>
-
-      <div class="nav-section-label" style="margin-top:8px">Einstellungen</div>
-      <div class="nav-item" data-tab="profile" onclick="switchTab('profile')">
-        <span class="nav-icon">👤</span><span>Profil</span>
-      </div>
-      <div class="nav-item" data-tab="pricing" onclick="switchTab('pricing')">
-        <span class="nav-icon">💳</span><span>Abo</span>
+      <div class="dist-card">
+        <div class="dist-icon">🔗</div>
+        <div class="dist-name">API & Webhooks</div>
+        <div class="dist-desc">Integriere PublicFlow in deine bestehenden Workflows via REST API oder Webhooks zu Zapier & Make.</div>
+        <div class="dist-status"><div class="status-dot green"></div><span>Pro & Enterprise</span></div>
+        <button class="btn btn-ghost" style="font-size:.85rem;padding:8px 16px;">Dokumentation</button>
       </div>
     </div>
+  </div>
 
-    <div class="sidebar-footer">
-      <div class="user-card">
-        <div class="user-avatar" id="user-avatar">N</div>
-        <div class="user-info">
-          <div class="user-name"  id="user-name-sidebar">Nutzer</div>
-          <div class="user-plan"  id="user-plan-sidebar">Kein Abo</div>
-        </div>
-        <div class="user-logout" onclick="doLogout()" title="Abmelden">⎋</div>
+  <!-- Account Tab -->
+  <div class="tab-panel" id="tab-account">
+    <div class="account-grid">
+      <div class="account-card">
+        <h3>👤 Profil</h3>
+        <div class="account-row"><span class="key">Name</span><span class="val" id="accName">—</span></div>
+        <div class="account-row"><span class="key">E-Mail</span><span class="val" id="accEmail">—</span></div>
+        <div class="account-row"><span class="key">Mitglied seit</span><span class="val" id="accSince">—</span></div>
+        <div class="account-row"><span class="key">Plan</span><span class="val"><span class="plan-badge free" id="accPlan">Free</span></span></div>
+      </div>
+      <div class="account-card">
+        <h3>📊 Nutzung</h3>
+        <div class="account-row"><span class="key">Diesen Monat</span><span class="val" id="accUsage">0 Mitteilungen</span></div>
+        <div class="account-row"><span class="key">Kontingent</span><span class="val" id="accQuota">3 / Monat</span></div>
+        <div class="account-row"><span class="key">Gesamt generiert</span><span class="val" id="accTotal">0</span></div>
+      </div>
+      <div class="account-card">
+        <h3>⬆️ Upgrade</h3>
+        <p style="color:var(--c-muted);font-size:.9rem;margin-bottom:20px;line-height:1.65;">Schalte mehr Pressemitteilungen, erweiterte Verteilerkanäle und Prioritäts-Support frei.</p>
+        <button class="btn btn-primary" onclick="handleUpgrade()">Auf Pro upgraden — 49€/Monat</button>
       </div>
     </div>
-  </nav>
-
-  <!-- MAIN CONTENT -->
-  <div class="main">
-
-    <!-- Topbar -->
-    <div class="topbar">
-      <div class="page-title" id="page-title">Dashboard</div>
-      <div class="topbar-actions">
-        <span id="ai-status" style="font-size:12px;color:var(--txt-muted)"></span>
-      </div>
-    </div>
-
-    <div class="content">
-
-      <!-- ── ONBOARDING ─────────────────────────── -->
-      <div id="tab-onboarding" style="display:none">
-        <div class="onboard-wrap">
-          <div class="steps">
-            <div class="step done" id="step1">
-              <div class="step-num">✓</div>
-              <div class="step-text">Registriert</div>
-              <div class="step-line done" id="line1"></div>
-            </div>
-            <div class="step active" id="step2">
-              <div class="step-num">2</div>
-              <div class="step-text">Profil</div>
-              <div class="step-line" id="line2"></div>
-            </div>
-            <div class="step" id="step3">
-              <div class="step-num">3</div>
-              <div class="step-text">Abo</div>
-            </div>
-          </div>
-
-          <!-- Step 2: Profil -->
-          <div id="onboard-profile">
-            <div class="onboard-card">
-              <div class="onboard-title">Unternehmensprofil anlegen</div>
-              <div class="onboard-sub">Damit der KI-Matcher die richtigen Ausschreibungen findet.</div>
-              <div id="onboard-error" class="msg-error" style="display:none"></div>
-              <div class="field"><label>Unternehmensname *</label><input type="text" id="ob-name" placeholder="Mustermann GmbH"></div>
-              <div class="field"><label>Branche *</label>
-                <select id="ob-industry">
-                  <option value="">Auswählen...</option>
-                  <option>IT &amp; Software</option><option>Bau &amp; Architektur</option>
-                  <option>Beratung &amp; Dienstleistung</option><option>Gesundheit &amp; Pflege</option>
-                  <option>Bildung &amp; Forschung</option><option>Umwelt &amp; Energie</option>
-                  <option>Marketing &amp; Kommunikation</option><option>Transport &amp; Logistik</option>
-                  <option>Sicherheit</option><option>Sonstiges</option>
-                </select>
-              </div>
-              <div class="field"><label>Kompetenzen / Keywords *</label>
-                <input type="text" id="ob-keywords" placeholder="z.B. Cloud, DevOps, Python, KI">
-                <div class="field-hint">Kommagetrennt · Fließen direkt in die TED-Suchanfrage ein</div>
-              </div>
-              <div class="field-row">
-                <div class="field"><label>Min. Budget €</label><input type="number" id="ob-min" placeholder="10.000"></div>
-                <div class="field"><label>Max. Budget €</label><input type="number" id="ob-max" placeholder="500.000"></div>
-              </div>
-              <div class="field"><label>Regionen</label><input type="text" id="ob-regions" value="Deutschland,EU"></div>
-              <button class="btn btn-primary btn-full" style="margin-top:8px" onclick="saveOnboardProfile()">Weiter zum Abo →</button>
-            </div>
-          </div>
-
-          <!-- Step 3: Abo -->
-          <div id="onboard-pricing" style="display:none">
-            <div class="onboard-card">
-              <div class="onboard-title">Plan auswählen</div>
-              <div class="onboard-sub">Starte im Testmodus oder wähle direkt deinen Plan.</div>
-              <div id="onboard-pay-error" class="msg-error" style="display:none"></div>
-              <div class="pricing-grid" style="margin-bottom:20px">
-                <div class="pricing-card">
-                  <div class="plan-name">Starter</div>
-                  <div class="plan-price">€99<span>/Monat</span></div>
-                  <ul class="plan-features">
-                    <li>5 Ausschreibungen/Woche</li>
-                    <li>Tägl. E-Mail-Alerts</li>
-                    <li>Basis-Matching</li>
-                  </ul>
-                  <button class="btn btn-ghost btn-full" onclick="doCheckout('starter','monthly')">Starter wählen</button>
-                </div>
-                <div class="pricing-card popular">
-                  <div class="popular-tag">EMPFOHLEN</div>
-                  <div class="plan-name" style="background:linear-gradient(135deg,#a78bfa,#ec4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">Professional</div>
-                  <div class="plan-price">€175<span>/Monat</span></div>
-                  <ul class="plan-features">
-                    <li>Unbegrenzte Ausschreibungen</li>
-                    <li>KI-Matching (Claude AI)</li>
-                    <li>Sofort-Alerts &amp; Digest</li>
-                    <li>Manuelle Suche</li>
-                  </ul>
-                  <button class="btn btn-primary btn-full" onclick="doCheckout('professional','monthly')">Professional wählen</button>
-                </div>
-              </div>
-              <div style="text-align:center">
-                <button class="btn btn-ghost btn-sm" onclick="activateMock()">🧪 Testmodus aktivieren (ohne Zahlung)</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ── DASHBOARD ───────────────────────────── -->
-      <div id="tab-dashboard" style="display:none">
-        <div class="stats-row">
-          <div class="stat-card">
-            <div class="stat-label">Matches gesamt</div>
-            <div class="stat-value" id="stat-matches">–</div>
-            <div class="stat-hint">KI-bewertete Treffer</div>
-          </div>
-          <div class="stat-card green">
-            <div class="stat-label">Ausschreibungen</div>
-            <div class="stat-value" id="stat-tenders">–</div>
-            <div class="stat-hint">In Datenbank</div>
-          </div>
-          <div class="stat-card orange">
-            <div class="stat-label">Letzter Scan</div>
-            <div class="stat-value" id="stat-last-scan" style="font-size:15px;margin-top:8px">–</div>
-            <div class="stat-hint">Tägl. 07:00 Uhr</div>
-          </div>
-          <div class="stat-card purple">
-            <div class="stat-label">Dein Plan</div>
-            <div class="stat-value" id="stat-plan" style="font-size:17px;margin-top:8px">–</div>
-            <div class="stat-hint" id="stat-plan-sub"></div>
-          </div>
-        </div>
-
-        <div class="action-bar">
-          <button class="btn btn-primary" onclick="triggerScrape()">🔄 Jetzt scannen</button>
-          <button class="btn btn-success" onclick="triggerMatch()">🎯 Matching starten</button>
-          <div class="divider"></div>
-          <button class="btn btn-ghost btn-sm" onclick="switchTab('search')">🔍 Manuell suchen</button>
-        </div>
-
-        <div id="scrape-status" style="margin-bottom:16px"></div>
-
-        <div class="card">
-          <div class="card-header">
-            <div>
-              <div class="card-title">Neueste Matches</div>
-              <div class="card-sub">Top 5 zuletzt gefundene Treffer</div>
-            </div>
-            <button class="btn btn-ghost btn-sm" onclick="switchTab('matches')">Alle ansehen →</button>
-          </div>
-          <div id="dashboard-matches"><div class="spinner"></div></div>
-        </div>
-      </div>
-
-      <!-- ── MATCHES ────────────────────────────── -->
-      <div id="tab-matches" style="display:none">
-        <div class="action-bar">
-          <button class="btn btn-primary btn-sm" onclick="triggerMatch()">🎯 Neu matchen</button>
-          <div class="divider"></div>
-          <select class="filter-select" id="filter-score" onchange="renderMatches()">
-            <option value="0">Alle Scores</option>
-            <option value="70">Score ≥ 70%</option>
-            <option value="50">Score ≥ 50%</option>
-          </select>
-          <select class="filter-select" id="filter-source" onchange="renderMatches()">
-            <option value="">Alle Quellen</option>
-            <option value="ted">TED EU</option>
-            <option value="bund">bund.de</option>
-          </select>
-        </div>
-        <div id="matches-list"><div class="spinner"></div></div>
-      </div>
-
-      <!-- ── SEARCH ──────────────────────────────── -->
-      <div id="tab-search" style="display:none">
-        <div class="search-bar">
-          <input class="search-input" type="text" id="search-query"
-                 placeholder="Suchbegriff eingeben..." onkeydown="if(event.key==='Enter') doSearch()">
-          <select class="filter-select" id="search-source">
-            <option value="">Alle Quellen</option>
-            <option value="ted.europa.eu">TED EU</option>
-            <option value="service.bund.de">bund.de</option>
-          </select>
-          <button class="btn btn-primary" onclick="doSearch()">Suchen</button>
-        </div>
-        <div class="filter-bar">
-          <input type="number" class="filter-select" id="search-min" placeholder="Min. Budget €" style="width:130px">
-          <input type="number" class="filter-select" id="search-max" placeholder="Max. Budget €" style="width:130px">
-        </div>
-        <div id="search-results"></div>
-      </div>
-
-      <!-- ── PROFIL ──────────────────────────────── -->
-      <div id="tab-profile" style="display:none">
-        <div class="card">
-          <div id="profile-msg" style="display:none"></div>
-          <div class="section-title">Unternehmen</div>
-          <div class="profile-grid" style="margin-bottom:20px">
-            <div class="field"><label>Unternehmensname</label><input type="text" id="p-name"></div>
-            <div class="field"><label>Branche</label>
-              <select id="p-industry">
-                <option>IT &amp; Software</option><option>Bau &amp; Architektur</option>
-                <option>Beratung &amp; Dienstleistung</option><option>Gesundheit &amp; Pflege</option>
-                <option>Bildung &amp; Forschung</option><option>Umwelt &amp; Energie</option>
-                <option>Marketing &amp; Kommunikation</option><option>Transport &amp; Logistik</option>
-                <option>Sicherheit</option><option>Sonstiges</option>
-              </select>
-            </div>
-            <div class="field" style="grid-column:1/-1">
-              <label>Beschreibung</label>
-              <textarea id="p-desc" placeholder="Was macht dein Unternehmen? Welche Stärken habt ihr?"></textarea>
-            </div>
-          </div>
-
-          <div class="section-title">Matching-Kriterien</div>
-          <div class="field"><label>Kompetenzen / Keywords</label>
-            <input type="text" id="p-keywords" placeholder="Cloud, DevOps, Python, KI, Beratung">
-            <div class="field-hint">Kommagetrennt · Fließen direkt in TED-Suchanfrage und KI-Matching ein</div>
-          </div>
-          <div class="field"><label>CPV-Codes (optional)</label>
-            <input type="text" id="p-cpv" placeholder="72000000, 71000000">
-            <div class="field-hint">EU-Vergabeklassen · Kommagetrennt</div>
-          </div>
-          <div class="profile-grid" style="margin-bottom:20px">
-            <div class="field"><label>Min. Budget €</label><input type="number" id="p-min"></div>
-            <div class="field"><label>Max. Budget €</label><input type="number" id="p-max"></div>
-            <div class="field" style="grid-column:1/-1"><label>Regionen</label>
-              <input type="text" id="p-regions" placeholder="Deutschland,EU,Bayern">
-            </div>
-          </div>
-
-          <div style="display:flex;justify-content:flex-end">
-            <button class="btn btn-primary" onclick="saveProfile()">Änderungen speichern</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- ── ABO ────────────────────────────────── -->
-      <div id="tab-pricing" style="display:none">
-        <div id="sub-status-card" style="margin-bottom:24px"></div>
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title">Pläne vergleichen</div>
-          </div>
-          <div class="pricing-grid">
-            <div class="pricing-card">
-              <div class="plan-name">Starter</div>
-              <div class="plan-price" style="margin:8px 0">€99<span>/Monat</span></div>
-              <ul class="plan-features">
-                <li>5 Ausschreibungen/Woche</li>
-                <li>Tägl. E-Mail-Alerts</li>
-                <li>Basis-Matching (Regel-basiert)</li>
-                <li>Deutscher Support</li>
-              </ul>
-              <button class="btn btn-ghost btn-full" onclick="doCheckout('starter','monthly')">Starter wählen</button>
-              <div style="text-align:center;margin-top:8px;font-size:11px;color:var(--txt-light);cursor:pointer" onclick="doCheckout('starter','yearly')">Jährlich: €79/Monat (–20%)</div>
-            </div>
-            <div class="pricing-card popular">
-              <div class="popular-tag">EMPFOHLEN</div>
-              <div class="plan-name" style="background:linear-gradient(135deg,#a78bfa,#ec4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">Professional</div>
-              <div class="plan-price" style="margin:8px 0">€175<span>/Monat</span></div>
-              <ul class="plan-features">
-                <li>Unbegrenzte Ausschreibungen</li>
-                <li>KI-Matching via Claude AI</li>
-                <li>Sofort-Alerts bei neuen Matches</li>
-                <li>Wöchentlicher Digest</li>
-                <li>Profil-basiertes TED-Scraping</li>
-                <li>Manuelle Freitext-Suche</li>
-              </ul>
-              <button class="btn btn-primary btn-full" onclick="doCheckout('professional','monthly')">Professional wählen</button>
-              <div style="text-align:center;margin-top:8px;font-size:11px;color:var(--txt-light);cursor:pointer" onclick="doCheckout('professional','yearly')">Jährlich: €140/Monat (–20%)</div>
-            </div>
-          </div>
-          <div style="text-align:center;margin-top:20px">
-            <button class="btn btn-ghost btn-sm" onclick="activateMock()">🧪 Testmodus aktivieren (ohne Zahlung)</button>
-          </div>
-        </div>
-      </div>
-
-    </div><!-- /content -->
-  </div><!-- /main -->
-</div><!-- /app-screen -->
-
-<div id="toast"></div>
+  </div>
+</div><!-- /dashboard -->
 
 <script>
-const API = window.location.origin;
-let authToken = localStorage.getItem('pf_token');
-let currentUser = null;
-let allMatches = [];
-let scrapeRunning = false;
+  // ─── Config ───────────────────────────────────────────
+  const API = '';  // same origin
 
-/* ── UTILS ──────────────────────────────────────────── */
-function toast(msg, ms = 3200) {
-  const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.classList.add('show');
-  setTimeout(() => el.classList.remove('show'), ms);
-}
-async function apiFetch(path, opts = {}) {
-  const h = { 'Content-Type': 'application/json', ...(opts.headers || {}) };
-  if (authToken) h['Authorization'] = 'Bearer ' + authToken;
-  const r = await fetch(API + path, { ...opts, headers: h });
-  if (r.status === 401) { doLogout(); throw new Error('Session abgelaufen'); }
-  return r;
-}
-function fmt(n) { return n != null ? Number(n).toLocaleString('de-DE') : '–'; }
-function scClass(s) { return s >= 70 ? 'score-high' : s >= 50 ? 'score-mid' : 'score-low'; }
-function esc(s) {
-  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-function initials(name) { return (name||'?').split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase(); }
+  // ─── State ────────────────────────────────────────────
+  let currentUser = null;
+  let authToken   = localStorage.getItem('pf_token') || null;
+  let releases    = [];
 
-/* ── AUTH ───────────────────────────────────────────── */
-function switchAuthTab(tab) {
-  document.getElementById('login-form').style.display    = tab === 'login'    ? '' : 'none';
-  document.getElementById('register-form').style.display = tab === 'register' ? '' : 'none';
-  document.querySelectorAll('.auth-tab').forEach((el, i) =>
-    el.classList.toggle('active', (i === 0) === (tab === 'login')));
-  document.getElementById('auth-error').style.display = 'none';
-}
-async function doLogin() {
-  const email = document.getElementById('login-email').value.trim();
-  const password = document.getElementById('login-password').value;
-  const err = document.getElementById('auth-error');
-  err.style.display = 'none';
-  if (!email || !password) { err.textContent = 'Bitte alle Felder ausfüllen.'; err.style.display = ''; return; }
-  try {
-    const r = await fetch(API + '/auth/login', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password })
-    });
-    const d = await r.json();
-    if (!r.ok) { err.textContent = d.detail || 'Login fehlgeschlagen'; err.style.display = ''; return; }
-    authToken = d.token;
-    localStorage.setItem('pf_token', authToken);
-    currentUser = d;
-    enterApp();
-  } catch(e) { err.textContent = 'Server nicht erreichbar.'; err.style.display = ''; }
-}
-async function doRegister() {
-  const name = document.getElementById('reg-name').value.trim();
-  const email = document.getElementById('reg-email').value.trim();
-  const password = document.getElementById('reg-password').value;
-  const err = document.getElementById('auth-error');
-  err.style.display = 'none';
-  if (!name || !email || !password) { err.textContent = 'Alle Felder ausfüllen.'; err.style.display = ''; return; }
-  if (password.length < 6) { err.textContent = 'Passwort mind. 6 Zeichen.'; err.style.display = ''; return; }
-  try {
-    const r = await fetch(API + '/auth/register', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password, full_name: name })
-    });
-    const d = await r.json();
-    if (!r.ok) { err.textContent = d.detail || 'Registrierung fehlgeschlagen'; err.style.display = ''; return; }
-    authToken = d.token;
-    localStorage.setItem('pf_token', authToken);
-    currentUser = d;
-    enterApp();
-  } catch(e) { err.textContent = 'Server nicht erreichbar.'; err.style.display = ''; }
-}
-function doLogout() {
-  authToken = null; currentUser = null;
-  localStorage.removeItem('pf_token');
-  document.getElementById('auth-screen').style.display = '';
-  document.getElementById('app-screen').classList.remove('visible');
-}
+  // ─── Init ─────────────────────────────────────────────
+  window.addEventListener('DOMContentLoaded', () => {
+    if (authToken) verifyAndLoad();
+    // Scroll reveal
+    const obs = new IntersectionObserver(
+      entries => entries.forEach(e => {
+        if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); }
+      }),
+      { threshold: 0.1, rootMargin: '0px 0px -40px 0px' }
+    );
+    document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+  });
 
-/* ── APP INIT ───────────────────────────────────────── */
-async function enterApp() {
-  document.getElementById('auth-screen').style.display = 'none';
-  document.getElementById('app-screen').classList.add('visible');
-  try {
-    const r = await apiFetch('/auth/me');
-    if (r.ok) currentUser = await r.json();
-  } catch(e) {}
-
-  // Sidebar user info
-  const name = currentUser?.full_name || currentUser?.email || 'Nutzer';
-  document.getElementById('user-name-sidebar').textContent = name;
-  document.getElementById('user-avatar').textContent = initials(name);
-  document.getElementById('user-plan-sidebar').textContent =
-    currentUser?.has_subscription
-      ? (currentUser.plan === 'professional' ? 'Professional ✓' : 'Starter ✓')
-      : 'Kein Abo';
-
-  // AI status indicator
-  document.getElementById('ai-status').innerHTML =
-    '<span class="status-dot green"></span> Claude AI aktiv';
-
-  // Routing
-  if (!currentUser?.has_profile) {
-    showOnboarding('profile');
-  } else if (!currentUser?.has_subscription) {
-    showOnboarding('pricing');
-  } else {
-    switchTab('dashboard');
-    loadDashboard();
-  }
-}
-
-async function init() {
-  if (authToken) {
+  async function verifyAndLoad() {
     try {
-      const r = await apiFetch('/auth/me');
-      if (r.ok) { currentUser = await r.json(); enterApp(); return; }
-    } catch(e) {}
-    authToken = null; localStorage.removeItem('pf_token');
+      const r = await apiFetch('/api/me');
+      if (r.ok) {
+        currentUser = await r.json();
+        showDashboard();
+      } else {
+        authToken = null;
+        localStorage.removeItem('pf_token');
+      }
+    } catch { /* offline */ }
   }
-}
 
-/* ── ONBOARDING ─────────────────────────────────────── */
-function showOnboarding(step) {
-  document.querySelectorAll('[id^=tab-]').forEach(el => el.style.display = 'none');
-  document.getElementById('tab-onboarding').style.display = '';
-  const isProfile = step === 'profile';
-  document.getElementById('onboard-profile').style.display  = isProfile ? '' : 'none';
-  document.getElementById('onboard-pricing').style.display  = isProfile ? 'none' : '';
-  document.getElementById('step2').className = 'step ' + (isProfile ? 'active' : 'done');
-  document.getElementById('step3').className = 'step ' + (isProfile ? '' : 'active');
-  document.getElementById('line2').className = 'step-line' + (isProfile ? '' : ' done');
-  if (!isProfile) document.getElementById('step2').querySelector('.step-num').textContent = '✓';
-  setPageTitle(isProfile ? 'Profil anlegen' : 'Plan auswählen');
-}
+  // ─── API helper ───────────────────────────────────────
+  async function apiFetch(path, opts = {}) {
+    const headers = { 'Content-Type': 'application/json', ...(opts.headers || {}) };
+    if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
+    return fetch(path, { ...opts, headers });
+  }
 
-async function saveOnboardProfile() {
-  const err = document.getElementById('onboard-error');
-  err.style.display = 'none';
-  const name = document.getElementById('ob-name').value.trim();
-  const ind  = document.getElementById('ob-industry').value;
-  const kw   = document.getElementById('ob-keywords').value.trim();
-  if (!name || !ind || !kw) { err.textContent = 'Bitte alle Pflichtfelder ausfüllen.'; err.style.display = ''; return; }
-  try {
-    const r = await apiFetch('/profile', {
-      method: 'POST',
-      body: JSON.stringify({
-        company_name: name, industry: ind, experience_keywords: kw,
-        min_budget: parseFloat(document.getElementById('ob-min').value) || null,
-        max_budget: parseFloat(document.getElementById('ob-max').value) || null,
-        regions: document.getElementById('ob-regions').value || 'Deutschland,EU'
-      })
-    });
-    if (!r.ok) { const d = await r.json(); err.textContent = d.detail || 'Fehler'; err.style.display = ''; return; }
-    currentUser.has_profile = true;
-    showOnboarding('pricing');
-  } catch(e) { err.textContent = 'Fehler beim Speichern.'; err.style.display = ''; }
-}
+  // ─── Toast ────────────────────────────────────────────
+  let toastTimer;
+  function toast(msg, type = 'success') {
+    const t = document.getElementById('toast');
+    t.textContent = (type === 'success' ? '✓  ' : '✕  ') + msg;
+    t.className = `show ${type}`;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { t.className = ''; }, 3500);
+  }
 
-async function activateMock() {
-  try {
-    const r = await apiFetch('/subscription/activate-mock?plan=professional&interval=monthly', { method: 'POST' });
-    if (r.ok) {
-      currentUser.has_subscription = true; currentUser.plan = 'professional';
-      document.getElementById('user-plan-sidebar').textContent = 'Professional ✓';
-      toast('✅ Testmodus aktiviert!');
-      switchTab('dashboard'); loadDashboard();
+  // ─── Auth UI ──────────────────────────────────────────
+  function showAuth(tab) {
+    document.getElementById('auth').scrollIntoView({ behavior: 'smooth' });
+    setTimeout(() => switchAuthTab(tab), 400);
+  }
+
+  function switchAuthTab(tab) {
+    document.getElementById('loginForm').classList.toggle('hidden', tab !== 'login');
+    document.getElementById('registerForm').classList.toggle('hidden', tab !== 'register');
+    document.getElementById('tabLogin').classList.toggle('active', tab === 'login');
+    document.getElementById('tabRegister').classList.toggle('active', tab === 'register');
+  }
+
+  async function handleLogin(e) {
+    e.preventDefault();
+    const btn = document.getElementById('loginBtn');
+    const sp  = document.getElementById('loginSpinner');
+    const msg = document.getElementById('loginMsg');
+    btn.disabled = true; sp.style.display = 'block'; msg.textContent = '';
+    try {
+      const body = new URLSearchParams({
+        username: document.getElementById('loginEmail').value,
+        password: document.getElementById('loginPassword').value,
+      });
+      const r = await fetch('/api/login', { method: 'POST', body, headers: { 'Content-Type': 'application/x-www-form-urlencoded' } });
+      const data = await r.json();
+      if (r.ok) {
+        authToken = data.access_token;
+        localStorage.setItem('pf_token', authToken);
+        currentUser = data.user || { email: document.getElementById('loginEmail').value };
+        showDashboard();
+        toast('Willkommen zurück!');
+      } else {
+        msg.textContent = data.detail || 'Anmeldung fehlgeschlagen.';
+        msg.className = 'auth-msg error';
+      }
+    } catch {
+      msg.textContent = 'Server nicht erreichbar.';
+      msg.className = 'auth-msg error';
     }
-  } catch(e) { toast('Fehler beim Aktivieren'); }
-}
+    btn.disabled = false; sp.style.display = 'none';
+  }
 
-async function doCheckout(plan, interval) {
-  try {
-    const r = await apiFetch('/checkout', { method: 'POST', body: JSON.stringify({ plan, interval }) });
-    const d = await r.json();
-    if (d.checkout_url) window.location.href = d.checkout_url;
-    else toast('Stripe nicht konfiguriert — nutze Testmodus');
-  } catch(e) { toast('Checkout Fehler'); }
-}
-
-/* ── TAB ROUTING ────────────────────────────────────── */
-const PAGE_TITLES = {
-  dashboard: 'Dashboard', matches: 'Matches', search: 'Suche',
-  profile: 'Unternehmensprofil', pricing: 'Abo & Pläne'
-};
-function setPageTitle(t) { document.getElementById('page-title').textContent = t; }
-
-function switchTab(name) {
-  document.querySelectorAll('[id^=tab-]').forEach(el => el.style.display = 'none');
-  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-  document.getElementById('tab-' + name).style.display = '';
-  document.querySelector('[data-tab="' + name + '"]')?.classList.add('active');
-  setPageTitle(PAGE_TITLES[name] || name);
-  if (name === 'matches') loadMatches();
-  if (name === 'profile') loadProfile();
-  if (name === 'pricing') loadSubStatus();
-}
-
-/* ── DASHBOARD ──────────────────────────────────────── */
-async function loadDashboard() {
-  try {
-    const r = await apiFetch('/tenders?limit=1');
-    if (r.ok) { const d = await r.json(); document.getElementById('stat-tenders').textContent = fmt(d.total); }
-  } catch(e) {}
-  try {
-    const r = await apiFetch('/matches');
-    if (r.ok) {
-      const d = await r.json();
-      const total = d.total || 0;
-      document.getElementById('stat-matches').textContent = fmt(total);
-      const badge = document.getElementById('nav-badge-matches');
-      if (total > 0) { badge.textContent = total; badge.style.display = ''; }
-      renderDashboardMatches(d.matches?.slice(0, 5) || []);
+  async function handleRegister(e) {
+    e.preventDefault();
+    const btn = document.getElementById('registerBtn');
+    const sp  = document.getElementById('registerSpinner');
+    const msg = document.getElementById('registerMsg');
+    btn.disabled = true; sp.style.display = 'block'; msg.textContent = '';
+    try {
+      const r = await apiFetch('/api/register', {
+        method: 'POST',
+        body: JSON.stringify({
+          name: document.getElementById('regName').value,
+          email: document.getElementById('regEmail').value,
+          password: document.getElementById('regPassword').value,
+        }),
+      });
+      const data = await r.json();
+      if (r.ok) {
+        msg.textContent = 'Account erstellt! Melde dich jetzt an.';
+        msg.className = 'auth-msg success';
+        setTimeout(() => switchAuthTab('login'), 1500);
+      } else {
+        msg.textContent = data.detail || 'Registrierung fehlgeschlagen.';
+        msg.className = 'auth-msg error';
+      }
+    } catch {
+      msg.textContent = 'Server nicht erreichbar.';
+      msg.className = 'auth-msg error';
     }
-  } catch(e) {}
-  document.getElementById('stat-last-scan').textContent = new Date().toLocaleDateString('de-DE');
-  document.getElementById('stat-plan').textContent = (currentUser?.plan || '–').replace('professional','Pro').replace('starter','Starter');
-  document.getElementById('stat-plan-sub').textContent = currentUser?.has_subscription ? 'Aktiv ✓' : 'Kein Abo';
-}
-
-async function triggerScrape() {
-  if (scrapeRunning) { toast('Scan läuft bereits...'); return; }
-  scrapeRunning = true;
-  const el = document.getElementById('scrape-status');
-  el.innerHTML = '<div class="msg-info">🔄 Scan läuft im Hintergrund (~30 Sek.)...</div>';
-  try {
-    await apiFetch('/scrape', { method: 'POST' });
-    setTimeout(() => {
-      el.innerHTML = '<div class="msg-success">✅ Scan abgeschlossen! Starte Matching...</div>';
-      triggerMatch(true);
-    }, 20000);
-  } catch(e) {
-    el.innerHTML = '<div class="msg-error">❌ Scan Fehler. Server erreichbar?</div>';
-    scrapeRunning = false;
+    btn.disabled = false; sp.style.display = 'none';
   }
-}
 
-async function triggerMatch(fromScrape = false) {
-  const el = document.getElementById('scrape-status');
-  if (!fromScrape) el.innerHTML = '<div class="msg-info">🎯 Matching läuft...</div>';
-  try {
-    const r = await apiFetch('/match', { method: 'POST' });
-    const d = await r.json();
-    if (r.ok) {
-      el.innerHTML = '<div class="msg-success">✅ ' + (d.new_matches || d.matches_found) + ' neue Matches gefunden!</div>';
-      allMatches = []; loadDashboard();
-    } else {
-      el.innerHTML = '<div class="msg-error">' + esc(d.detail || 'Matching fehlgeschlagen') + '</div>';
+  function handleLogout() {
+    authToken = null;
+    currentUser = null;
+    releases = [];
+    localStorage.removeItem('pf_token');
+    document.getElementById('dashboard').style.display = 'none';
+    document.getElementById('landingPage').style.display = '';
+    document.getElementById('navCta').style.display = '';
+    document.getElementById('navLinks').style.display = '';
+    toast('Abgemeldet.', 'success');
+  }
+
+  // ─── Dashboard ────────────────────────────────────────
+  function showDashboard() {
+    document.getElementById('landingPage').style.display = 'none';
+    document.getElementById('dashboard').style.display = '';
+    document.getElementById('navCta').style.display = 'none';
+    window.scrollTo(0, 0);
+    populateDashboard();
+    loadHistory();
+  }
+
+  function populateDashboard() {
+    if (!currentUser) return;
+    const name = currentUser.name || currentUser.email || 'Nutzer';
+    document.getElementById('dashUsername').textContent = name.split(' ')[0];
+    document.getElementById('accName').textContent  = currentUser.name  || '—';
+    document.getElementById('accEmail').textContent = currentUser.email || '—';
+    document.getElementById('accSince').textContent = currentUser.created_at
+      ? new Date(currentUser.created_at).toLocaleDateString('de-DE') : '—';
+    const isPro = currentUser.plan === 'pro' || currentUser.plan === 'enterprise';
+    const planLabel = currentUser.plan || 'free';
+    document.getElementById('planBadge').textContent = planLabel.charAt(0).toUpperCase() + planLabel.slice(1) + ' Plan';
+    document.getElementById('planBadge').className = `plan-badge ${isPro ? 'pro' : 'free'}`;
+    document.getElementById('accPlan').textContent  = planLabel.charAt(0).toUpperCase() + planLabel.slice(1);
+    document.getElementById('accPlan').className    = `plan-badge ${isPro ? 'pro' : 'free'}`;
+    const limit = currentUser.monthly_limit || 3;
+    const used  = currentUser.monthly_used  || 0;
+    document.getElementById('quotaText').textContent = `${used} / ${limit} genutzt`;
+    document.getElementById('quotaFill').style.width = `${Math.min(100, used / limit * 100)}%`;
+    document.getElementById('accUsage').textContent  = `${used} Mitteilungen`;
+    document.getElementById('accQuota').textContent  = `${limit} / Monat`;
+    document.getElementById('accTotal').textContent  = currentUser.total_releases || used;
+  }
+
+  function switchTab(name) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.dash-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById(`tab-${name}`).classList.add('active');
+    const tabs = document.querySelectorAll('.dash-tab');
+    const map  = ['generate', 'history', 'distribute', 'account'];
+    tabs[map.indexOf(name)]?.classList.add('active');
+  }
+
+  // ─── Generate ─────────────────────────────────────────
+  async function handleGenerate(e) {
+    e.preventDefault();
+    const btn = document.getElementById('genBtn');
+    const sp  = document.getElementById('genSpinner');
+    btn.disabled = true; sp.style.display = 'block';
+    document.getElementById('resultCard').style.display = 'none';
+    try {
+      const r = await apiFetch('/api/generate', {
+        method: 'POST',
+        body: JSON.stringify({
+          company:  document.getElementById('genCompany').value,
+          industry: document.getElementById('genIndustry').value,
+          topic:    document.getElementById('genTopic').value,
+          details:  document.getElementById('genDetails').value,
+          tone:     document.getElementById('genTone').value,
+          audience: document.getElementById('genAudience').value,
+        }),
+      });
+      const data = await r.json();
+      if (r.ok) {
+        document.getElementById('resultBody').textContent = data.content || data.text || JSON.stringify(data);
+        document.getElementById('resultCard').style.display = '';
+        // refresh quota
+        if (data.monthly_used !== undefined) {
+          currentUser.monthly_used = data.monthly_used;
+          populateDashboard();
+        }
+        toast('Pressemitteilung erstellt! ✨');
+        loadHistory();
+      } else {
+        toast(data.detail || 'Generierung fehlgeschlagen.', 'error');
+      }
+    } catch {
+      toast('Server nicht erreichbar.', 'error');
     }
-  } catch(e) { el.innerHTML = '<div class="msg-error">❌ Matching Fehler.</div>'; }
-  scrapeRunning = false;
-}
-
-function renderDashboardMatches(matches) {
-  const el = document.getElementById('dashboard-matches');
-  if (!matches.length) {
-    el.innerHTML = '<div class="empty"><div class="empty-icon">🎯</div><h3>Noch keine Matches</h3><p>Klicke "Jetzt scannen" und dann "Matching starten".</p></div>';
-    return;
+    btn.disabled = false; sp.style.display = 'none';
   }
-  el.innerHTML = '<div class="match-list">' + matches.map(matchCard).join('') + '</div>';
-}
 
-/* ── MATCHES ────────────────────────────────────────── */
-async function loadMatches() {
-  if (allMatches.length) { renderMatches(); return; }
-  document.getElementById('matches-list').innerHTML = '<div class="spinner"></div>';
-  try {
-    const r = await apiFetch('/matches');
-    if (r.ok) { const d = await r.json(); allMatches = d.matches || []; }
-  } catch(e) {}
-  renderMatches();
-}
-
-function renderMatches() {
-  const el = document.getElementById('matches-list');
-  const minScore = parseInt(document.getElementById('filter-score')?.value || 0);
-  const src = (document.getElementById('filter-source')?.value || '').toLowerCase();
-  let list = allMatches.filter(m => m.match_score >= minScore);
-  if (src) list = list.filter(m => (m.tender_source||'').toLowerCase().includes(src));
-  if (!list.length) {
-    el.innerHTML = '<div class="empty"><div class="empty-icon">🔍</div><h3>Keine Matches</h3><p>Zuerst scannen und matchen.</p></div>';
-    return;
+  function copyResult() {
+    const text = document.getElementById('resultBody').textContent;
+    navigator.clipboard.writeText(text).then(() => toast('In Zwischenablage kopiert!'));
   }
-  el.innerHTML = '<div class="match-list">' + list.map(matchCard).join('') + '</div>';
-}
 
-function matchCard(m) {
-  const s = m.match_score || 0;
-  const dl = m.tender_deadline ? m.tender_deadline.substring(0, 10) : '';
-  const rsn = (m.reasoning || '').replace(/\n/g, ' · ').substring(0, 180);
-  const src = m.tender_source || '';
-  return `<div class="match-item">
-    <div class="score-ring ${scClass(s)}">
-      <div>${s.toFixed(0)}</div>
-      <div class="score-label">%</div>
-    </div>
-    <div class="match-content">
-      <div class="match-title">${esc(m.tender_title || 'Ausschreibung')}</div>
-      <div class="match-chips">
-        <span class="chip chip-blue">${esc(src)}</span>
-        ${dl ? `<span class="chip chip-gray">⏰ ${dl}</span>` : ''}
-        ${m.notified ? '<span class="chip chip-green">📧 Alert gesendet</span>' : '<span class="chip chip-new">✨ Neu</span>'}
-      </div>
-      <div class="match-reasoning">${esc(rsn)}</div>
-      <div class="match-actions">
-        ${m.tender_url ? `<a href="${esc(m.tender_url)}" target="_blank" class="btn btn-primary btn-xs">Ansehen →</a>` : ''}
-        <span class="btn btn-ghost btn-xs" style="cursor:default">Score: ${s.toFixed(0)}%</span>
-      </div>
-    </div>
-  </div>`;
-}
+  function downloadResult() {
+    const text = document.getElementById('resultBody').textContent;
+    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url; a.download = 'pressemitteilung.txt'; a.click();
+    URL.revokeObjectURL(url);
+  }
 
-/* ── SEARCH ─────────────────────────────────────────── */
-async function doSearch() {
-  const query = document.getElementById('search-query').value.trim();
-  const source = document.getElementById('search-source').value;
-  const minB = parseFloat(document.getElementById('search-min').value) || null;
-  const maxB = parseFloat(document.getElementById('search-max').value) || null;
-  const el = document.getElementById('search-results');
-  if (!query) { toast('Bitte Suchbegriff eingeben'); return; }
-  el.innerHTML = '<div class="spinner"></div>';
-  try {
-    const body = { query, limit: 30 };
-    if (source) body.source = source;
-    if (minB) body.min_budget = minB;
-    if (maxB) body.max_budget = maxB;
-    const r = await apiFetch('/search', { method: 'POST', body: JSON.stringify(body) });
-    const d = await r.json();
-    if (!r.ok) { el.innerHTML = `<div class="msg-error">${esc(d.detail || 'Fehler')}</div>`; return; }
-    if (!d.tenders?.length) {
-      el.innerHTML = '<div class="empty"><div class="empty-icon">🔍</div><h3>Keine Ergebnisse</h3><p>Anderen Begriff versuchen oder zuerst scannen.</p></div>';
+  // ─── History ──────────────────────────────────────────
+  async function loadHistory() {
+    try {
+      const r = await apiFetch('/api/releases');
+      if (!r.ok) return;
+      releases = await r.json();
+      renderHistory();
+    } catch { /* offline */ }
+  }
+
+  function renderHistory() {
+    const list = document.getElementById('historyList');
+    if (!releases.length) {
+      list.innerHTML = `<div style="text-align:center;padding:64px;color:var(--c-dim);">
+        <div style="font-size:2.5rem;margin-bottom:16px;">📋</div>
+        <div>Noch keine Pressemitteilungen generiert.</div></div>`;
       return;
     }
-    el.innerHTML = `<p style="font-size:12px;color:var(--txt-muted);margin-bottom:12px">${d.total} Ergebnisse</p>` +
-      d.tenders.map(t => `<div class="tender-row">
-        <div class="tender-row-title">${esc(t.title)}</div>
-        <div class="tender-row-meta">
-          <span>📡 ${esc(t.source)}</span>
-          <span>🏢 ${esc(t.buyer_name||'–')}</span>
-          ${t.deadline ? `<span>⏰ ${t.deadline.substring(0,10)}</span>` : ''}
-          ${t.budget_max ? `<span>💰 bis €${fmt(t.budget_max)}</span>` : ''}
+    list.innerHTML = releases.map((r, i) => `
+      <div class="history-item">
+        <div class="history-main">
+          <div class="history-meta">
+            <span class="history-type">${escHtml(r.industry || 'Allgemein')}</span>
+            <span class="history-date">${r.created_at ? new Date(r.created_at).toLocaleString('de-DE') : '—'}</span>
+          </div>
+          <div class="history-title">${escHtml(r.topic || r.title || 'Pressemitteilung')}</div>
+          <div class="history-preview">${escHtml((r.content || r.text || '').substring(0, 160))}…</div>
         </div>
-        ${t.description ? `<p style="font-size:12px;color:var(--txt-muted);margin-top:8px;line-height:1.5">${esc(t.description.substring(0,200))}…</p>` : ''}
-        ${t.source_url ? `<a href="${esc(t.source_url)}" target="_blank" class="btn btn-ghost btn-xs" style="margin-top:10px">Ansehen →</a>` : ''}
+        <div class="history-actions">
+          <button class="icon-btn" onclick="viewRelease(${i})" title="Ansehen">👁</button>
+          <button class="icon-btn" onclick="copyRelease(${i})" title="Kopieren">📋</button>
+        </div>
       </div>`).join('');
-  } catch(e) { el.innerHTML = '<div class="msg-error">Fehler bei der Suche.</div>'; }
-}
-
-/* ── PROFILE ────────────────────────────────────────── */
-async function loadProfile() {
-  try {
-    const r = await apiFetch('/profile');
-    if (!r.ok) return;
-    const d = await r.json();
-    document.getElementById('p-name').value     = d.name || '';
-    document.getElementById('p-industry').value = d.industry || '';
-    document.getElementById('p-keywords').value = d.experience_keywords || '';
-    document.getElementById('p-cpv').value      = d.cpv_focus || '';
-    document.getElementById('p-min').value      = d.min_budget || '';
-    document.getElementById('p-max').value      = d.max_budget || '';
-    document.getElementById('p-regions').value  = d.regions || 'Deutschland,EU';
-    document.getElementById('p-desc').value     = d.description || '';
-  } catch(e) {}
-}
-
-async function saveProfile() {
-  const msgEl = document.getElementById('profile-msg');
-  msgEl.style.display = 'none';
-  const name = document.getElementById('p-name').value.trim();
-  const kw   = document.getElementById('p-keywords').value.trim();
-  if (!name || !kw) {
-    msgEl.className = 'msg-error'; msgEl.textContent = 'Name und Keywords sind erforderlich.';
-    msgEl.style.display = ''; return;
   }
-  try {
-    const r = await apiFetch('/profile', {
-      method: 'POST',
-      body: JSON.stringify({
-        company_name: name, industry: document.getElementById('p-industry').value,
-        experience_keywords: kw, cpv_focus: document.getElementById('p-cpv').value || null,
-        min_budget: parseFloat(document.getElementById('p-min').value) || null,
-        max_budget: parseFloat(document.getElementById('p-max').value) || null,
-        regions: document.getElementById('p-regions').value || 'Deutschland,EU',
-        description: document.getElementById('p-desc').value || null,
-      })
-    });
-    if (r.ok) {
-      msgEl.className = 'msg-success'; msgEl.textContent = '✅ Profil gespeichert!';
-      msgEl.style.display = ''; toast('Profil gespeichert ✅');
-    } else {
-      const d = await r.json(); msgEl.className = 'msg-error';
-      msgEl.textContent = d.detail || 'Fehler'; msgEl.style.display = '';
+
+  function viewRelease(i) {
+    const r = releases[i];
+    document.getElementById('resultBody').textContent = r.content || r.text || '';
+    document.getElementById('resultCard').style.display = '';
+    switchTab('generate');
+    document.getElementById('tab-generate').scrollIntoView({ behavior: 'smooth' });
+  }
+
+  function copyRelease(i) {
+    const text = releases[i].content || releases[i].text || '';
+    navigator.clipboard.writeText(text).then(() => toast('In Zwischenablage kopiert!'));
+  }
+
+  function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // ─── Upgrade ──────────────────────────────────────────
+  async function handleUpgrade() {
+    try {
+      const r = await apiFetch('/api/create-checkout-session', { method: 'POST' });
+      const data = await r.json();
+      if (data.url) { window.location.href = data.url; }
+      else { toast('Stripe-Session konnte nicht erstellt werden.', 'error'); }
+    } catch {
+      toast('Server nicht erreichbar.', 'error');
     }
-  } catch(e) { msgEl.className = 'msg-error'; msgEl.textContent = 'Fehler.'; msgEl.style.display = ''; }
-}
-
-/* ── SUBSCRIPTION ───────────────────────────────────── */
-async function loadSubStatus() {
-  const el = document.getElementById('sub-status-card');
-  if (!currentUser?.has_subscription) {
-    el.innerHTML = '<div class="msg-info" style="margin:0"><strong>Kein aktives Abo</strong> — Wähle einen Plan um loszulegen.</div>';
-    return;
   }
-  const plan = (currentUser.plan||'').replace('professional','Professional').replace('starter','Starter');
-  el.innerHTML = `<div class="msg-success" style="margin:0;display:flex;align-items:center;justify-content:space-between">
-    <span><strong>Aktives Abo: ${esc(plan)}</strong></span>
-    <button class="btn btn-danger btn-sm" onclick="cancelSub()">Kündigen</button>
-  </div>`;
-}
-
-async function cancelSub() {
-  if (!confirm('Abo wirklich kündigen? Es läuft bis zum Periodenende weiter.')) return;
-  try {
-    const r = await apiFetch('/subscription', { method: 'DELETE' });
-    if (r.ok) { toast('Abo wird zum Periodenende gekündigt.'); loadSubStatus(); }
-    else toast('Kündigung fehlgeschlagen.');
-  } catch(e) { toast('Fehler'); }
-}
-
-/* ── BOOT ───────────────────────────────────────────── */
-document.addEventListener('DOMContentLoaded', init);
-document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('login-password').addEventListener('keydown', e => {
-    if (e.key === 'Enter') doLogin();
-  });
-});
 </script>
 </body>
 </html>
