@@ -463,47 +463,618 @@ footer { padding:60px 5% 40px;border-top:1px solid var(--border); }
   </div>
 </footer>
 
+<!-- ══ MODAL (Register / Login) ══════════════════════════════ -->
+<style>
+.modal-bg{display:none;position:fixed;inset:0;z-index:800;background:rgba(6,6,15,.92);backdrop-filter:blur(18px);align-items:center;justify-content:center;padding:20px;}
+.modal-bg.open{display:flex;animation:fadein .2s ease;}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+.modal{background:var(--bg2);border:1px solid var(--border);border-radius:22px;padding:44px 40px;max-width:520px;width:100%;position:relative;animation:pop .28s cubic-bezier(.34,1.56,.64,1) both;overflow:hidden;max-height:90vh;overflow-y:auto;}
+.modal::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--grad);}
+@keyframes pop{from{opacity:0;transform:scale(.91) translateY(14px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.modal-x{position:absolute;top:16px;right:16px;background:rgba(240,239,255,.05);border:1px solid var(--border);border-radius:8px;width:32px;height:32px;cursor:pointer;color:var(--muted);font-size:16px;display:flex;align-items:center;justify-content:center;transition:all .2s;font-family:var(--body);}
+.modal-x:hover{background:rgba(240,239,255,.1);color:var(--white);}
+.modal h2{font-family:var(--display);font-size:1.75rem;font-weight:700;letter-spacing:-.025em;margin-bottom:6px;}
+.modal>.modal-sub{font-size:13px;color:var(--muted);margin-bottom:24px;}
+.f-l{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:7px;margin-top:14px;font-family:var(--body);}
+.f-l:first-of-type{margin-top:0;}
+.f-in,.f-sel{width:100%;background:rgba(240,239,255,.04);border:1px solid var(--border);border-radius:10px;padding:11px 15px;color:var(--white);font-size:14px;font-family:var(--body);font-weight:300;outline:none;transition:border-color .2s,box-shadow .2s;}
+.f-in:focus,.f-sel:focus{border-color:rgba(43,110,255,.5);box-shadow:0 0 0 3px rgba(43,110,255,.1);}
+.f-sel option{background:var(--bg2);}
+.f-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.f-err{font-size:12px;color:#f87171;margin-top:8px;min-height:16px;}
+.modal .btn-main{width:100%;justify-content:center;margin-top:16px;}
+.modal-step{display:none;}.modal-step.active{display:block;}
+.step-dots{display:flex;gap:6px;justify-content:center;margin-bottom:20px;}
+.step-dot{width:6px;height:6px;border-radius:50%;background:var(--border);transition:all .3s;}
+.step-dot.active{background:var(--blue);width:20px;border-radius:3px;}
+.plan-cards{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:4px;}
+.plan-card{border:1.5px solid var(--border);border-radius:12px;padding:18px 16px;cursor:pointer;transition:all .2s;position:relative;}
+.plan-card:hover{border-color:rgba(43,110,255,.4);}
+.plan-card.selected{border-color:var(--blue);background:rgba(43,110,255,.06);}
+.plan-card.selected::after{content:'✓';position:absolute;top:10px;right:12px;color:var(--blue);font-size:14px;font-weight:700;}
+.plan-name{font-family:var(--display);font-size:.9rem;font-weight:600;margin-bottom:4px;}
+.plan-price{font-size:1.3rem;font-weight:700;font-family:var(--display);}
+.plan-price small{font-size:.75rem;font-weight:300;color:var(--muted);}
+.plan-feat{font-size:11px;color:var(--muted);margin-top:8px;line-height:1.6;}
+.back-link{font-size:12px;color:var(--muted);cursor:pointer;margin-top:12px;text-align:center;display:block;transition:color .2s;}
+.back-link:hover{color:var(--white);}
+.modal-tabs{display:flex;gap:4px;background:rgba(255,255,255,.04);border-radius:10px;padding:4px;margin-bottom:20px;}
+.modal-tab{flex:1;padding:9px;border-radius:7px;text-align:center;cursor:pointer;font-size:13px;font-weight:500;color:var(--muted);transition:all .2s;border:none;background:transparent;font-family:var(--body);}
+.modal-tab.active{background:var(--grad);color:#fff;}
+/* Dashboard */
+#dashboard{display:none;position:fixed;inset:0;z-index:600;background:var(--bg);overflow-y:auto;}
+.dash-nav{position:sticky;top:0;z-index:10;background:rgba(6,6,15,.9);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:16px 5%;display:flex;align-items:center;justify-content:space-between;}
+.dash-nav .logo{font-family:var(--display);font-weight:700;font-size:1.2rem;display:flex;align-items:center;gap:8px;}
+.dash-nav .logo-icon{width:28px;height:28px;background:var(--grad);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;}
+.dash-nav .logo-text{background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.dash-body{max-width:1100px;margin:0 auto;padding:40px 5%;}
+.dash-welcome{margin-bottom:32px;}
+.dash-welcome h1{font-family:var(--display);font-size:1.8rem;font-weight:700;margin-bottom:6px;}
+.dash-welcome p{color:var(--muted);font-size:14px;}
+.dash-tabs-bar{display:flex;gap:8px;margin-bottom:28px;flex-wrap:wrap;}
+.dash-tab-btn{padding:8px 18px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--muted);transition:all .2s;font-family:var(--body);}
+.dash-tab-btn.active{background:var(--grad);border-color:transparent;color:#fff;}
+.dash-panel{display:none;}.dash-panel.active{display:block;}
+.dash-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:28px;}
+.dash-card{background:rgba(240,239,255,.03);border:1px solid var(--border);border-radius:14px;padding:24px 20px;}
+.dash-card-val{font-family:var(--display);font-size:2rem;font-weight:700;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.dash-card-label{font-size:12px;color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:.06em;}
+.match-list{display:flex;flex-direction:column;gap:12px;}
+.match-item{background:rgba(240,239,255,.025);border:1px solid var(--border);border-radius:12px;padding:20px 22px;display:grid;grid-template-columns:1fr auto;gap:16px;align-items:center;transition:border-color .2s;}
+.match-item:hover{border-color:rgba(43,110,255,.3);}
+.match-title{font-size:14px;font-weight:500;margin-bottom:4px;}
+.match-org{font-size:12px;color:var(--muted);}
+.match-right{text-align:right;flex-shrink:0;}
+.match-score{font-family:var(--display);font-size:1.4rem;font-weight:700;color:var(--blue-l);}
+.match-days{font-size:11px;color:var(--muted);margin-top:2px;}
+.match-days.hot{color:#fb923c;}
+.match-badge{display:inline-block;font-size:10px;font-weight:600;padding:2px 9px;border-radius:100px;background:rgba(43,110,255,.12);color:var(--blue-l);border:1px solid rgba(43,110,255,.2);margin-top:6px;}
+.empty-state{text-align:center;padding:60px 20px;color:var(--muted);}
+.empty-state .es-icon{font-size:3rem;margin-bottom:16px;}
+.empty-state p{font-size:14px;line-height:1.75;}
+.profile-form{background:rgba(240,239,255,.025);border:1px solid var(--border);border-radius:14px;padding:28px;}
+.profile-form h3{font-family:var(--display);font-size:1.1rem;font-weight:600;margin-bottom:20px;}
+.pf-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.upgrade-box{background:linear-gradient(135deg,rgba(43,110,255,.08),rgba(139,92,246,.08));border:1px solid rgba(43,110,255,.25);border-radius:14px;padding:28px;text-align:center;}
+.upgrade-box h3{font-family:var(--display);font-size:1.1rem;font-weight:600;margin-bottom:8px;}
+.upgrade-box p{font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.7;}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;margin-right:6px;}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+
+<!-- ══ MODAL HTML ══ -->
 <div class="modal-bg" id="modal" onclick="if(event.target===this)closeModal()">
   <div class="modal">
     <button class="modal-x" onclick="closeModal()">✕</button>
-    <div id="mform">
-      <h2>Jetzt starten</h2>
-      <p>Starter ab 249 €/Monat · Professional ab 499 €/Monat</p>
-      <label class="f-l">Unternehmen</label><input class="f-in" id="fc" type="text" placeholder="Mustermann GmbH" />
-      <label class="f-l">E-Mail-Adresse</label><input class="f-in" id="fe" type="email" placeholder="chef@mustermann.de" />
+
+    <!-- Tab Switch: Register / Login -->
+    <div class="modal-tabs" id="modalTabs">
+      <button class="modal-tab active" onclick="switchModalTab('register')">Registrieren</button>
+      <button class="modal-tab" onclick="switchModalTab('login')">Anmelden</button>
+    </div>
+
+    <!-- REGISTER: Step 1 — Account -->
+    <div class="modal-step active" id="step-account">
+      <div class="step-dots"><div class="step-dot active"></div><div class="step-dot"></div><div class="step-dot"></div></div>
+      <h2>Account erstellen</h2>
+      <p class="modal-sub">Schritt 1 von 3 — Ihre Zugangsdaten</p>
+      <label class="f-l">Vollständiger Name</label>
+      <input class="f-in" id="r-name" type="text" placeholder="Max Mustermann" />
+      <label class="f-l">E-Mail-Adresse</label>
+      <input class="f-in" id="r-email" type="email" placeholder="chef@firma.de" />
+      <label class="f-l">Passwort</label>
+      <input class="f-in" id="r-pass" type="password" placeholder="Mindestens 8 Zeichen" />
+      <div class="f-err" id="err-account"></div>
+      <button class="btn-main" onclick="goToStep2()">Weiter →</button>
+    </div>
+
+    <!-- REGISTER: Step 2 — Company Profile -->
+    <div class="modal-step" id="step-profile">
+      <div class="step-dots"><div class="step-dot"></div><div class="step-dot active"></div><div class="step-dot"></div></div>
+      <h2>Ihr Unternehmen</h2>
+      <p class="modal-sub">Schritt 2 von 3 — Profil für KI-Matching</p>
+      <label class="f-l">Unternehmensname</label>
+      <input class="f-in" id="r-company" type="text" placeholder="Mustermann GmbH" />
       <label class="f-l">Branche</label>
-      <select class="f-sel" id="fb"><option value="">Bitte wählen…</option><option>Bau & Handwerk</option><option>IT & Software</option><option>Beratung & Dienstleistung</option><option>Reinigung & Facility</option><option>Transport & Logistik</option><option>Gesundheit & Pflege</option><option>Sonstige</option></select>
-      <button class="btn-main" onclick="submitForm()" style="width:100%;justify-content:center;margin-top:4px;">Profil erstellen &amp; loslegen →</button>
+      <select class="f-sel" id="r-industry">
+        <option value="">Bitte wählen…</option>
+        <option value="Bau & Handwerk">Bau & Handwerk</option>
+        <option value="IT & Software">IT & Software</option>
+        <option value="Beratung & Dienstleistung">Beratung & Dienstleistung</option>
+        <option value="Reinigung & Facility">Reinigung & Facility</option>
+        <option value="Transport & Logistik">Transport & Logistik</option>
+        <option value="Gesundheit & Pflege">Gesundheit & Pflege</option>
+        <option value="Ingenieurwesen & Planung">Ingenieurwesen & Planung</option>
+        <option value="Catering & Verpflegung">Catering & Verpflegung</option>
+        <option value="Sonstige">Sonstige</option>
+      </select>
+      <label class="f-l">Kernleistungen / Stichworte (kommagetrennt)</label>
+      <input class="f-in" id="r-keywords" type="text" placeholder="z.B. Softwareentwicklung, Cloud, IT-Infrastruktur" />
+      <div class="f-row">
+        <div>
+          <label class="f-l">Bevorzugte Region</label>
+          <select class="f-sel" id="r-region">
+            <option value="Deutschland">Deutschland (gesamt)</option>
+            <option value="Bayern">Bayern</option>
+            <option value="NRW">Nordrhein-Westfalen</option>
+            <option value="Baden-Württemberg">Baden-Württemberg</option>
+            <option value="Berlin">Berlin</option>
+            <option value="Hamburg">Hamburg</option>
+            <option value="EU-weit">EU-weit</option>
+          </select>
+        </div>
+        <div>
+          <label class="f-l">Mind. Auftragsvolumen</label>
+          <select class="f-sel" id="r-budget">
+            <option value="10000">ab 10.000 €</option>
+            <option value="25000">ab 25.000 €</option>
+            <option value="50000" selected>ab 50.000 €</option>
+            <option value="100000">ab 100.000 €</option>
+            <option value="250000">ab 250.000 €</option>
+          </select>
+        </div>
+      </div>
+      <div class="f-err" id="err-profile"></div>
+      <button class="btn-main" onclick="goToStep3()">Weiter →</button>
+      <span class="back-link" onclick="showStep('step-account')">← Zurück</span>
     </div>
-    <div class="success" id="msuccess">
-      <div class="suc-icon">✓</div>
-      <h3>Willkommen bei PublicFlow!</h3>
-      <p>Sie erhalten in Kürze eine E-Mail mit Ihrem persönlichen Onboarding-Link. Morgen früh um 7 Uhr landet der erste Digest in Ihrem Postfach.</p>
+
+    <!-- REGISTER: Step 3 — Plan -->
+    <div class="modal-step" id="step-plan">
+      <div class="step-dots"><div class="step-dot"></div><div class="step-dot"></div><div class="step-dot active"></div></div>
+      <h2>Plan wählen</h2>
+      <p class="modal-sub">Schritt 3 von 3 — Monatlich kündbar</p>
+      <div class="plan-cards">
+        <div class="plan-card selected" id="plan-starter" onclick="selectPlan('starter')">
+          <div class="plan-name">Starter</div>
+          <div class="plan-price">249 € <small>/ Monat</small></div>
+          <div class="plan-feat">1 Profil · EU + BRD<br>Bis 10 Treffer / Tag<br>Frist-Erinnerungen</div>
+        </div>
+        <div class="plan-card" id="plan-professional" onclick="selectPlan('professional')">
+          <div class="plan-name">Professional</div>
+          <div class="plan-price">499 € <small>/ Monat</small></div>
+          <div class="plan-feat">3 Profile · Alle 16 Länder<br>Unbegrenzte Treffer<br>Marktreport + KI-Score</div>
+        </div>
+      </div>
+      <div class="f-err" id="err-plan"></div>
+      <button class="btn-main" id="btn-checkout" onclick="doRegisterAndCheckout()">
+        Jetzt kostenpflichtig starten →
+      </button>
+      <span class="back-link" onclick="showStep('step-profile')">← Zurück</span>
     </div>
+
+    <!-- LOGIN form -->
+    <div class="modal-step" id="step-login">
+      <h2>Anmelden</h2>
+      <p class="modal-sub">Willkommen zurück.</p>
+      <label class="f-l">E-Mail-Adresse</label>
+      <input class="f-in" id="l-email" type="email" placeholder="chef@firma.de" />
+      <label class="f-l">Passwort</label>
+      <input class="f-in" id="l-pass" type="password" placeholder="••••••••" />
+      <div class="f-err" id="err-login"></div>
+      <button class="btn-main" id="btn-login" onclick="doLogin()">Anmelden →</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══ DASHBOARD ══ -->
+<div id="dashboard">
+  <nav class="dash-nav">
+    <div class="logo">
+      <div class="logo-icon">⚡</div>
+      <span class="logo-text">PublicFlow</span>
+    </div>
+    <div style="display:flex;gap:12px;align-items:center;">
+      <span id="dash-plan-badge" style="font-size:11px;padding:3px 12px;border-radius:100px;background:rgba(43,110,255,.12);color:var(--blue-l);border:1px solid rgba(43,110,255,.2);font-weight:600;"></span>
+      <button class="btn-ghost" onclick="doLogout()" style="padding:8px 16px;font-size:13px;">Abmelden</button>
+    </div>
+  </nav>
+
+  <div class="dash-body">
+    <div class="dash-welcome">
+      <h1>Guten Tag, <span id="dash-name">—</span> 👋</h1>
+      <p>Ihre Ausschreibungen werden täglich um 7:00 Uhr aktualisiert.</p>
+    </div>
+
+    <!-- Stats -->
+    <div class="dash-cards">
+      <div class="dash-card"><div class="dash-card-val" id="stat-matches">—</div><div class="dash-card-label">Neue Matches heute</div></div>
+      <div class="dash-card"><div class="dash-card-val" id="stat-total">—</div><div class="dash-card-label">Matches gesamt</div></div>
+      <div class="dash-card"><div class="dash-card-val" id="stat-vol">—</div><div class="dash-card-label">Ø Match-Score</div></div>
+      <div class="dash-card"><div class="dash-card-val" id="stat-plan">—</div><div class="dash-card-label">Ihr Plan</div></div>
+    </div>
+
+    <!-- Tab bar -->
+    <div class="dash-tabs-bar">
+      <button class="dash-tab-btn active" onclick="switchDashTab('matches')">📋 Meine Matches</button>
+      <button class="dash-tab-btn" onclick="switchDashTab('profile')">⚙️ Profil</button>
+      <button class="dash-tab-btn" onclick="switchDashTab('upgrade')">⬆️ Upgrade</button>
+    </div>
+
+    <!-- Matches Panel -->
+    <div class="dash-panel active" id="panel-matches">
+      <div id="match-list-wrap">
+        <div class="empty-state"><div class="es-icon">🔍</div><p>Matches werden geladen…</p></div>
+      </div>
+      <div style="margin-top:20px;">
+        <button class="btn-ghost" onclick="triggerScrape()" style="font-size:13px;padding:10px 20px;">
+          🔄 Jetzt neu scannen
+        </button>
+      </div>
+    </div>
+
+    <!-- Profile Panel -->
+    <div class="dash-panel" id="panel-profile">
+      <div class="profile-form">
+        <h3>Unternehmensprofil bearbeiten</h3>
+        <label class="f-l">Unternehmensname</label>
+        <input class="f-in" id="p-company" type="text" />
+        <label class="f-l">Branche</label>
+        <select class="f-sel" id="p-industry">
+          <option value="Bau & Handwerk">Bau & Handwerk</option>
+          <option value="IT & Software">IT & Software</option>
+          <option value="Beratung & Dienstleistung">Beratung & Dienstleistung</option>
+          <option value="Reinigung & Facility">Reinigung & Facility</option>
+          <option value="Transport & Logistik">Transport & Logistik</option>
+          <option value="Gesundheit & Pflege">Gesundheit & Pflege</option>
+          <option value="Ingenieurwesen & Planung">Ingenieurwesen & Planung</option>
+          <option value="Sonstige">Sonstige</option>
+        </select>
+        <label class="f-l">Kernleistungen / Stichworte</label>
+        <input class="f-in" id="p-keywords" type="text" placeholder="kommagetrennt" />
+        <div class="pf-row" style="margin-top:0;">
+          <div>
+            <label class="f-l">Region</label>
+            <select class="f-sel" id="p-region">
+              <option value="Deutschland">Deutschland (gesamt)</option>
+              <option value="Bayern">Bayern</option>
+              <option value="NRW">Nordrhein-Westfalen</option>
+              <option value="Baden-Württemberg">Baden-Württemberg</option>
+              <option value="Berlin">Berlin</option>
+              <option value="Hamburg">Hamburg</option>
+              <option value="EU-weit">EU-weit</option>
+            </select>
+          </div>
+          <div>
+            <label class="f-l">Mind. Volumen</label>
+            <select class="f-sel" id="p-budget">
+              <option value="10000">ab 10.000 €</option>
+              <option value="25000">ab 25.000 €</option>
+              <option value="50000">ab 50.000 €</option>
+              <option value="100000">ab 100.000 €</option>
+              <option value="250000">ab 250.000 €</option>
+            </select>
+          </div>
+        </div>
+        <div class="f-err" id="err-profile-save"></div>
+        <button class="btn-main" onclick="saveProfile()" style="margin-top:20px;">Profil speichern</button>
+      </div>
+    </div>
+
+    <!-- Upgrade Panel -->
+    <div class="dash-panel" id="panel-upgrade">
+      <div class="upgrade-box">
+        <h3>⚡ Auf Professional upgraden</h3>
+        <p>3 Unternehmensprofile · Alle 16 Bundesländer · Unbegrenzte Treffer täglich · Wöchentlicher Marktreport · KI-Score-Bewertung · Priority-Support</p>
+        <button class="btn-main" onclick="startCheckout('professional')" style="display:inline-flex;width:auto;">Professional für 499 €/Monat →</button>
+      </div>
+    </div>
+
   </div>
 </div>
 
 <script>
+// ── Cursor ──────────────────────────────────────────────
 const cur=document.getElementById('cur'),ring=document.getElementById('curRing');
 let mx=0,my=0,rx=0,ry=0;
 document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;cur.style.left=mx+'px';cur.style.top=my+'px';});
 (function a(){rx+=(mx-rx)*.12;ry+=(my-ry)*.12;ring.style.left=rx+'px';ring.style.top=ry+'px';requestAnimationFrame(a);})();
-document.querySelectorAll('a,button,.faq-q').forEach(el=>{
+document.querySelectorAll('a,button,.faq-q,.plan-card').forEach(el=>{
   el.addEventListener('mouseenter',()=>{cur.style.width='16px';cur.style.height='16px';cur.style.background='var(--purple)';ring.style.width='48px';ring.style.height='48px';});
   el.addEventListener('mouseleave',()=>{cur.style.width='10px';cur.style.height='10px';cur.style.background='var(--blue)';ring.style.width='34px';ring.style.height='34px';});
 });
-function openModal(){document.getElementById('modal').classList.add('open');document.body.style.overflow='hidden';}
-function closeModal(){document.getElementById('modal').classList.remove('open');document.body.style.overflow='';}
-function submitForm(){
-  const c=document.getElementById('fc').value.trim(),e=document.getElementById('fe').value.trim(),b=document.getElementById('fb').value;
-  if(!c||!e||!b){alert('Bitte alle Felder ausfüllen.');return;}
-  document.getElementById('mform').style.display='none';
-  document.getElementById('msuccess').style.display='block';
-}
+
+// ── FAQ ─────────────────────────────────────────────────
 function toggleFaq(el){const item=el.parentElement,was=item.classList.contains('open');document.querySelectorAll('.faq-item').forEach(i=>i.classList.remove('open'));if(!was)item.classList.add('open');}
+
+// ── Scroll Reveal ────────────────────────────────────────
 const obs=new IntersectionObserver(e=>{e.forEach(x=>{if(x.isIntersecting)x.target.classList.add('in');});},{threshold:.1});
 document.querySelectorAll('.rv').forEach(el=>obs.observe(el));
 document.querySelectorAll('.prob-grid .prob-cell,.feat-grid .feat,.pricing-grid .pc,.testi-grid .testi,.impact-grid .impact-cell,.faq-grid .faq-item').forEach((el,i)=>{el.style.transitionDelay=(i%4)*.08+'s';});
+
+// ── API ─────────────────────────────────────────────────
+const API = '';
+let token = localStorage.getItem('pf_token') || '';
+let currentUser = null;
+let selectedPlan = 'starter';
+
+async function apiFetch(path, opts={}) {
+  const headers = {'Content-Type':'application/json'};
+  if (token) headers['Authorization'] = 'Bearer ' + token;
+  const r = await fetch(API + path, {...opts, headers});
+  return r;
+}
+
+// ── Init ─────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', async () => {
+  if (token) {
+    const r = await apiFetch('/auth/me');
+    if (r.ok) {
+      currentUser = await r.json();
+      showDashboard();
+    } else {
+      token = ''; localStorage.removeItem('pf_token');
+    }
+  }
+});
+
+// ── Modal ────────────────────────────────────────────────
+function openModal() { document.getElementById('modal').classList.add('open'); document.body.style.overflow='hidden'; }
+function closeModal() { document.getElementById('modal').classList.remove('open'); document.body.style.overflow=''; }
+
+function switchModalTab(tab) {
+  document.querySelectorAll('.modal-tab').forEach((t,i)=>t.classList.toggle('active', (tab==='register'&&i===0)||(tab==='login'&&i===1)));
+  if (tab === 'login') {
+    document.querySelectorAll('.modal-step').forEach(s=>s.classList.remove('active'));
+    document.getElementById('step-login').classList.add('active');
+    document.getElementById('modalTabs').style.display='flex';
+  } else {
+    showStep('step-account');
+    document.getElementById('modalTabs').style.display='flex';
+  }
+}
+
+function showStep(id) {
+  document.querySelectorAll('.modal-step').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function selectPlan(plan) {
+  selectedPlan = plan;
+  document.getElementById('plan-starter').classList.toggle('selected', plan==='starter');
+  document.getElementById('plan-professional').classList.toggle('selected', plan==='professional');
+}
+
+function goToStep2() {
+  const name=document.getElementById('r-name').value.trim();
+  const email=document.getElementById('r-email').value.trim();
+  const pass=document.getElementById('r-pass').value;
+  const err=document.getElementById('err-account');
+  if (!name||!email||!pass) { err.textContent='Bitte alle Felder ausfüllen.'; return; }
+  if (pass.length < 8) { err.textContent='Passwort muss mindestens 8 Zeichen haben.'; return; }
+  err.textContent='';
+  showStep('step-profile');
+}
+
+function goToStep3() {
+  const company=document.getElementById('r-company').value.trim();
+  const industry=document.getElementById('r-industry').value;
+  const keywords=document.getElementById('r-keywords').value.trim();
+  const err=document.getElementById('err-profile');
+  if (!company||!industry||!keywords) { err.textContent='Bitte alle Felder ausfüllen.'; return; }
+  err.textContent='';
+  showStep('step-plan');
+}
+
+async function doRegisterAndCheckout() {
+  const btn = document.getElementById('btn-checkout');
+  btn.innerHTML = '<span class="spin"></span> Wird verarbeitet…';
+  btn.disabled = true;
+  document.getElementById('err-plan').textContent = '';
+
+  try {
+    // 1) Register
+    const r1 = await apiFetch('/auth/register', {
+      method:'POST',
+      body: JSON.stringify({
+        full_name: document.getElementById('r-name').value.trim(),
+        email: document.getElementById('r-email').value.trim(),
+        password: document.getElementById('r-pass').value,
+      })
+    });
+    const d1 = await r1.json();
+    if (!r1.ok) { throw new Error(d1.detail || 'Registrierung fehlgeschlagen.'); }
+    token = d1.access_token;
+    localStorage.setItem('pf_token', token);
+
+    // 2) Create profile
+    const keywords = document.getElementById('r-keywords').value.split(',').map(k=>k.trim()).filter(Boolean);
+    const r2 = await apiFetch('/profile', {
+      method:'POST',
+      body: JSON.stringify({
+        company_name: document.getElementById('r-company').value.trim(),
+        industry: document.getElementById('r-industry').value,
+        experience_keywords: keywords.join(','),
+        regions: document.getElementById('r-region').value,
+        min_budget: parseInt(document.getElementById('r-budget').value),
+        max_budget: 10000000,
+        cpv_focus: '',
+        company_size: 'KMU',
+        description: '',
+      })
+    });
+    if (!r2.ok) console.warn('Profil-Erstellung fehlgeschlagen (nicht kritisch)');
+
+    // 3) Checkout
+    const r3 = await apiFetch('/checkout', {
+      method:'POST',
+      body: JSON.stringify({ plan: selectedPlan, interval: 'monthly' })
+    });
+    const d3 = await r3.json();
+    if (d3.url) {
+      window.location.href = d3.url;
+    } else {
+      // No Stripe configured yet → go to dashboard anyway
+      currentUser = { full_name: document.getElementById('r-name').value.trim(), plan: selectedPlan };
+      closeModal();
+      showDashboard();
+    }
+  } catch(e) {
+    document.getElementById('err-plan').textContent = e.message;
+    btn.innerHTML = 'Jetzt kostenpflichtig starten →';
+    btn.disabled = false;
+  }
+}
+
+async function doLogin() {
+  const btn = document.getElementById('btn-login');
+  btn.innerHTML = '<span class="spin"></span> Anmelden…';
+  btn.disabled = true;
+  document.getElementById('err-login').textContent = '';
+  try {
+    const r = await apiFetch('/auth/login', {
+      method:'POST',
+      body: JSON.stringify({
+        email: document.getElementById('l-email').value.trim(),
+        password: document.getElementById('l-pass').value,
+      })
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.detail || 'Anmeldung fehlgeschlagen.');
+    token = d.access_token;
+    localStorage.setItem('pf_token', token);
+    currentUser = d.user || {};
+    closeModal();
+    showDashboard();
+  } catch(e) {
+    document.getElementById('err-login').textContent = e.message;
+    btn.innerHTML = 'Anmelden →';
+    btn.disabled = false;
+  }
+}
+
+function doLogout() {
+  token = ''; currentUser = null;
+  localStorage.removeItem('pf_token');
+  document.getElementById('dashboard').style.display = 'none';
+}
+
+// ── Dashboard ────────────────────────────────────────────
+async function showDashboard() {
+  document.getElementById('dashboard').style.display = 'block';
+  window.scrollTo(0,0);
+  // Fill name
+  const name = (currentUser?.full_name || currentUser?.email || '').split(' ')[0];
+  document.getElementById('dash-name').textContent = name || '—';
+  const plan = currentUser?.plan || 'starter';
+  document.getElementById('dash-plan-badge').textContent = plan === 'professional' ? 'Professional' : 'Starter';
+  document.getElementById('stat-plan').textContent = plan === 'professional' ? 'Pro' : 'Starter';
+
+  // Load matches
+  await loadMatches();
+  // Load profile
+  await loadProfile();
+}
+
+function switchDashTab(tab) {
+  document.querySelectorAll('.dash-tab-btn').forEach((b,i)=>{
+    b.classList.toggle('active', ['matches','profile','upgrade'][i]===tab);
+  });
+  document.querySelectorAll('.dash-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('panel-'+tab).classList.add('active');
+}
+
+async function loadMatches() {
+  try {
+    const r = await apiFetch('/matches');
+    if (!r.ok) { renderMatches([]); return; }
+    const data = await r.json();
+    const matches = data.matches || data || [];
+    document.getElementById('stat-matches').textContent = matches.filter(m=>{
+      const d=new Date(m.matched_at||m.created_at||Date.now());
+      return (Date.now()-d)<86400000;
+    }).length;
+    document.getElementById('stat-total').textContent = matches.length;
+    const avg = matches.length ? Math.round(matches.reduce((s,m)=>s+(m.match_score||0),0)/matches.length*100) : 0;
+    document.getElementById('stat-vol').textContent = avg ? avg+'%' : '—';
+    renderMatches(matches);
+  } catch(e) { renderMatches([]); }
+}
+
+function renderMatches(matches) {
+  const wrap = document.getElementById('match-list-wrap');
+  if (!matches.length) {
+    wrap.innerHTML = `<div class="empty-state"><div class="es-icon">🔍</div><p>Noch keine Matches vorhanden.<br>Klicken Sie auf "Jetzt neu scannen" um die ersten Ausschreibungen zu laden.</p></div>`;
+    return;
+  }
+  wrap.innerHTML = `<div class="match-list">${matches.slice(0,20).map(m=>{
+    const score = m.match_score ? Math.round(m.match_score*100) : '—';
+    const days = m.deadline ? Math.ceil((new Date(m.deadline)-Date.now())/86400000) : null;
+    const hot = days !== null && days <= 7;
+    return `<div class="match-item">
+      <div>
+        <div class="match-title">${esc(m.title||m.tender_title||'Ausschreibung')}</div>
+        <div class="match-org">${esc(m.contracting_authority||m.organization||'')}${m.budget ? ' · ' + fmtMoney(m.budget) : ''}</div>
+        ${m.reasoning ? `<div class="match-badge">${esc(m.reasoning.substring(0,60))}…</div>` : ''}
+      </div>
+      <div class="match-right">
+        <div class="match-score">${score}%</div>
+        ${days!==null ? `<div class="match-days ${hot?'hot':''}>${hot?'⚡ ':''} ${days} Tage</div>` : ''}
+        ${m.url ? `<a href="${esc(m.url)}" target="_blank" style="font-size:11px;color:var(--blue-l);text-decoration:none;margin-top:4px;display:block;">Öffnen →</a>` : ''}
+      </div>
+    </div>`;
+  }).join('')}</div>`;
+}
+
+function fmtMoney(v) {
+  if (!v) return '';
+  if (v >= 1000000) return (v/1000000).toFixed(1).replace('.',',')+' Mio. €';
+  if (v >= 1000) return Math.round(v/1000)+'k €';
+  return v+' €';
+}
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+async function triggerScrape() {
+  try {
+    await apiFetch('/scrape', {method:'POST'});
+    setTimeout(loadMatches, 3000);
+  } catch(e) {}
+}
+
+async function loadProfile() {
+  try {
+    const r = await apiFetch('/profile');
+    if (!r.ok) return;
+    const d = await r.json();
+    document.getElementById('p-company').value = d.name || '';
+    document.getElementById('p-industry').value = d.industry || '';
+    document.getElementById('p-keywords').value = d.experience_keywords || '';
+    if (d.regions) { const sel=document.getElementById('p-region'); [...sel.options].forEach(o=>{if(o.value===d.regions)o.selected=true;}); }
+    if (d.min_budget) { const sel=document.getElementById('p-budget'); [...sel.options].forEach(o=>{if(parseInt(o.value)===d.min_budget)o.selected=true;}); }
+  } catch(e) {}
+}
+
+async function saveProfile() {
+  const err = document.getElementById('err-profile-save');
+  err.textContent = '';
+  try {
+    const keywords = document.getElementById('p-keywords').value.split(',').map(k=>k.trim()).filter(Boolean);
+    const r = await apiFetch('/profile', {
+      method:'POST',
+      body: JSON.stringify({
+        company_name: document.getElementById('p-company').value.trim(),
+        industry: document.getElementById('p-industry').value,
+        experience_keywords: keywords.join(','),
+        regions: document.getElementById('p-region').value,
+        min_budget: parseInt(document.getElementById('p-budget').value),
+        max_budget: 10000000,
+        cpv_focus: '', company_size: 'KMU', description: '',
+      })
+    });
+    if (r.ok) { err.style.color='var(--blue-l)'; err.textContent='✓ Profil gespeichert.'; }
+    else { err.style.color='#f87171'; err.textContent='Fehler beim Speichern.'; }
+  } catch(e) { err.style.color='#f87171'; err.textContent='Verbindungsfehler.'; }
+}
+
+async function startCheckout(plan) {
+  try {
+    const r = await apiFetch('/checkout', {method:'POST', body:JSON.stringify({plan, interval:'monthly'})});
+    const d = await r.json();
+    if (d.url) window.location.href = d.url;
+    else alert('Stripe noch nicht konfiguriert.');
+  } catch(e) {}
+}
 </script>
 </body>
 </html>
