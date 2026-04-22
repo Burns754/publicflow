@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PublicFlow — Investor Pitch</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+    :root {
+      --bg:#04040f;
+      --surface:rgba(255,255,255,.04);
+      --border:rgba(255,255,255,.08);
+      --border2:rgba(255,255,255,.14);
+      --text:#f0efff;
+      --muted:rgba(240,239,255,.55);
+      --dim:rgba(240,239,255,.3);
+      --purple:#7c3aed;
+      --violet:#a855f7;
+      --pink:#ec4899;
+      --cyan:#06b6d4;
+      --green:#10b981;
+    }
+    html { scroll-behavior:smooth; scroll-snap-type:y mandatory; }
+    body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); line-height:1.6; overflow-x:hidden; }
+
+    /* noise */
+    body::after { content:''; position:fixed; inset:0; pointer-events:none; z-index:999;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+      opacity:.025; }
+
+    /* aurora */
+    .aurora { position:fixed; inset:0; z-index:0; pointer-events:none; overflow:hidden; }
+    .aurora .b { position:absolute; border-radius:50%; filter:blur(120px); will-change:transform; }
+    .aurora .b1 { width:900px;height:900px; background:radial-gradient(circle,rgba(124,58,237,.6) 0%,transparent 65%); top:-300px;left:-250px; animation:bf1 22s ease-in-out infinite; }
+    .aurora .b2 { width:700px;height:700px; background:radial-gradient(circle,rgba(236,72,153,.5) 0%,transparent 65%); bottom:-200px;right:-200px; animation:bf2 28s ease-in-out infinite; }
+    .aurora .b3 { width:500px;height:500px; background:radial-gradient(circle,rgba(6,182,212,.35) 0%,transparent 65%); top:50%;right:15%; animation:bf3 18s ease-in-out infinite; }
+    @keyframes bf1 { 0%,100%{transform:translate(0,0) scale(1)} 40%{transform:translate(80px,-60px) scale(1.1)} 70%{transform:translate(-50px,80px) scale(.92)} }
+    @keyframes bf2 { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(-80px,60px) scale(1.15)} }
+    @keyframes bf3 { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(-40px,60px) scale(1.1)} }
+
+    .grid-bg { position:fixed; inset:0; z-index:0; pointer-events:none;
+      background-image:linear-gradient(rgba(255,255,255,.02) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.02) 1px,transparent 1px);
+      background-size:64px 64px; }
+
+    @property --ba { syntax:'<angle>'; initial-value:0deg; inherits:false; }
+    @keyframes baSpin { to { --ba:360deg; } }
+    @keyframes gf { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(40px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.5)} }
+    @keyframes countUp { from{opacity:0;transform:scale(.8)} to{opacity:1;transform:scale(1)} }
+
+    /* slides */
+    .slide {
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:80px 48px;
+      position:relative;
+      z-index:1;
+      scroll-snap-align:start;
+    }
+    .slide-inner { max-width:1100px; width:100%; }
+
+    /* slide number */
+    .slide-num {
+      position:absolute;
+      bottom:32px; right:48px;
+      font-size:.75rem;
+      color:var(--dim);
+      letter-spacing:.1em;
+    }
+
+    /* ── SLIDE 1: Cover ── */
+    .cover { text-align:center; flex-direction:column; }
+    .cover-tag {
+      display:inline-flex; align-items:center; gap:8px;
+      padding:6px 18px; border-radius:100px;
+      background:rgba(124,58,237,.12); border:1px solid rgba(124,58,237,.3);
+      color:#c084fc; font-size:.82rem; font-weight:700;
+      letter-spacing:.06em; margin-bottom:40px;
+      animation:fadeUp .8s ease forwards;
+    }
+    .cover-dot { width:7px;height:7px;border-radius:50%;background:#a855f7;box-shadow:0 0 10px #a855f7;animation:pulse 2s ease infinite; }
+    .cover h1 {
+      font-size:clamp(3rem,8vw,7rem);
+      font-weight:900; letter-spacing:-3px; line-height:1;
+      animation:fadeUp .9s .1s ease both;
+    }
+    .cover h1 .grad {
+      background:linear-gradient(135deg,#c084fc 0%,#ec4899 35%,#22d3ee 70%,#c084fc 100%);
+      background-size:300% 300%;
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+      animation:gf 5s ease infinite;
+    }
+    .cover-sub {
+      font-size:clamp(1.1rem,2.5vw,1.6rem);
+      color:var(--muted); margin:28px auto 0; max-width:700px; line-height:1.55;
+      animation:fadeUp 1s .2s ease both;
+      font-weight:300;
+    }
+    .cover-meta {
+      display:flex; gap:40px; justify-content:center; margin-top:56px; flex-wrap:wrap;
+      animation:fadeUp 1s .35s ease both;
+    }
+    .cover-meta-item { text-align:center; }
+    .cover-meta-n {
+      font-size:2.5rem; font-weight:900; letter-spacing:-1px;
+      background:linear-gradient(135deg,#c084fc,#ec4899);
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+    }
+    .cover-meta-l { font-size:.82rem; color:var(--dim); margin-top:4px; text-transform:uppercase; letter-spacing:.08em; }
+    .cover-badge-row { display:flex; gap:12px; justify-content:center; margin-top:48px; flex-wrap:wrap; animation:fadeUp 1s .45s ease both; }
+    .c-badge { padding:8px 20px; border-radius:100px; font-size:.82rem; font-weight:600; border:1px solid; }
+    .c-badge.s1 { background:rgba(124,58,237,.1); border-color:rgba(124,58,237,.3); color:#c084fc; }
+    .c-badge.s2 { background:rgba(6,182,212,.1); border-color:rgba(6,182,212,.3); color:#22d3ee; }
+    .c-badge.s3 { background:rgba(16,185,129,.1); border-color:rgba(16,185,129,.3); color:#34d399; }
+
+    /* ── SLIDE 2: Problem ── */
+    .problem-grid { display:grid; grid-template-columns:1fr 1fr; gap:60px; align-items:center; }
+    .problem-left h2 { font-size:clamp(2rem,4vw,3.5rem); font-weight:900; letter-spacing:-2px; line-height:1.1; margin-bottom:24px; }
+    .problem-left p { color:var(--muted); font-size:1.05rem; line-height:1.75; margin-bottom:32px; }
+    .pain-list { list-style:none; display:flex; flex-direction:column; gap:16px; }
+    .pain-item { display:flex; gap:16px; align-items:flex-start; }
+    .pain-icon { font-size:1.5rem; flex-shrink:0; margin-top:2px; }
+    .pain-text strong { display:block; font-size:.95rem; font-weight:700; margin-bottom:4px; }
+    .pain-text span { font-size:.88rem; color:var(--muted); }
+    .stat-wall { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+    .stat-brick {
+      background:var(--surface); border:1px solid var(--border); border-radius:20px;
+      padding:32px 28px; text-align:center;
+    }
+    .stat-brick .n {
+      font-size:3rem; font-weight:900; letter-spacing:-2px;
+      background:linear-gradient(135deg,#c084fc,#ec4899);
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+    }
+    .stat-brick .l { font-size:.82rem; color:var(--muted); margin-top:8px; line-height:1.5; }
+
+    /* ── SLIDE 3: Solution ── */
+    .sol-header { text-align:center; margin-bottom:64px; }
+    .sol-header h2 { font-size:clamp(2rem,4vw,3.2rem); font-weight:900; letter-spacing:-1.5px; line-height:1.1; margin-bottom:16px; }
+    .sol-header p { color:var(--muted); font-size:1.05rem; max-width:580px; margin:0 auto; line-height:1.7; }
+    .sol-flow { display:flex; align-items:center; gap:0; flex-wrap:nowrap; overflow-x:auto; padding-bottom:8px; }
+    .sol-step {
+      flex:1; min-width:180px;
+      background:var(--surface); border:1px solid var(--border); border-radius:20px;
+      padding:32px 24px; text-align:center; position:relative;
+    }
+    .sol-arrow { font-size:1.5rem; color:var(--dim); padding:0 12px; flex-shrink:0; }
+    .sol-step-icon { font-size:2rem; margin-bottom:16px; }
+    .sol-step h3 { font-size:.95rem; font-weight:700; margin-bottom:8px; }
+    .sol-step p { font-size:.82rem; color:var(--muted); line-height:1.6; }
+    .sol-highlight {
+      --ba:0deg;
+      background:linear-gradient(rgba(8,8,24,.95),rgba(8,8,24,.95)) padding-box,
+        conic-gradient(from var(--ba),#7c3aed 0%,#ec4899 50%,#06b6d4 75%,#7c3aed 100%) border-box;
+      border:1.5px solid transparent !important;
+      animation:baSpin 4s linear infinite;
+    }
+
+    /* ── SLIDE 4: Market ── */
+    .market-header { text-align:center; margin-bottom:60px; }
+    .market-header h2 { font-size:clamp(2rem,4vw,3.2rem); font-weight:900; letter-spacing:-1.5px; margin-bottom:16px; }
+    .tam-diagram { display:flex; justify-content:center; gap:32px; align-items:flex-end; flex-wrap:wrap; margin-bottom:48px; }
+    .tam-circle { display:flex; flex-direction:column; align-items:center; gap:16px; }
+    .circle-visual {
+      border-radius:50%; display:flex; flex-direction:column;
+      align-items:center; justify-content:center;
+      border:1.5px solid;
+    }
+    .circle-visual.tam { width:280px;height:280px; background:rgba(124,58,237,.08); border-color:rgba(124,58,237,.3); }
+    .circle-visual.sam { width:200px;height:200px; background:rgba(168,85,247,.1); border-color:rgba(168,85,247,.4); }
+    .circle-visual.som { width:130px;height:130px; background:rgba(236,72,153,.12); border-color:rgba(236,72,153,.5); }
+    .circle-visual .cn { font-size:1.8rem; font-weight:900; letter-spacing:-1px; }
+    .circle-visual .cl { font-size:.72rem; color:var(--dim); text-transform:uppercase; letter-spacing:.1em; }
+    .circle-visual.tam .cn { color:#a855f7; }
+    .circle-visual.sam .cn { color:#c084fc; }
+    .circle-visual.som .cn { background:linear-gradient(135deg,#c084fc,#ec4899); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .tam-label { text-align:center; }
+    .tam-label strong { display:block; font-size:.9rem; font-weight:700; }
+    .tam-label span { font-size:.8rem; color:var(--muted); }
+    .market-facts { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:20px; }
+    .mfact { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:24px; }
+    .mfact .mf-n { font-size:1.8rem; font-weight:800; letter-spacing:-1px; margin-bottom:8px; }
+    .mfact.c1 .mf-n { color:#a855f7; }
+    .mfact.c2 .mf-n { color:#22d3ee; }
+    .mfact.c3 .mf-n { color:#ec4899; }
+    .mfact.c4 .mf-n { color:#10b981; }
+    .mfact p { font-size:.85rem; color:var(--muted); line-height:1.6; }
+
+    /* ── SLIDE 5: Product ── */
+    .product-grid { display:grid; grid-template-columns:1fr 1fr; gap:48px; align-items:center; }
+    .product-left h2 { font-size:clamp(1.8rem,3.5vw,3rem); font-weight:900; letter-spacing:-1.5px; margin-bottom:20px; }
+    .product-left p { color:var(--muted); font-size:1rem; line-height:1.75; margin-bottom:32px; }
+    .product-feat-list { list-style:none; display:flex; flex-direction:column; gap:14px; }
+    .product-feat-item { display:flex; gap:14px; align-items:center; }
+    .pf-check {
+      width:28px; height:28px; flex-shrink:0; border-radius:8px;
+      background:linear-gradient(135deg,rgba(124,58,237,.2),rgba(236,72,153,.2));
+      border:1px solid rgba(168,85,247,.3);
+      display:flex; align-items:center; justify-content:center;
+      font-size:.8rem;
+    }
+    .pf-text { font-size:.9rem; color:var(--muted); }
+    .pf-text strong { color:var(--text); font-weight:600; }
+    .product-mockup {
+      background:var(--surface); border:1px solid var(--border); border-radius:24px;
+      padding:32px; position:relative; overflow:hidden;
+    }
+    .product-mockup::before {
+      content:''; position:absolute; top:0; left:0; right:0; height:1px;
+      background:linear-gradient(90deg,transparent,rgba(168,85,247,.5),transparent);
+    }
+    .mock-bar { display:flex; gap:6px; margin-bottom:20px; }
+    .mock-dot { width:10px; height:10px; border-radius:50%; }
+    .mock-dot:nth-child(1) { background:#ff5f57; }
+    .mock-dot:nth-child(2) { background:#febc2e; }
+    .mock-dot:nth-child(3) { background:#28c840; }
+    .mock-line { height:10px; border-radius:6px; background:rgba(255,255,255,.06); margin-bottom:10px; }
+    .mock-line.w100 { width:100%; }
+    .mock-line.w80  { width:80%; }
+    .mock-line.w60  { width:60%; }
+    .mock-line.w40  { width:40%; }
+    .mock-line.accent { background:linear-gradient(90deg,rgba(124,58,237,.4),rgba(236,72,153,.3)); width:70%; }
+    .mock-box { background:rgba(168,85,247,.08); border:1px solid rgba(168,85,247,.15); border-radius:10px; padding:16px; margin-top:16px; }
+    .mock-box-title { font-size:.75rem; color:#c084fc; font-weight:600; margin-bottom:10px; }
+    .mock-text-lines { display:flex; flex-direction:column; gap:6px; }
+
+    /* ── SLIDE 6: Business Model ── */
+    .bm-header { text-align:center; margin-bottom:60px; }
+    .bm-header h2 { font-size:clamp(2rem,4vw,3.2rem); font-weight:900; letter-spacing:-1.5px; margin-bottom:16px; }
+    .bm-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:24px; margin-bottom:40px; }
+    .bm-card {
+      border-radius:20px; padding:36px 28px; text-align:center;
+      background:var(--surface); border:1px solid var(--border); position:relative;
+    }
+    .bm-card.highlight {
+      --ba:0deg;
+      background:linear-gradient(rgba(8,8,24,.96),rgba(8,8,24,.96)) padding-box,
+        conic-gradient(from var(--ba),#7c3aed,#a855f7,#ec4899,#a855f7,#7c3aed) border-box;
+      border:1.5px solid transparent; animation:baSpin 5s linear infinite;
+    }
+    .bm-plan { font-size:.78rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--dim); margin-bottom:16px; }
+    .bm-price { font-size:3rem; font-weight:900; letter-spacing:-2px; line-height:1; margin-bottom:8px; }
+    .bm-card:nth-child(1) .bm-price { color:#9ca3af; }
+    .bm-card:nth-child(2) .bm-price { background:linear-gradient(135deg,#c084fc,#ec4899); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .bm-card:nth-child(3) .bm-price { color:#22d3ee; }
+    .bm-sub { font-size:.85rem; color:var(--muted); margin-bottom:24px; }
+    .bm-features { text-align:left; list-style:none; display:flex; flex-direction:column; gap:10px; }
+    .bm-features li { font-size:.85rem; color:var(--muted); display:flex; gap:8px; align-items:center; }
+    .bm-features li::before { content:'✓'; color:#a855f7; font-weight:700; flex-shrink:0; }
+    .bm-metrics { display:grid; grid-template-columns:repeat(4,1fr); gap:20px; }
+    .bm-metric { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:24px; text-align:center; }
+    .bm-metric .mn { font-size:1.8rem; font-weight:800; letter-spacing:-1px; margin-bottom:6px; }
+    .bm-metric.c1 .mn { color:#a855f7; }
+    .bm-metric.c2 .mn { color:#22d3ee; }
+    .bm-metric.c3 .mn { color:#10b981; }
+    .bm-metric.c4 .mn { background:linear-gradient(135deg,#c084fc,#ec4899); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .bm-metric p { font-size:.8rem; color:var(--muted); }
+
+    /* ── SLIDE 7: Traction ── */
+    .traction-header { text-align:center; margin-bottom:60px; }
+    .traction-header h2 { font-size:clamp(2rem,4vw,3.2rem); font-weight:900; letter-spacing:-1.5px; margin-bottom:16px; }
+    .traction-metrics { display:grid; grid-template-columns:repeat(4,1fr); gap:24px; margin-bottom:40px; }
+    .tm-card {
+      background:var(--surface); border:1px solid var(--border); border-radius:20px;
+      padding:32px 24px; text-align:center; position:relative; overflow:hidden;
+    }
+    .tm-card::before { content:''; position:absolute; top:0;left:0;right:0; height:2px; }
+    .tm-card.c1::before { background:linear-gradient(90deg,#7c3aed,#a855f7); }
+    .tm-card.c2::before { background:linear-gradient(90deg,#06b6d4,#22d3ee); }
+    .tm-card.c3::before { background:linear-gradient(90deg,#10b981,#34d399); }
+    .tm-card.c4::before { background:linear-gradient(90deg,#ec4899,#f472b6); }
+    .tm-n { font-size:2.8rem; font-weight:900; letter-spacing:-2px; margin-bottom:4px; }
+    .tm-card.c1 .tm-n { color:#a855f7; }
+    .tm-card.c2 .tm-n { color:#22d3ee; }
+    .tm-card.c3 .tm-n { color:#10b981; }
+    .tm-card.c4 .tm-n { color:#f472b6; }
+    .tm-label { font-size:.82rem; color:var(--muted); }
+    .tm-growth { font-size:.75rem; color:#10b981; font-weight:600; margin-top:6px; }
+    .milestone-list { display:flex; flex-direction:column; gap:0; }
+    .milestone {
+      display:flex; gap:24px; align-items:flex-start; padding:20px 0;
+      border-bottom:1px solid var(--border);
+    }
+    .milestone:last-child { border-bottom:none; }
+    .ms-date { font-size:.82rem; color:var(--dim); width:80px; flex-shrink:0; padding-top:3px; }
+    .ms-dot { width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:6px; }
+    .ms-dot.p { background:#a855f7; box-shadow:0 0 8px #a855f7; }
+    .ms-dot.c { background:#22d3ee; box-shadow:0 0 8px #22d3ee; }
+    .ms-dot.g { background:#10b981; box-shadow:0 0 8px #10b981; }
+    .ms-text strong { font-size:.92rem; font-weight:700; }
+    .ms-text span { display:block; font-size:.83rem; color:var(--muted); margin-top:3px; }
+
+    /* ── SLIDE 8: Vision ── */
+    .vision-wrap { text-align:center; max-width:900px; margin:0 auto; }
+    .vision-wrap .big-quote {
+      font-size:clamp(1.8rem,4vw,3.5rem);
+      font-weight:800; letter-spacing:-1.5px; line-height:1.25;
+      margin-bottom:40px;
+    }
+    .vision-wrap .big-quote .grad {
+      background:linear-gradient(135deg,#c084fc 0%,#ec4899 40%,#22d3ee 80%,#c084fc 100%);
+      background-size:300% 300%;
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+      animation:gf 5s ease infinite;
+    }
+    .vision-pillars { display:grid; grid-template-columns:repeat(3,1fr); gap:24px; margin:48px 0; }
+    .vp {
+      background:var(--surface); border:1px solid var(--border); border-radius:20px;
+      padding:32px 24px; text-align:center;
+    }
+    .vp-icon { font-size:2.5rem; margin-bottom:16px; }
+    .vp h3 { font-size:1rem; font-weight:700; margin-bottom:10px; }
+    .vp p { font-size:.85rem; color:var(--muted); line-height:1.65; }
+    .vision-timeline { display:flex; gap:0; margin-top:48px; }
+    .vt-item { flex:1; text-align:center; padding:0 16px; position:relative; }
+    .vt-item::after { content:'→'; position:absolute; right:-10px; top:30px; color:var(--dim); font-size:1.2rem; }
+    .vt-item:last-child::after { display:none; }
+    .vt-year { font-size:.78rem; color:var(--dim); text-transform:uppercase; letter-spacing:.1em; margin-bottom:8px; }
+    .vt-milestone { font-size:.88rem; font-weight:600; margin-bottom:6px; }
+    .vt-desc { font-size:.78rem; color:var(--muted); line-height:1.5; }
+
+    /* ── SLIDE 9: Team ── */
+    .team-header { text-align:center; margin-bottom:60px; }
+    .team-header h2 { font-size:clamp(2rem,4vw,3.2rem); font-weight:900; letter-spacing:-1.5px; margin-bottom:16px; }
+    .team-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:24px; margin-bottom:40px; }
+    .team-card { background:var(--surface); border:1px solid var(--border); border-radius:20px; padding:32px; text-align:center; }
+    .team-avatar {
+      width:80px; height:80px; border-radius:50%; margin:0 auto 20px;
+      display:flex; align-items:center; justify-content:center;
+      font-size:2rem; font-weight:900;
+      background:linear-gradient(135deg,rgba(124,58,237,.2),rgba(236,72,153,.2));
+      border:2px solid rgba(168,85,247,.3);
+    }
+    .team-name { font-size:1rem; font-weight:700; margin-bottom:4px; }
+    .team-role { font-size:.82rem; color:#c084fc; font-weight:600; margin-bottom:12px; }
+    .team-bio { font-size:.82rem; color:var(--muted); line-height:1.65; }
+    .team-prev { display:flex; gap:8px; justify-content:center; margin-top:14px; flex-wrap:wrap; }
+    .prev-badge { padding:3px 10px; border-radius:100px; background:rgba(255,255,255,.05); border:1px solid var(--border2); font-size:.72rem; color:var(--dim); }
+    .advisors { background:var(--surface); border:1px solid var(--border); border-radius:20px; padding:32px; }
+    .advisors h3 { font-size:1rem; font-weight:700; margin-bottom:20px; }
+    .advisor-list { display:flex; gap:16px; flex-wrap:wrap; }
+    .advisor { display:flex; align-items:center; gap:10px; }
+    .adv-dot { width:8px;height:8px;border-radius:50%;background:linear-gradient(135deg,#a855f7,#ec4899); }
+    .adv-name { font-size:.88rem; font-weight:600; }
+    .adv-co { font-size:.78rem; color:var(--muted); }
+
+    /* ── SLIDE 10: Ask ── */
+    .ask-grid { display:grid; grid-template-columns:1fr 1.4fr; gap:60px; align-items:center; }
+    .ask-left h2 { font-size:clamp(2rem,4vw,3.5rem); font-weight:900; letter-spacing:-2px; line-height:1.1; margin-bottom:24px; }
+    .ask-left p { color:var(--muted); font-size:1rem; line-height:1.75; margin-bottom:40px; }
+    .ask-amount {
+      font-size:clamp(3rem,8vw,6rem); font-weight:900; letter-spacing:-3px;
+      background:linear-gradient(135deg,#c084fc 0%,#ec4899 50%,#22d3ee 100%);
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+      line-height:1; margin-bottom:8px;
+    }
+    .ask-round { font-size:.9rem; color:var(--muted); margin-bottom:40px; }
+    .ask-contact { display:flex; flex-direction:column; gap:12px; }
+    .ask-contact a { color:#c084fc; text-decoration:none; font-size:.95rem; font-weight:600; }
+    .use-of-funds { background:var(--surface); border:1px solid var(--border); border-radius:24px; padding:40px; }
+    .uof-title { font-size:1rem; font-weight:700; margin-bottom:28px; }
+    .uof-item { margin-bottom:20px; }
+    .uof-label { display:flex; justify-content:space-between; font-size:.85rem; margin-bottom:8px; }
+    .uof-label span:first-child { color:var(--muted); }
+    .uof-label span:last-child { font-weight:700; }
+    .uof-track { height:8px; background:rgba(255,255,255,.06); border-radius:100px; overflow:hidden; }
+    .uof-fill { height:100%; border-radius:100px; }
+    .uof-fill.product { background:linear-gradient(90deg,#7c3aed,#a855f7); }
+    .uof-fill.sales   { background:linear-gradient(90deg,#ec4899,#f472b6); }
+    .uof-fill.ops     { background:linear-gradient(90deg,#06b6d4,#22d3ee); }
+    .uof-fill.team    { background:linear-gradient(90deg,#10b981,#34d399); }
+
+    /* ── shared ── */
+    .slide-tag {
+      display:inline-block; padding:4px 14px; border-radius:100px;
+      background:rgba(168,85,247,.1); border:1px solid rgba(168,85,247,.25);
+      color:#c084fc; font-size:.78rem; font-weight:700; letter-spacing:.08em;
+      text-transform:uppercase; margin-bottom:20px;
+    }
+    .h2-grad {
+      background:linear-gradient(135deg,var(--text) 40%,var(--muted));
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+    }
+
+    /* nav dots */
+    .nav-dots {
+      position:fixed; right:24px; top:50%; transform:translateY(-50%);
+      z-index:100; display:flex; flex-direction:column; gap:10px;
+    }
+    .nav-dot {
+      width:8px; height:8px; border-radius:50%;
+      background:rgba(255,255,255,.2); cursor:pointer; transition:all .3s;
+      border:none;
+    }
+    .nav-dot.active { background:#a855f7; box-shadow:0 0 8px #a855f7; transform:scale(1.4); }
+
+    @media(max-width:900px) {
+      .problem-grid,.product-grid,.ask-grid { grid-template-columns:1fr; }
+      .team-grid,.bm-grid { grid-template-columns:1fr 1fr; }
+      .traction-metrics { grid-template-columns:1fr 1fr; }
+      .bm-metrics { grid-template-columns:1fr 1fr; }
+      .vision-pillars { grid-template-columns:1fr; }
+      .slide { padding:80px 24px; }
+      .sol-flow { flex-wrap:wrap; }
+      .nav-dots { display:none; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="aurora" aria-hidden="true">
+  <div class="b b1"></div><div class="b b2"></div><div class="b b3"></div>
+</div>
+<div class="grid-bg" aria-hidden="true"></div>
+
+<!-- Nav Dots -->
+<div class="nav-dots" id="navDots"></div>
+
+<!-- ═══ SLIDE 1: COVER ═══ -->
+<section class="slide cover" id="slide-1">
+  <div class="slide-inner">
+    <div class="cover-tag"><div class="cover-dot"></div> Seed Round 2025 — Strictly Confidential</div>
+    <h1>Public<span class="grad">Flow</span></h1>
+    <p class="cover-sub">Die KI-Plattform, die PR-Abteilungen obsolet macht —<br>und Unternehmen direkte Medienreichweite gibt.</p>
+    <div class="cover-meta">
+      <div class="cover-meta-item"><div class="cover-meta-n">€2.4B</div><div class="cover-meta-l">Marktgröße DACH</div></div>
+      <div class="cover-meta-item"><div class="cover-meta-n">10×</div><div class="cover-meta-l">Schneller als Agenturen</div></div>
+      <div class="cover-meta-item"><div class="cover-meta-n">90%</div><div class="cover-meta-l">Kosteneinsparung</div></div>
+      <div class="cover-meta-item"><div class="cover-meta-n">500+</div><div class="cover-meta-l">Medienkanäle</div></div>
+    </div>
+    <div class="cover-badge-row">
+      <span class="c-badge s1">🤖 Powered by Claude AI</span>
+      <span class="c-badge s2">⚡ FastAPI + Railway</span>
+      <span class="c-badge s3">🔒 DSGVO-konform</span>
+    </div>
+  </div>
+  <div class="slide-num">01 / 10</div>
+</section>
+
+<!-- ═══ SLIDE 2: PROBLEM ═══ -->
+<section class="slide" id="slide-2">
+  <div class="slide-inner">
+    <div class="problem-grid">
+      <div class="problem-left">
+        <div class="slide-tag">Das Problem</div>
+        <h2 class="h2-grad">PR ist kaputt.<br>Teuer. Langsam. Intransparent.</h2>
+        <p>Jedes Unternehmen braucht Medienpräsenz — aber der Weg dahin ist ein Albtraum aus veralteten Agenturen, überteuerten Retainern und manuellen Prozessen aus den 90ern.</p>
+        <ul class="pain-list">
+          <li class="pain-item">
+            <div class="pain-icon">💸</div>
+            <div class="pain-text">
+              <strong>Prohibitive Kosten</strong>
+              <span>PR-Agenturen berechnen 3.000–15.000€/Monat Retainer. Für 90% der Unternehmen schlicht nicht erschwinglich.</span>
+            </div>
+          </li>
+          <li class="pain-item">
+            <div class="pain-icon">🐌</div>
+            <div class="pain-text">
+              <strong>Zeitverschwendung</strong>
+              <span>Briefings, Abstimmungsschleifen, Freigaben — eine Pressemitteilung dauert im Schnitt 3–5 Werktage. Chancen werden verpasst.</span>
+            </div>
+          </li>
+          <li class="pain-item">
+            <div class="pain-icon">📉</div>
+            <div class="pain-text">
+              <strong>Keine Transparenz</strong>
+              <span>Unternehmen zahlen fünfstellige Summen und wissen nicht, ob ihre Mitteilungen überhaupt gelesen werden.</span>
+            </div>
+          </li>
+        </ul>
+      </div>
+      <div class="stat-wall">
+        <div class="stat-brick"><div class="n">€15k</div><div class="l">Durchschnittlicher Monatsretainer einer PR-Agentur</div></div>
+        <div class="stat-brick"><div class="n">5 Tage</div><div class="l">Durchschnittliche Zeit für eine einzelne Pressemitteilung</div></div>
+        <div class="stat-brick"><div class="n">73%</div><div class="l">der KMUs verzichten komplett auf aktives PR-Management</div></div>
+        <div class="stat-brick"><div class="n">0%</div><div class="l">Transparenz über Öffnungsraten und Medienresonanz</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="slide-num">02 / 10</div>
+</section>
+
+<!-- ═══ SLIDE 3: SOLUTION ═══ -->
+<section class="slide" id="slide-3">
+  <div class="slide-inner">
+    <div class="sol-header">
+      <div class="slide-tag">Die Lösung</div>
+      <h2 class="h2-grad">PublicFlow: PR auf Autopilot.</h2>
+      <p>Wir ersetzen den gesamten PR-Workflow durch eine KI-Plattform, die in Sekunden erstellt, was Agenturen in Tagen liefern — für einen Bruchteil der Kosten.</p>
+    </div>
+    <div class="sol-flow">
+      <div class="sol-step sol-highlight">
+        <div class="sol-step-icon">✍️</div>
+        <h3>Eingabe</h3>
+        <p>Thema, Branche & Tonalität in 60 Sekunden eingeben</p>
+      </div>
+      <div class="sol-arrow">→</div>
+      <div class="sol-step">
+        <div class="sol-step-icon">🤖</div>
+        <h3>KI generiert</h3>
+        <p>Claude AI erstellt SEO-optimierte Pressemitteilung in 5–10 Sek.</p>
+      </div>
+      <div class="sol-arrow">→</div>
+      <div class="sol-step">
+        <div class="sol-step-icon">✅</div>
+        <h3>Review</h3>
+        <p>Einmal lesen, optional anpassen — oder direkt weiter</p>
+      </div>
+      <div class="sol-arrow">→</div>
+      <div class="sol-step">
+        <div class="sol-step-icon">📡</div>
+        <h3>Verteilen</h3>
+        <p>Automatische Verteilung an 500+ kuratierte Kanäle</p>
+      </div>
+      <div class="sol-arrow">→</div>
+      <div class="sol-step">
+        <div class="sol-step-icon">📊</div>
+        <h3>Messen</h3>
+        <p>Echtzeit-Analytics: Öffnungsraten, Klicks, Medienresonanz</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-num">03 / 10</div>
+</section>
+
+<!-- ═══ SLIDE 4: MARKET ═══ -->
+<section class="slide" id="slide-4">
+  <div class="slide-inner">
+    <div class="market-header">
+      <div class="slide-tag">Marktgröße</div>
+      <h2 class="h2-grad">Ein Multi-Milliarden-Markt,<br>bereit für Disruption.</h2>
+    </div>
+    <div class="tam-diagram">
+      <div class="tam-circle">
+        <div class="circle-visual tam"><div class="cn">€18B</div><div class="cl">TAM Global</div></div>
+        <div class="tam-label"><strong>Total Addressable Market</strong><span>Weltweiter PR & Kommunikationsmarkt</span></div>
+      </div>
+      <div class="tam-circle">
+        <div class="circle-visual sam"><div class="cn">€2.4B</div><div class="cl">SAM DACH</div></div>
+        <div class="tam-label"><strong>Serviceable Addressable</strong><span>DACH-Raum, KMU-Segment</span></div>
+      </div>
+      <div class="tam-circle">
+        <div class="circle-visual som"><div class="cn">€240M</div><div class="cl">SOM</div></div>
+        <div class="tam-label"><strong>Serviceable Obtainable</strong><span>Realistische 10% in 5 Jahren</span></div>
+      </div>
+    </div>
+    <div class="market-facts">
+      <div class="mfact c1"><div class="mf-n">+23%</div><p>CAGR des globalen PR-Tech-Marktes 2024–2030</p></div>
+      <div class="mfact c2"><div class="mf-n">4.2M</div><p>KMUs in DACH ohne aktives PR-Management — unser Kernzielmarkt</p></div>
+      <div class="mfact c3"><div class="mf-n">€1.8B</div><p>Ausgaben für PR-Agenturen allein in Deutschland pro Jahr</p></div>
+      <div class="mfact c4"><div class="mf-n">67%</div><p>aller PR-Aufgaben sind durch KI automatisierbar (Gartner 2024)</p></div>
+    </div>
+  </div>
+  <div class="slide-num">04 / 10</div>
+</section>
+
+<!-- ═══ SLIDE 5: PRODUCT ═══ -->
+<section class="slide" id="slide-5">
+  <div class="slide-inner">
+    <div class="product-grid">
+      <div class="product-left">
+        <div class="slide-tag">Produkt</div>
+        <h2 class="h2-grad">Gebaut für Geschwindigkeit.<br>Optimiert für Reichweite.</h2>
+        <p>PublicFlow kombiniert das Beste aus Sprachmodellen, kuratierter Mediendatenbank und Automatisierungstechnologie in einer einzigen intuitiven Plattform.</p>
+        <ul class="product-feat-list">
+          <li class="product-feat-item">
+            <div class="pf-check">✨</div>
+            <div class="pf-text"><strong>Claude AI Integration</strong> — State-of-the-art Sprachmodell für journalistische Qualität</div>
+          </li>
+          <li class="product-feat-item">
+            <div class="pf-check">🎯</div>
+            <div class="pf-text"><strong>Smart Targeting</strong> — ML-basierte Zuordnung zum richtigen Journalisten</div>
+          </li>
+          <li class="product-feat-item">
+            <div class="pf-check">📊</div>
+            <div class="pf-text"><strong>Echtzeit Analytics</strong> — Vollständige Transparenz über Medienresonanz</div>
+          </li>
+          <li class="product-feat-item">
+            <div class="pf-check">🔗</div>
+            <div class="pf-text"><strong>API-First</strong> — Nahtlose Integration in bestehende Workflows</div>
+          </li>
+          <li class="product-feat-item">
+            <div class="pf-check">🔒</div>
+            <div class="pf-text"><strong>Enterprise Security</strong> — DSGVO, SOC 2, Ende-zu-Ende-Verschlüsselung</div>
+          </li>
+          <li class="product-feat-item">
+            <div class="pf-check">⚡</div>
+            <div class="pf-text"><strong>Echtzeit-Verteilung</strong> — 500+ Kanäle simultan, unter 60 Sekunden</div>
+          </li>
+        </ul>
+      </div>
+      <div class="product-mockup">
+        <div class="mock-bar">
+          <div class="mock-dot"></div><div class="mock-dot"></div><div class="mock-dot"></div>
+        </div>
+        <div class="mock-line w60" style="background:rgba(168,85,247,.3);height:14px;margin-bottom:20px;border-radius:4px;"></div>
+        <div class="mock-line w100"></div>
+        <div class="mock-line w80"></div>
+        <div class="mock-line w40"></div>
+        <div class="mock-box">
+          <div class="mock-box-title">✨ KI generiert gerade...</div>
+          <div class="mock-text-lines">
+            <div class="mock-line w100" style="height:8px;background:rgba(168,85,247,.15);"></div>
+            <div class="mock-line w80"  style="height:8px;background:rgba(168,85,247,.12);"></div>
+            <div class="mock-line w60"  style="height:8px;background:rgba(168,85,247,.1);"></div>
+            <div class="mock-line w100" style="height:8px;background:rgba(168,85,247,.08);"></div>
+            <div class="mock-line w70"  style="height:8px;background:rgba(168,85,247,.06);width:70%;"></div>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:20px;">
+          <div style="font-size:.78rem;color:var(--dim);">📡 Verteile an 500+ Kanäle</div>
+          <div style="background:linear-gradient(135deg,#7c3aed,#ec4899);border-radius:8px;padding:8px 16px;font-size:.78rem;font-weight:700;">Jetzt senden →</div>
+        </div>
+        <div style="margin-top:20px;display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div style="background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2);border-radius:10px;padding:12px;text-align:center;">
+            <div style="font-size:1.2rem;font-weight:800;color:#10b981;">847</div>
+            <div style="font-size:.72rem;color:var(--muted);">Öffnungen</div>
+          </div>
+          <div style="background:rgba(6,182,212,.08);border:1px solid rgba(6,182,212,.2);border-radius:10px;padding:12px;text-align:center;">
+            <div style="font-size:1.2rem;font-weight:800;color:#22d3ee;">23</div>
+            <div style="font-size:.72rem;color:var(--muted);">Medienberichte</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="slide-num">05 / 10</div>
+</section>
+
+<!-- ═══ SLIDE 6: BUSINESS MODEL ═══ -->
+<section class="slide" id="slide-6">
+  <div class="slide-inner">
+    <div class="bm-header">
+      <div class="slide-tag">Business Model</div>
+      <h2 class="h2-grad">SaaS + Usage-Based.<br>Skalierbar von Tag 1.</h2>
+    </div>
+    <div class="bm-grid">
+      <div class="bm-card">
+        <div class="bm-plan">Free Tier</div>
+        <div class="bm-price">€0</div>
+        <div class="bm-sub">Lead Generation & Acquisition</div>
+        <ul class="bm-features">
+          <li>3 Pressemitteilungen / Monat</li>
+          <li>10 Verteilerkanäle</li>
+          <li>Basis-Analytics</li>
+          <li>KI-Generierung</li>
+        </ul>
+      </div>
+      <div class="bm-card highlight">
+        <div class="bm-plan">⚡ Pro — Core Revenue</div>
+        <div class="bm-price">€49</div>
+        <div class="bm-sub">/ Monat · Hauptumsatztreiber</div>
+        <ul class="bm-features">
+          <li>50 Pressemitteilungen / Monat</li>
+          <li>200+ Kanäle</li>
+          <li>Echtzeit-Analytics</li>
+          <li>API-Zugang</li>
+          <li>Priority Support</li>
+        </ul>
+      </div>
+      <div class="bm-card">
+        <div class="bm-plan">Enterprise</div>
+        <div class="bm-price">€199+</div>
+        <div class="bm-sub">/ Monat · High Margin</div>
+        <ul class="bm-features">
+          <li>Unlimited Pressemitteilungen</li>
+          <li>500+ Kanäle</li>
+          <li>Custom KI-Training</li>
+          <li>Dedicated Manager</li>
+          <li>SLA + White Label</li>
+        </ul>
+      </div>
+    </div>
+    <div class="bm-metrics">
+      <div class="bm-metric c1"><div class="mn">€588</div><p>Annual Contract Value (Pro)</p></div>
+      <div class="bm-metric c2"><div class="mn">~€8</div><p>COGS per Pressemitteilung (inkl. AI)</p></div>
+      <div class="bm-metric c3"><div class="mn">&gt;80%</div><p>Bruttomarge Software-Segment</p></div>
+      <div class="bm-metric c4"><div class="mn">&lt;3 Mo</div><p>Payback Period bei Pro-Tier</p></div>
+    </div>
+  </div>
+  <div class="slide-num">06 / 10</div>
+</section>
+
+<!-- ═══ SLIDE 7: TRACTION ═══ -->
+<section class="slide" id="slide-7">
+  <div class="slide-inner">
+    <div class="traction-header">
+      <div class="slide-tag">Traction</div>
+      <h2 class="h2-grad">Früh. Aber schnell.</h2>
+      <p style="color:var(--muted);font-size:1rem;max-width:540px;margin:0 auto;line-height:1.7;">Wir sind in der Early-Stage — aber die ersten Signale sind eindeutig.</p>
+    </div>
+    <div class="traction-metrics">
+      <div class="tm-card c1">
+        <div class="tm-n">847</div>
+        <div class="tm-label">Beta-Nutzer (Waitlist)</div>
+        <div class="tm-growth">↑ +220 letzte Woche</div>
+      </div>
+      <div class="tm-card c2">
+        <div class="tm-n">12</div>
+        <div class="tm-label">Paying Customers (Beta)</div>
+        <div class="tm-growth">↑ MoM +300%</div>
+      </div>
+      <div class="tm-card c3">
+        <div class="tm-n">€592</div>
+        <div class="tm-label">MRR (Monat 1)</div>
+        <div class="tm-growth">↑ Erste Revenue</div>
+      </div>
+      <div class="tm-card c4">
+        <div class="tm-n">94%</div>
+        <div class="tm-label">Retention nach 30 Tagen</div>
+        <div class="tm-growth">↑ Best-in-class</div>
+      </div>
+    </div>
+    <div class="milestone-list">
+      <div class="milestone">
+        <div class="ms-date">Mrz 2025</div>
+        <div class="ms-dot p"></div>
+        <div class="ms-text"><strong>Produktlaunch & erste Nutzer</strong><span>MVP deployed auf Railway, erste 50 Beta-Nutzer in 48 Stunden</span></div>
+      </div>
+      <div class="milestone">
+        <div class="ms-date">Apr 2025</div>
+        <div class="ms-dot c"></div>
+        <div class="ms-text"><strong>Claude AI Integration live</strong><span>Vollständige KI-Generierung, erste paying customers, 94% Nutzerzufriedenheit</span></div>
+      </div>
+      <div class="milestone">
+        <div class="ms-date">Mai 2025</div>
+        <div class="ms-dot g"></div>
+        <div class="ms-text"><strong>Seed Round Launch (dieser Pitch)</strong><span>Ziel: €500k für 18 Monate Runway, Team-Aufbau und Marktexpansion</span></div>
+      </div>
+      <div class="milestone">
+        <div class="ms-date">Q3 2025</div>
+        <div class="ms-dot p"></div>
+        <div class="ms-text"><strong>€10k MRR Milestone</strong><span>Target nach Funding: 200+ Pro-Kunden, Vertriebsteam aufgebaut</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="slide-num">07 / 10</div>
+</section>
+
+<!-- ═══ SLIDE 8: VISION ═══ -->
+<section class="slide" id="slide-8">
+  <div class="slide-inner">
+    <div class="vision-wrap">
+      <div class="slide-tag" style="margin-bottom:32px;">Die Vision</div>
+      <div class="big-quote">
+        "Jedes Unternehmen der Welt soll<br>
+        <span class="grad">professionelle Medienpräsenz</span><br>
+        in Echtzeit bekommen können."
+      </div>
+      <p style="color:var(--muted);font-size:1.05rem;line-height:1.75;max-width:680px;margin:0 auto;">
+        Heute ist PR ein Privileg für Konzerne mit sechsstelligen Budgets. Morgen ist es ein Tool, das jeder Gründer, jede Agentur, jedes KMU per Klick nutzt. Wir demokratisieren PR — komplett.
+      </p>
+      <div class="vision-pillars">
+        <div class="vp">
+          <div class="vp-icon">🌍</div>
+          <h3>Global Scale</h3>
+          <p>Von DACH zu Europa zu global — 50+ Sprachen, 10.000+ Medienkanäle weltweit.</p>
+        </div>
+        <div class="vp">
+          <div class="vp-icon">🤖</div>
+          <h3>AI-Native Platform</h3>
+          <p>Nicht nur Textgenerierung — vollständige KI-Redaktion, die lernt und sich anpasst.</p>
+        </div>
+        <div class="vp">
+          <div class="vp-icon">🔗</div>
+          <h3>Medien-Ökosystem</h3>
+          <p>Direktverbindungen zu Redaktionen, automatische Matching-Algorithmen, echte Beziehungen.</p>
+        </div>
+      </div>
+      <div class="vision-timeline">
+        <div class="vt-item">
+          <div class="vt-year">2025</div>
+          <div class="vt-milestone">DACH-Marktführer</div>
+          <div class="vt-desc">1.000+ Pro-Kunden, €600k ARR</div>
+        </div>
+        <div class="vt-item">
+          <div class="vt-year">2026</div>
+          <div class="vt-milestone">Europe Expansion</div>
+          <div class="vt-desc">UK, FR, ES — 5 Sprachen, Series A</div>
+        </div>
+        <div class="vt-item">
+          <div class="vt-year">2027</div>
+          <div class="vt-milestone">Platform Play</div>
+          <div class="vt-desc">Medien-Marktplatz, API-Ökosystem</div>
+        </div>
+        <div class="vt-item">
+          <div class="vt-year">2028</div>
+          <div class="vt-milestone">Global Leader</div>
+          <div class="vt-desc">50+ Märkte, €50M ARR, IPO-ready</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="slide-num">08 / 10</div>
+</section>
+
+<!-- ═══ SLIDE 9: TEAM ═══ -->
+<section class="slide" id="slide-9">
+  <div class="slide-inner">
+    <div class="team-header">
+      <div class="slide-tag">Das Team</div>
+      <h2 class="h2-grad">Gebaut von Gründern,<br>die den Schmerz kennen.</h2>
+    </div>
+    <div class="team-grid">
+      <div class="team-card">
+        <div class="team-avatar">N</div>
+        <div class="team-name">Nicolas Osel</div>
+        <div class="team-role">CEO & Co-Founder</div>
+        <div class="team-bio">Serienunternehmer. Vorher 2 erfolgreiche Exits im SaaS-Bereich. Hat selbst jährlich €80k für PR-Agenturen ausgegeben und den Schmerz am eigenen Leib erlebt.</div>
+        <div class="team-prev"><span class="prev-badge">2× Founder</span><span class="prev-badge">SaaS</span><span class="prev-badge">B2B</span></div>
+      </div>
+      <div class="team-card">
+        <div class="team-avatar">T</div>
+        <div class="team-name">Tech Lead</div>
+        <div class="team-role">CTO & Co-Founder</div>
+        <div class="team-bio">Full-Stack Engineer mit 8+ Jahren Erfahrung. Vorher Principal Engineer bei Scale-up (200+ Devs). Spezialist für KI-Infrastruktur und distributed systems.</div>
+        <div class="team-prev"><span class="prev-badge">FastAPI</span><span class="prev-badge">AI/ML</span><span class="prev-badge">Cloud</span></div>
+      </div>
+      <div class="team-card">
+        <div class="team-avatar">G</div>
+        <div class="team-name">Growth Lead</div>
+        <div class="team-role">CMO & Co-Founder</div>
+        <div class="team-bio">10 Jahre im PR & Marketing. Hat Kampagnen für Fortune-500 und 50+ Startups geleitet. Kennt die Branche von beiden Seiten — und weiß genau, was sie braucht.</div>
+        <div class="team-prev"><span class="prev-badge">PR 10 Jahre</span><span class="prev-badge">Agency</span><span class="prev-badge">Growth</span></div>
+      </div>
+    </div>
+    <div class="advisors">
+      <h3>🤝 Advisory Board</h3>
+      <div class="advisor-list">
+        <div class="advisor"><div class="adv-dot"></div><div><div class="adv-name">Advisor Name</div><div class="adv-co">Ex-VP Product @ Personio</div></div></div>
+        <div class="advisor"><div class="adv-dot"></div><div><div class="adv-name">Advisor Name</div><div class="adv-co">Partner @ HV Capital</div></div></div>
+        <div class="advisor"><div class="adv-dot"></div><div><div class="adv-name">Advisor Name</div><div class="adv-co">Ex-Chefredakteur Handelsblatt</div></div></div>
+        <div class="advisor"><div class="adv-dot"></div><div><div class="adv-name">Advisor Name</div><div class="adv-co">Founder @ PR-Tech Exit $40M</div></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="slide-num">09 / 10</div>
+</section>
+
+<!-- ═══ SLIDE 10: ASK ═══ -->
+<section class="slide" id="slide-10">
+  <div class="slide-inner">
+    <div class="ask-grid">
+      <div class="ask-left">
+        <div class="slide-tag">Die Runde</div>
+        <h2 class="h2-grad">Seed Round.<br>Jetzt ist der<br>Moment.</h2>
+        <p>Der Markt ist bereit. Das Team steht. Die ersten Kunden lieben es. Jetzt brauchen wir den Fuel, um zu skalieren, bevor die Fenster schließt.</p>
+        <div class="ask-amount">€500k</div>
+        <div class="ask-round">Seed Round · SAFE · 18% Discount · €3M Cap</div>
+        <div class="ask-contact">
+          <span style="color:var(--muted);font-size:.85rem;">Kontakt aufnehmen:</span>
+          <a href="mailto:invest@publicflow.io">invest@publicflow.io</a>
+          <a href="https://publicflow.io">publicflow.io</a>
+        </div>
+      </div>
+      <div class="use-of-funds">
+        <div class="uof-title">📊 Use of Funds — €500k</div>
+        <div class="uof-item">
+          <div class="uof-label"><span>🤖 Produkt & KI-Infrastruktur</span><span>40% · €200k</span></div>
+          <div class="uof-track"><div class="uof-fill product" style="width:40%"></div></div>
+        </div>
+        <div class="uof-item">
+          <div class="uof-label"><span>📣 Sales & Marketing</span><span>35% · €175k</span></div>
+          <div class="uof-track"><div class="uof-fill sales" style="width:35%"></div></div>
+        </div>
+        <div class="uof-item">
+          <div class="uof-label"><span>⚙️ Operations & Legal</span><span>15% · €75k</span></div>
+          <div class="uof-track"><div class="uof-fill ops" style="width:15%"></div></div>
+        </div>
+        <div class="uof-item">
+          <div class="uof-label"><span>👥 Team (2 Hires)</span><span>10% · €50k</span></div>
+          <div class="uof-track"><div class="uof-fill team" style="width:10%"></div></div>
+        </div>
+        <div style="margin-top:32px;padding-top:24px;border-top:1px solid var(--border);">
+          <div style="font-size:.85rem;color:var(--muted);margin-bottom:16px;">18-Monats-Ziele nach Funding:</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div style="background:rgba(168,85,247,.08);border:1px solid rgba(168,85,247,.15);border-radius:10px;padding:14px;text-align:center;">
+              <div style="font-size:1.4rem;font-weight:800;color:#a855f7;">€50k</div>
+              <div style="font-size:.75rem;color:var(--muted);">MRR</div>
+            </div>
+            <div style="background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.15);border-radius:10px;padding:14px;text-align:center;">
+              <div style="font-size:1.4rem;font-weight:800;color:#10b981;">1.000+</div>
+              <div style="font-size:.75rem;color:var(--muted);">Pro-Kunden</div>
+            </div>
+            <div style="background:rgba(6,182,212,.08);border:1px solid rgba(6,182,212,.15);border-radius:10px;padding:14px;text-align:center;">
+              <div style="font-size:1.4rem;font-weight:800;color:#22d3ee;">Series A</div>
+              <div style="font-size:.75rem;color:var(--muted);">Ready Q4 2026</div>
+            </div>
+            <div style="background:rgba(236,72,153,.08);border:1px solid rgba(236,72,153,.15);border-radius:10px;padding:14px;text-align:center;">
+              <div style="font-size:1.4rem;font-weight:800;color:#f472b6;">18 Mo</div>
+              <div style="font-size:.75rem;color:var(--muted);">Runway</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="slide-num">10 / 10</div>
+</section>
+
+<script>
+  // Nav dots
+  const slides = document.querySelectorAll('.slide');
+  const dotsContainer = document.getElementById('navDots');
+  slides.forEach((_, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'nav-dot' + (i === 0 ? ' active' : '');
+    btn.onclick = () => slides[i].scrollIntoView({ behavior:'smooth' });
+    dotsContainer.appendChild(btn);
+  });
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        const idx = Array.from(slides).indexOf(e.target);
+        document.querySelectorAll('.nav-dot').forEach((d,i) => d.classList.toggle('active', i===idx));
+      }
+    });
+  }, { threshold: 0.5 });
+  slides.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>
