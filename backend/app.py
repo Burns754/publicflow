@@ -136,7 +136,7 @@ def require_active_sub(user_id: str, db) -> Subscription:
 @app.get("/")
 async def root():
     """Redirect zur Landing Page."""
-    return RedirectResponse(url="/app/landing.html", status_code=302)
+    return RedirectResponse(url="/app/index.html", status_code=302)
 
 @app.get("/api")
 async def api_root():
