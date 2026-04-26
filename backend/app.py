@@ -861,7 +861,7 @@ async def admin_export(secret: str, db=Depends(get_db)):
             "min_budget": company.min_budget if company else 0,
             "max_budget": company.max_budget if company else 0,
             "matches_gesamt": match_count,
-            "stripe_sub_id": sub.stripe_subscription_id if sub else "",
+            "stripe_sub_id": sub.id if sub else "",
         })
 
     return {"kunden": result, "gesamt": len(result), "stand": datetime.utcnow().isoformat()}
