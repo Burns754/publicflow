@@ -37,8 +37,7 @@ class TenderMatcher:
     def _claude_match(self, company: Dict, tender: Dict) -> Tuple[float, str]:
         prompt = f"""Du bist Experte für öffentliche Vergabe und bewertest ob eine Ausschreibung für ein Unternehmen relevant ist.
 
-UNTERNEHMEN:
-- Name: {company.get('name', 'N/A')}
+UNTERNEHMEN (anonymisiert, nur fachliche Merkmale):
 - Branche: {company.get('industry', 'N/A')}
 - Kompetenzen: {company.get('experience_keywords', 'N/A')}
 - CPV-Fokus: {company.get('cpv_focus', 'N/A')}

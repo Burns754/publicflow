@@ -8,7 +8,7 @@ PublicFlow Backend v0.3
 - Täglicher Scheduler
 """
 
-from fastapi import FastAPI, HTTPException, Request, Depends, status, BackgroundTasks
+from fastapi import FastAPI, HTTPException, Request, Depends, status, BackgroundTasks, Header
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, RedirectResponse
@@ -19,7 +19,10 @@ from datetime import datetime
 import asyncio
 import logging
 import os
+import secrets
 import threading
+import time
+from collections import defaultdict
 from typing import Optional, List
 
 from models import Base, User, Company, Subscription, Tender, Match, SearchQuery
@@ -832,14 +835,48 @@ async def search_tenders(
 
 ADMIN_SECRET = os.getenv("ADMIN_SECRET", "publicflow-admin-2026")
 
+# Rate-Limiter: max 5 Fehlversuche pro IP in 60 Sekunden
+_admin_fail_log: dict = defaultdict(list)
+_RATE_LIMIT_WINDOW = 60   # Sekunden
+_RATE_LIMIT_MAX    = 5    # Versuche
+
+
+def _check_admin_auth(request: Request, authorization: Optional[str]) -> None:
+    """Prüft Bearer-Token timing-safe und blockt bei zu vielen Fehlversuchen."""
+    ip = request.client.host if request.client else "unknown"
+    now = time.time()
+
+    # Alte Einträge entfernen
+    _admin_fail_log[ip] = [t for t in _admin_fail_log[ip] if now - t < _RATE_LIMIT_WINDOW]
+
+    if len(_admin_fail_log[ip]) >= _RATE_LIMIT_MAX:
+        logger.warning(f"🚨 Admin-Rate-Limit überschritten von IP: {ip}")
+        raise HTTPException(status_code=429, detail="Zu viele Fehlversuche – bitte warte 60 Sekunden")
+
+    token = None
+    if authorization and authorization.startswith("Bearer "):
+        token = authorization[7:]
+
+    if not token or not secrets.compare_digest(
+        token.encode("utf-8"),
+        ADMIN_SECRET.encode("utf-8")
+    ):
+        _admin_fail_log[ip].append(now)
+        logger.warning(f"🚨 Admin-Zugriff verweigert von IP: {ip} ({len(_admin_fail_log[ip])}/{_RATE_LIMIT_MAX} Versuche)")
+        raise HTTPException(status_code=403, detail="Nicht autorisiert")
+
+
 @app.get("/admin/export")
-async def admin_export(secret: str, db=Depends(get_db)):
+async def admin_export(
+    request: Request,
+    authorization: Optional[str] = Header(None),
+    db=Depends(get_db)
+):
     """
     Exportiert alle Kundendaten als JSON für Google Sheets Sync.
-    Aufruf: /admin/export?secret=DEIN_ADMIN_SECRET
+    Aufruf: Header  Authorization: Bearer DEIN_ADMIN_SECRET
     """
-    if secret != ADMIN_SECRET:
-        raise HTTPException(status_code=403, detail="Nicht autorisiert")
+    _check_admin_auth(request, authorization)
 
     users = db.query(User).all()
     result = []
@@ -868,10 +905,14 @@ async def admin_export(secret: str, db=Depends(get_db)):
 
 
 @app.get("/admin/tenders")
-async def admin_tenders(secret: str, limit: int = 50, db=Depends(get_db)):
+async def admin_tenders(
+    request: Request,
+    limit: int = 50,
+    authorization: Optional[str] = Header(None),
+    db=Depends(get_db)
+):
     """Exportiert die letzten Ausschreibungen in der Datenbank."""
-    if secret != ADMIN_SECRET:
-        raise HTTPException(status_code=403, detail="Nicht autorisiert")
+    _check_admin_auth(request, authorization)
 
     tenders = db.query(Tender).order_by(Tender.scraped_at.desc()).limit(limit).all()
     return {
@@ -900,6 +941,18 @@ async def startup():
     logger.info("🚀 PublicFlow v0.3.1 startet...")
     Base.metadata.create_all(bind=engine)
     logger.info("✅ Datenbank bereit")
+
+    # ── DSGVO Region-Check ────────────────────────────────────────────
+    _db_url = os.getenv("DATABASE_URL", "")
+    if any(kw in _db_url for kw in ["us-", "amazonaws.com", "us1.", "us2.", "us3."]):
+        logger.warning(
+            "⚠️  DSGVO-WARNUNG: DATABASE_URL deutet auf US-Region hin! "
+            "Bitte Railway-Projekt auf EU-Region (europe-west4) prüfen."
+        )
+    elif _db_url:
+        logger.info("✅ Datenbank-Region: keine offensichtliche US-Region erkannt")
+    else:
+        logger.warning("⚠️  DATABASE_URL nicht gesetzt!")
 
     start_scheduler(engine)
 
