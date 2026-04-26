@@ -374,7 +374,7 @@ async def create_checkout(
         if not checkout_url:
             raise HTTPException(status_code=500, detail="Checkout konnte nicht erstellt werden")
 
-        return {"checkout_url": checkout_url}
+        return {"url": checkout_url}  # Frontend erwartet "url"
     finally:
         db.close()
 
@@ -499,6 +499,25 @@ async def activate_mock(
             ))
         db.commit()
         return {"status": "activated", "plan": plan, "interval": interval}
+    finally:
+        db.close()
+
+
+@app.get("/subscription")
+async def get_subscription(user_id: str = Depends(get_current_user_id)):
+    """Abo-Status des eingeloggten Nutzers."""
+    db = SessionLocal()
+    try:
+        sub = db.query(Subscription).filter(Subscription.user_id == user_id).first()
+        if not sub:
+            return {"has_subscription": False, "plan": None, "status": None, "interval": None}
+        return {
+            "has_subscription": True,
+            "plan": sub.plan,
+            "status": sub.status,
+            "interval": sub.interval,
+            "current_period_end": sub.current_period_end.isoformat() if sub.current_period_end else None,
+        }
     finally:
         db.close()
 

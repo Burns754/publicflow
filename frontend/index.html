@@ -1012,19 +1012,29 @@ function renderMatches(matches) {
     return;
   }
   wrap.innerHTML = `<div class="match-list">${matches.slice(0,20).map(m=>{
-    const score = m.match_score ? Math.round(m.match_score*100) : '—';
-    const days = m.deadline ? Math.ceil((new Date(m.deadline)-Date.now())/86400000) : null;
+    // Backend gibt match_score als 0-100 zurück (nicht 0-1)
+    const score = m.match_score != null ? Math.round(m.match_score) : '—';
+    // Deadline: Backend nutzt tender_deadline
+    const deadlineStr = m.tender_deadline || m.deadline || null;
+    const days = deadlineStr ? Math.ceil((new Date(deadlineStr)-Date.now())/86400000) : null;
     const hot = days !== null && days <= 7;
+    // URL: Backend nutzt tender_url
+    const link = m.tender_url || m.url || '';
+    // Titel: Backend nutzt tender_title
+    const title = m.tender_title || m.title || 'Ausschreibung';
+    // Auftraggeber
+    const org = m.tender_source || m.contracting_authority || m.organization || '';
+    const budget = m.budget_min || m.budget_max ? fmtMoney(m.budget_max||m.budget_min) : '';
     return `<div class="match-item">
       <div>
-        <div class="match-title">${esc(m.title||m.tender_title||'Ausschreibung')}</div>
-        <div class="match-org">${esc(m.contracting_authority||m.organization||'')}${m.budget ? ' · ' + fmtMoney(m.budget) : ''}</div>
-        ${m.reasoning ? `<div class="match-badge">${esc(m.reasoning.substring(0,60))}…</div>` : ''}
+        <div class="match-title">${esc(title)}</div>
+        <div class="match-org">${esc(org)}${budget ? ' · ' + budget : ''}</div>
+        ${m.reasoning ? `<div class="match-badge">${esc(m.reasoning.substring(0,80))}${m.reasoning.length>80?'…':''}</div>` : ''}
       </div>
       <div class="match-right">
         <div class="match-score">${score}%</div>
-        ${days!==null ? `<div class="match-days ${hot?'hot':''}>${hot?'⚡ ':''} ${days} Tage</div>` : ''}
-        ${m.url ? `<a href="${esc(m.url)}" target="_blank" style="font-size:11px;color:var(--blue-l);text-decoration:none;margin-top:4px;display:block;">Öffnen →</a>` : ''}
+        ${days!==null && days>=0 ? `<div class="match-days ${hot?'hot':''}">${hot?'⚡ ':''}${days} Tage</div>` : ''}
+        ${link ? `<a href="${esc(link)}" target="_blank" style="font-size:11px;color:var(--blue-l);text-decoration:none;margin-top:4px;display:block;">Öffnen →</a>` : ''}
       </div>
     </div>`;
   }).join('')}</div>`;
