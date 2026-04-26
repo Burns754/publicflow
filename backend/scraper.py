@@ -96,6 +96,52 @@ class TEDScraper:
             logger.error(f"TED Profil-Suche Fehler: {e} — Fallback")
             return self.fetch_recent_tenders(limit)
 
+    def fetch_eu_wide(self, limit: int = 20) -> List[Dict]:
+        """
+        EU-weite TED-Suche (ohne Länderbeschränkung).
+        Liefert Ausschreibungen aller EU-Institutionen und Mitgliedsstaaten.
+        """
+        year = datetime.now().year
+        prev_year = year - 1
+        attempts = [
+            (f"EU-weit ND=*-{year}", {
+                "query": f"ND=*-{year}",
+                "fields": self.FIELDS,
+                "page": 1, "limit": limit
+            }),
+            ("EU-weit scope=ACTIVE", {
+                "query": "*",
+                "fields": self.FIELDS,
+                "page": 1, "limit": limit,
+                "scope": "ACTIVE"
+            }),
+            (f"EU-weit ND=*-{year} OR ND=*-{prev_year}", {
+                "query": f"(ND=*-{year} OR ND=*-{prev_year})",
+                "fields": self.FIELDS,
+                "page": 1, "limit": limit
+            }),
+        ]
+        tenders = []
+        for label, payload in attempts:
+            try:
+                resp = self.session.post(self.API_URL, json=payload, timeout=30)
+                if resp.status_code == 200:
+                    data = resp.json()
+                    raw = data.get("notices", [])
+                    recent = [n for n in raw if self._is_recent(n, min_year=prev_year)]
+                    if recent:
+                        for n in recent:
+                            t = self._parse_notice(n)
+                            if t:
+                                t["source"] = "ted.europa.eu/EU"
+                                t["buyer_category"] = "EU"
+                                tenders.append(t)
+                        logger.info(f"✅ TED EU-weit '{label}': {len(tenders)} Einträge")
+                        break
+            except Exception as e:
+                logger.warning(f"TED EU-weit '{label}': {e}")
+        return self._filter_active(tenders)
+
     def fetch_recent_tenders(self, limit: int = 20) -> List[Dict]:
         tenders = []
         try:
@@ -314,18 +360,23 @@ class TEDScraper:
 
 
 # ─────────────────────────────────────────────────────────────────
-# Deutsche Vergabeplattformen
-# Reihenfolge: service.bund.de → DTVP → Vergabe NRW → Subreport → evergabe
+# Deutsche Vergabeplattformen (Bund + alle 16 Bundesländer)
+# Reihenfolge: Bundesplattform → Länder → Spezialplattformen
 # ─────────────────────────────────────────────────────────────────
 
 class EvergabeScraper:
     """
     Scraper für deutsche Vergabeplattformen.
-    Probiert mehrere Quellen in Reihenfolge, nimmt ersten Treffer.
+    Deckt Bund, alle relevanten Bundesländer und Spezialplattformen ab.
+    Probiert Quellen in Reihenfolge, sammelt von allen (mit Keyword-Filter).
     """
 
     RSS_SOURCES = [
-        # ── service.bund.de (offizielle Bundesplattform) ──────────────────────
+        # ══════════════════════════════════════════════════════════════
+        # BUNDESEBENE
+        # ══════════════════════════════════════════════════════════════
+
+        # ── service.bund.de (offizielle Bundesplattform) ──────────────
         ("service.bund.de",
          "https://www.service.bund.de/IMPORTE/Ausschreibungen/opensearch.html"
          "?view=processForm&resultCount=25&type=1&searchScope=1&tenderStatus=2&outputMode=rss"),
@@ -334,14 +385,63 @@ class EvergabeScraper:
          "AusschreibungenSuche_Formular.html?view=processForm&resultCount=25"
          "&tenderStatus=2&outputMode=rss"),
 
-        # ── DTVP ─────────────────────────────────────────────────────────────
+        # ── evergabe-online.de (ITZ Bund) ─────────────────────────────
+        ("evergabe-online",
+         "https://www.evergabe-online.de/tenderinformation.rss"),
+
+        # ── bund.de-feed ──────────────────────────────────────────────
+        ("bund.de-feed",
+         "https://www.bund.de/Content/DE/Bekanntmachungen/Suche.html"
+         "?nn=3294906&type=1&outputMode=rss"),
+
+        # ══════════════════════════════════════════════════════════════
+        # GROSSE ÜBERREGIONALE PLATTFORMEN
+        # ══════════════════════════════════════════════════════════════
+
+        # ── DTVP (Deutsches Vergabeportal) ────────────────────────────
         ("DTVP",
          "https://www.dtvp.de/Center/notice/search.do?"
          "rss=true&resultCountType=20&legalBasisType=VOB"),
         ("DTVP-alt",
          "https://www.dtvp.de/Center/notice/search.do?format=rss&status=2"),
 
-        # ── Vergabe NRW ──────────────────────────────────────────────────────
+        # ── Vergabe24 (DTVP-Tochter) ──────────────────────────────────
+        ("Vergabe24",
+         "https://www.vergabe24.de/ausschreibungen?format=rss"),
+
+        # ── Subreport ─────────────────────────────────────────────────
+        ("Subreport",
+         "https://www.subreport.de/E11000/ausschreibungen-rss.xml"),
+        ("Subreport-alt",
+         "https://www.subreport.de/rss/ausschreibungen.xml"),
+
+        # ── Ausschreibungen.de ────────────────────────────────────────
+        ("Ausschreibungen.de",
+         "https://www.ausschreibungen.de/rss/ausschreibungen.xml"),
+
+        # ── ibau.de (Bau & Infrastruktur) ────────────────────────────
+        ("ibau",
+         "https://www.ibau.de/rss/ausschreibungen/?format=rss"),
+        ("ibau-alt",
+         "https://www.ibau.de/ausschreibungen/rss/"),
+
+        # ── Auftragsboerse.de ─────────────────────────────────────────
+        ("Auftragsboerse",
+         "https://www.auftragsboerse.de/rss/feed.xml"),
+        ("Auftragsboerse-alt",
+         "https://www.auftragsboerse.de/ausschreibungen/feed"),
+
+        # ── Deutsche eVergabe ─────────────────────────────────────────
+        ("DeutscheEVergabe",
+         "https://www.deutsche-evergabe.de/rss/ausschreibungen"),
+        ("DeutscheEVergabe-alt",
+         "https://www.deutsche-evergabe.de/ausschreibungen?format=rss"),
+
+        # ══════════════════════════════════════════════════════════════
+        # BUNDESLAND-PLATTFORMEN
+        # ══════════════════════════════════════════════════════════════
+
+        # ── NRW (größtes Bundesland) ──────────────────────────────────
         ("VergabeNRW",
          "https://www.vergabe.nrw.de/VMPCenter/company/announcement/"
          "listAnnouncements.do?method=start&status=2&rss=true"),
@@ -349,24 +449,58 @@ class EvergabeScraper:
          "https://www.vergabe.nrw.de/VMPCenter/company/announcement/"
          "listAnnouncements.do?method=start&rss=true"),
 
-        # ── Subreport ────────────────────────────────────────────────────────
-        ("Subreport",
-         "https://www.subreport.de/E11000/ausschreibungen-rss.xml"),
-        ("Subreport-alt",
-         "https://www.subreport.de/rss/ausschreibungen.xml"),
+        # ── Bayern ───────────────────────────────────────────────────
+        ("VergabeBayern",
+         "https://www.vergabe.Bayern.de/NetServer/TenderingProcedureSearchServlet"
+         "?function=search&ContentId=VMPBayern_TenderListRSS&Status=2"),
+        ("VergabeBayern-alt",
+         "https://www.vergabe.Bayern.de/rss/ausschreibungen.xml"),
 
-        # ── Vergabe24 (DTVP-Tochter) ─────────────────────────────────────────
-        ("Vergabe24",
-         "https://www.vergabe24.de/ausschreibungen?format=rss"),
+        # ── Baden-Württemberg ─────────────────────────────────────────
+        ("StaatsanzeigerBW",
+         "https://vergabe.staatsanzeiger-bw.de/NetServer/TenderingProcedureSearchServlet"
+         "?function=search&ContentId=StAnzBW_TenderListRSS&Status=2"),
+        ("LeiKaVergabeBW",
+         "https://www.leika-vergabe.de/NetServer/TenderingProcedureSearchServlet"
+         "?function=search&ContentId=LeIKa_TenderListRSS"),
 
-        # ── Ausschreibungen.de ───────────────────────────────────────────────
-        ("Ausschreibungen.de",
-         "https://www.ausschreibungen.de/rss/ausschreibungen.xml"),
+        # ── Hessen ───────────────────────────────────────────────────
+        ("HAD-Hessen",
+         "https://www.had.de/onlinesuche_rss.html"),
+        ("HAD-Hessen-alt",
+         "https://www.had.de/rss/ausschreibungen.xml"),
 
-        # ── bund.de Suche (HTML fallback) ─────────────────────────────────────
-        ("bund.de-feed",
-         "https://www.bund.de/Content/DE/Bekanntmachungen/Suche.html"
-         "?nn=3294906&type=1&outputMode=rss"),
+        # ── Hamburg / Metropol-Nord ───────────────────────────────────
+        ("MetropolVergabe",
+         "https://www.metropol-vergabe.de/NetServer/TenderingProcedureSearchServlet"
+         "?function=search&ContentId=Metropol_TenderListRSS&Status=2"),
+        ("MetropolVergabe-alt",
+         "https://www.metropol-vergabe.de/rss/ausschreibungen.xml"),
+
+        # ── Sachsen ───────────────────────────────────────────────────
+        ("VergabeSachsen",
+         "https://www.vergabe.sachsen.de/VMPCenter/company/announcement/"
+         "listAnnouncements.do?method=start&status=2&rss=true"),
+
+        # ── Thüringen ─────────────────────────────────────────────────
+        ("VergabeThueringen",
+         "https://www.vergabe.thueringen.de/VMPCenter/company/announcement/"
+         "listAnnouncements.do?method=start&rss=true"),
+
+        # ── Niedersachsen ─────────────────────────────────────────────
+        ("VergabeNiedersachsen",
+         "https://www.vergabeplattform-niedersachsen.de/NetServer/"
+         "TenderingProcedureSearchServlet?function=search&ContentId=NDS_TenderListRSS"),
+
+        # ── Brandenburg / Berlin ──────────────────────────────────────
+        ("VergabeBBB",
+         "https://www.vergabeplattform.de/NetServer/TenderingProcedureSearchServlet"
+         "?function=search&ContentId=BBB_TenderListRSS&Status=2"),
+
+        # ── Rheinland-Pfalz ───────────────────────────────────────────
+        ("eVergabeRLP",
+         "https://evergabe.rlp.de/NetServer/TenderingProcedureSearchServlet"
+         "?function=search&ContentId=RLP_TenderListRSS"),
     ]
 
     EVERGABE_URL = "https://www.evergabe-online.de/tenderinformation.html?0"
@@ -626,77 +760,90 @@ BundDeScraper = EvergabeScraper
 # ─────────────────────────────────────────────────────────────────
 
 class ScraperOrchestrator:
-    """Koordiniert alle Scraper und dedupliziert Ergebnisse."""
+    """
+    Koordiniert alle Scraper und dedupliziert Ergebnisse.
+    Quellen: TED (EU), TED EU-weit, 16+ deutsche Vergabeplattformen.
+    """
 
     def __init__(self):
-        self.ted = TEDScraper()
+        self.ted  = TEDScraper()
         self.bund = EvergabeScraper()
 
-    def scrape_all(self, limit_per_source: int = 20) -> List[Dict]:
-        """Allgemeines Scraping ohne Profil-Kontext."""
+    def _merge(self, all_tenders: list, seen_ids: set, new_results: list, label: str):
+        """Hilfsmethode: neue Ergebnisse dedupliziert einmergen."""
+        added = 0
+        for t in new_results:
+            if t["id"] not in seen_ids:
+                seen_ids.add(t["id"])
+                all_tenders.append(t)
+                added += 1
+        logger.info(f"  {label}: {len(new_results)} abgerufen, {added} neu (gesamt {len(all_tenders)})")
+        return added
+
+    def scrape_all(self, limit_per_source: int = 25) -> List[Dict]:
+        """
+        Allgemeines Scraping ohne Profil-Kontext.
+        Läuft alle Quellen durch: TED-DE, TED-EU, alle deutschen Plattformen.
+        """
         all_tenders = []
         seen_ids = set()
 
-        logger.info("🔄 Multi-Source Scraping gestartet...")
+        logger.info("🔄 Multi-Source Scraping gestartet (alle Quellen)...")
 
         sources = [
-            ("TED",     lambda: self.ted.fetch_recent_tenders(limit_per_source)),
-            ("Bund/DE", lambda: self.bund.fetch_recent_tenders(limit_per_source)),
+            # EU-Quellen
+            ("TED-Deutschland",  lambda: self.ted.fetch_recent_tenders(limit_per_source)),
+            ("TED-EU-weit",      lambda: self.ted.fetch_eu_wide(limit_per_source)),
+            # Deutsche Plattformen (alle RSS_SOURCES werden intern durchlaufen)
+            ("DE-Plattformen",   lambda: self.bund.fetch_recent_tenders(limit_per_source)),
         ]
 
         for name, fn in sources:
             try:
                 result = fn()
-                new = 0
-                for t in result:
-                    if t["id"] not in seen_ids:
-                        seen_ids.add(t["id"])
-                        all_tenders.append(t)
-                        new += 1
-                logger.info(f"  {name}: {len(result)} abgerufen, {new} neu")
+                self._merge(all_tenders, seen_ids, result, name)
             except Exception as e:
                 logger.error(f"Scraper {name} fehlgeschlagen: {e}")
-            time.sleep(0.5)
+            time.sleep(1)
 
-        logger.info(f"📊 Gesamt dedupliziert: {len(all_tenders)} Ausschreibungen")
+        logger.info(f"📊 Gesamt dedupliziert: {len(all_tenders)} Ausschreibungen aus allen Quellen")
         return all_tenders
 
     def scrape_for_profile(self, keywords: List[str], cpv_codes: Optional[List[str]] = None,
-                           limit_per_source: int = 20) -> List[Dict]:
+                           limit_per_source: int = 25) -> List[Dict]:
         """
         Profil-aware Scraping: höhere Treffer-Relevanz durch keyword-basierte Queries.
-        Wird für individuelle Nutzer-Suche genutzt.
+        Läuft TED (DE + EU) + alle deutschen Plattformen mit Keyword-Filter.
         """
         all_tenders = []
         seen_ids = set()
 
         logger.info(f"🎯 Profil-Scraping für Keywords: {keywords[:5]}")
 
-        # TED: Profil-aware (höhere Qualität)
+        # TED Deutschland: keyword-aware
         try:
-            ted_results = self.ted.fetch_for_company(keywords, cpv_codes, limit_per_source)
-            for t in ted_results:
-                if t["id"] not in seen_ids:
-                    seen_ids.add(t["id"])
-                    all_tenders.append(t)
-            logger.info(f"  TED Profil: {len(ted_results)} Treffer")
+            ted_de = self.ted.fetch_for_company(keywords, cpv_codes, limit_per_source)
+            self._merge(all_tenders, seen_ids, ted_de, "TED-DE-Profil")
         except Exception as e:
-            logger.error(f"TED Profil-Scraping Fehler: {e}")
+            logger.error(f"TED-DE Profil Fehler: {e}")
 
         time.sleep(0.5)
 
-        # Deutsche Quellen: mit Keywords für bessere Relevanz
+        # TED EU-weit: zusätzliche EU-Treffer
+        try:
+            ted_eu = self.ted.fetch_eu_wide(limit_per_source)
+            self._merge(all_tenders, seen_ids, ted_eu, "TED-EU-weit")
+        except Exception as e:
+            logger.error(f"TED-EU Profil Fehler: {e}")
+
+        time.sleep(0.5)
+
+        # Deutsche Plattformen: mit Keywords für höhere Relevanz
         try:
             bund_results = self.bund.fetch_recent_tenders(limit_per_source, keywords=keywords)
-            new = 0
-            for t in bund_results:
-                if t["id"] not in seen_ids:
-                    seen_ids.add(t["id"])
-                    all_tenders.append(t)
-                    new += 1
-            logger.info(f"  Bund/DE: {new} neue Einträge")
+            self._merge(all_tenders, seen_ids, bund_results, "DE-Plattformen-Profil")
         except Exception as e:
-            logger.error(f"Bund/DE Profil-Scraping Fehler: {e}")
+            logger.error(f"DE-Plattformen Profil Fehler: {e}")
 
         logger.info(f"📊 Profil-Scraping: {len(all_tenders)} Ausschreibungen gesamt")
         return all_tenders
