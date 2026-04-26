@@ -828,6 +828,71 @@ async def search_tenders(
         db.close()
 
 
+# ── Admin Export (Google Sheets Sync) ────────────────────────────────
+
+ADMIN_SECRET = os.getenv("ADMIN_SECRET", "publicflow-admin-2026")
+
+@app.get("/admin/export")
+async def admin_export(secret: str, db=Depends(get_db)):
+    """
+    Exportiert alle Kundendaten als JSON für Google Sheets Sync.
+    Aufruf: /admin/export?secret=DEIN_ADMIN_SECRET
+    """
+    if secret != ADMIN_SECRET:
+        raise HTTPException(status_code=403, detail="Nicht autorisiert")
+
+    users = db.query(User).all()
+    result = []
+    for u in users:
+        company = db.query(Company).filter(Company.user_id == u.id).first()
+        sub = db.query(Subscription).filter(Subscription.user_id == u.id).first()
+        match_count = db.query(Match).filter(Match.company_id == company.id).count() if company else 0
+
+        result.append({
+            "registriert_am": u.created_at.strftime("%Y-%m-%d %H:%M") if u.created_at else "",
+            "name": u.full_name or "",
+            "email": u.email or "",
+            "plan": sub.plan if sub else "kein Abo",
+            "abo_status": sub.status if sub else "–",
+            "unternehmen": company.name if company else "",
+            "branche": company.industry if company else "",
+            "regionen": company.regions if company else "",
+            "keywords": company.experience_keywords if company else "",
+            "min_budget": company.min_budget if company else 0,
+            "max_budget": company.max_budget if company else 0,
+            "matches_gesamt": match_count,
+            "stripe_sub_id": sub.stripe_subscription_id if sub else "",
+        })
+
+    return {"kunden": result, "gesamt": len(result), "stand": datetime.utcnow().isoformat()}
+
+
+@app.get("/admin/tenders")
+async def admin_tenders(secret: str, limit: int = 50, db=Depends(get_db)):
+    """Exportiert die letzten Ausschreibungen in der Datenbank."""
+    if secret != ADMIN_SECRET:
+        raise HTTPException(status_code=403, detail="Nicht autorisiert")
+
+    tenders = db.query(Tender).order_by(Tender.scraped_at.desc()).limit(limit).all()
+    return {
+        "ausschreibungen": [
+            {
+                "id": t.id,
+                "titel": t.title,
+                "quelle": t.source,
+                "link": t.source_url,
+                "frist": t.deadline.strftime("%Y-%m-%d") if t.deadline else "",
+                "auftraggeber": t.buyer_name or "",
+                "budget_min": t.budget_min or 0,
+                "budget_max": t.budget_max or 0,
+                "gescrapt_am": t.scraped_at.strftime("%Y-%m-%d %H:%M") if t.scraped_at else "",
+            }
+            for t in tenders
+        ],
+        "gesamt": len(tenders)
+    }
+
+
 # ── Startup / Shutdown ────────────────────────────────────────────────
 
 @app.on_event("startup")
