@@ -957,9 +957,22 @@ async function showDashboard() {
   // Fill name
   const name = (currentUser?.full_name || currentUser?.email || '').split(' ')[0];
   document.getElementById('dash-name').textContent = name || '—';
-  const plan = currentUser?.plan || 'starter';
-  document.getElementById('dash-plan-badge').textContent = plan === 'professional' ? 'Professional' : 'Starter';
-  document.getElementById('stat-plan').textContent = plan === 'professional' ? 'Pro' : 'Starter';
+  const plan = currentUser?.plan;
+  const planLabel = plan === 'professional' ? 'Professional' : plan === 'starter' ? 'Starter' : 'Kein Abo';
+  const badge = document.getElementById('dash-plan-badge');
+  badge.textContent = planLabel;
+  // Farbe: Professional = lila, Starter = blau, kein Abo = grau
+  if (plan === 'professional') {
+    badge.style.background = 'rgba(139,92,246,.15)'; badge.style.color = '#a78bfa';
+    badge.style.border = '1px solid rgba(139,92,246,.25)';
+  } else if (plan === 'starter') {
+    badge.style.background = 'rgba(43,110,255,.12)'; badge.style.color = 'var(--blue-l)';
+    badge.style.border = '1px solid rgba(43,110,255,.2)';
+  } else {
+    badge.style.background = 'rgba(255,255,255,.06)'; badge.style.color = 'var(--muted)';
+    badge.style.border = '1px solid var(--border)';
+  }
+  document.getElementById('stat-plan').textContent = planLabel;
 
   // Load matches
   await loadMatches();
@@ -1038,33 +1051,91 @@ async function loadProfile() {
     if (!r.ok) return;
     const d = await r.json();
     document.getElementById('p-company').value = d.name || '';
-    document.getElementById('p-industry').value = d.industry || '';
+    // Branche setzen — auch wenn Wert nicht im Dropdown ist (custom value)
+    const indSel = document.getElementById('p-industry');
+    const indOpts = [...indSel.options].map(o => o.value);
+    if (d.industry) {
+      if (indOpts.includes(d.industry)) {
+        indSel.value = d.industry;
+      } else {
+        // Option dynamisch hinzufügen falls nicht vorhanden
+        const opt = document.createElement('option');
+        opt.value = d.industry; opt.textContent = d.industry;
+        indSel.appendChild(opt);
+        indSel.value = d.industry;
+      }
+    }
     document.getElementById('p-keywords').value = d.experience_keywords || '';
-    if (d.regions) { const sel=document.getElementById('p-region'); [...sel.options].forEach(o=>{if(o.value===d.regions)o.selected=true;}); }
-    if (d.min_budget) { const sel=document.getElementById('p-budget'); [...sel.options].forEach(o=>{if(parseInt(o.value)===d.min_budget)o.selected=true;}); }
-  } catch(e) {}
+    // Region: "Deutschland,EU" → "EU-weit" Mapping
+    if (d.regions) {
+      const sel = document.getElementById('p-region');
+      const regionMap = {'Deutschland,EU': 'EU-weit', 'Deutschland': 'Deutschland'};
+      const mapped = regionMap[d.regions] || d.regions;
+      [...sel.options].forEach(o => { if (o.value === mapped || o.value === d.regions) o.selected = true; });
+    }
+    if (d.min_budget) {
+      const sel = document.getElementById('p-budget');
+      let best = null;
+      [...sel.options].forEach(o => {
+        const v = parseInt(o.value);
+        if (v <= d.min_budget && (!best || v > parseInt(best.value))) best = o;
+      });
+      if (best) best.selected = true;
+    }
+  } catch(e) { console.warn('loadProfile Fehler:', e); }
 }
 
 async function saveProfile() {
   const err = document.getElementById('err-profile-save');
+  const btn = document.querySelector('#panel-profile .btn-main');
   err.textContent = '';
+  err.style.color = '#f87171';
+
+  // Frontend-Validierung
+  const companyName = document.getElementById('p-company').value.trim();
+  if (!companyName) { err.textContent = 'Bitte Unternehmensname eingeben.'; return; }
+  if (!token) { err.textContent = 'Sitzung abgelaufen — bitte neu einloggen.'; return; }
+
+  const keywords = document.getElementById('p-keywords').value.split(',').map(k=>k.trim()).filter(Boolean);
+  const regionVal = document.getElementById('p-region').value;
+  // "EU-weit" → Backend-Format "Deutschland,EU"
+  const regionBackend = regionVal === 'EU-weit' ? 'Deutschland,EU' : regionVal;
+
+  if (btn) { btn.disabled = true; btn.textContent = 'Speichern…'; }
   try {
-    const keywords = document.getElementById('p-keywords').value.split(',').map(k=>k.trim()).filter(Boolean);
     const r = await apiFetch('/profile', {
       method:'POST',
       body: JSON.stringify({
-        company_name: document.getElementById('p-company').value.trim(),
-        industry: document.getElementById('p-industry').value,
-        experience_keywords: keywords.join(','),
-        regions: document.getElementById('p-region').value,
-        min_budget: parseInt(document.getElementById('p-budget').value),
+        company_name: companyName,
+        industry: document.getElementById('p-industry').value || 'Sonstige',
+        experience_keywords: keywords.length ? keywords.join(',') : 'Allgemein',
+        regions: regionBackend,
+        min_budget: parseInt(document.getElementById('p-budget').value) || 10000,
         max_budget: 10000000,
         cpv_focus: '', company_size: 'KMU', description: '',
       })
     });
-    if (r.ok) { err.style.color='var(--blue-l)'; err.textContent='✓ Profil gespeichert.'; }
-    else { err.style.color='#f87171'; err.textContent='Fehler beim Speichern.'; }
-  } catch(e) { err.style.color='#f87171'; err.textContent='Verbindungsfehler.'; }
+    if (r.ok) {
+      err.style.color = 'var(--blue-l)';
+      err.textContent = '✓ Profil gespeichert.';
+    } else {
+      let detail = 'Unbekannter Fehler';
+      try {
+        const errBody = await r.json();
+        detail = errBody.detail || JSON.stringify(errBody).substring(0,120);
+      } catch(_) {}
+      if (r.status === 401) {
+        err.textContent = 'Sitzung abgelaufen — bitte Seite neu laden und neu einloggen.';
+      } else {
+        err.textContent = `Fehler ${r.status}: ${detail}`;
+      }
+    }
+  } catch(e) {
+    err.textContent = 'Verbindungsfehler — bitte Verbindung prüfen.';
+    console.error('saveProfile:', e);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Profil speichern'; }
+  }
 }
 
 async function startCheckout(plan) {
