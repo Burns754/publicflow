@@ -872,6 +872,11 @@ async function apiFetch(path, opts={}) {
 
 // ── Init ─────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', async () => {
+  // Hash-basiertes Tab-Routing (z.B. #funding, #profile)
+  const hash = window.location.hash.replace('#','');
+  if (['matches','funding','profile','upgrade'].includes(hash)) {
+    setTimeout(() => switchDashTab(hash), 300);
+  }
   if (token) {
     const r = await apiFetch('/auth/me');
     if (r.ok) {

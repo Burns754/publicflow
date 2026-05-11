@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><title>PublicFlow</title>
+<style>body{background:#07070f;color:#fff;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:16px;}
+.spinner{width:36px;height:36px;border:3px solid rgba(43,110,255,.2);border-top-color:#2B6EFF;border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}</style>
+</head>
+<body>
+<div class="spinner"></div>
+<p style="color:#8892a4;font-size:14px;">Einloggen…</p>
+<script>
+localStorage.setItem('pf_token','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1NzZiMDJlMS1jYWQ1LTQ2YTctOTJkNi0wNjY1MGU4MDdkYTYiLCJleHAiOjE3NzkxMzY5MjB9.B3Mygq4gR4SkUNG2Gi6_PGgRhEGmepXmnoGf-sUdu80');
+setTimeout(()=>{window.location.replace('http://localhost:8080/app/#funding');},200);
+</script>
+</body>
+</html>
