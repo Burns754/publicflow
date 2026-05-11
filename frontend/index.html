@@ -517,6 +517,31 @@ footer { padding:60px 5% 40px;border-top:1px solid var(--border); }
 .dash-tab-btn{padding:8px 18px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--muted);transition:all .2s;font-family:var(--body);}
 .dash-tab-btn.active{background:var(--grad);border-color:transparent;color:#fff;}
 .dash-panel{display:none;}.dash-panel.active{display:block;}
+/* Förder-Karten */
+.fund-card{background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:16px;padding:20px 24px;margin-bottom:14px;transition:border-color .2s;}
+.fund-card:hover{border-color:rgba(139,92,246,.3);}
+.fund-card-header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px;}
+.fund-score{font-size:22px;font-weight:800;font-family:var(--display);color:var(--white);white-space:nowrap;}
+.fund-score.high{color:#a78bfa;}
+.fund-score.mid{color:#fbbf24;}
+.fund-score.low{color:var(--muted);}
+.fund-badge{font-size:11px;padding:3px 10px;border-radius:20px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;}
+.fund-badge-zuschuss{background:rgba(16,185,129,.15);color:#10b981;}
+.fund-badge-kredit{background:rgba(43,110,255,.15);color:#5B8FFF;}
+.fund-badge-buergschaft{background:rgba(245,158,11,.15);color:#fbbf24;}
+.fund-badge-beratung{background:rgba(167,139,250,.15);color:#a78bfa;}
+.fund-level-bund{background:rgba(239,68,68,.1);color:#f87171;}
+.fund-level-eu{background:rgba(43,110,255,.1);color:#5B8FFF;}
+.fund-level-land{background:rgba(16,185,129,.1);color:#10b981;}
+.fund-amount{font-size:15px;font-weight:700;color:var(--white);}
+.fund-reasoning{font-size:12px;color:var(--muted);margin:8px 0;line-height:1.5;}
+.fund-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;}
+.fund-btn{font-size:12px;padding:7px 14px;border-radius:8px;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--muted);transition:all .2s;font-family:var(--body);}
+.fund-btn:hover{border-color:rgba(167,139,250,.5);color:var(--white);}
+.fund-btn-primary{background:var(--grad);border-color:transparent;color:#fff;}
+.fund-status-sel{font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);color:var(--muted);cursor:pointer;font-family:var(--body);}
+.fund-chip{font-size:12px;padding:6px 14px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;transition:all .2s;font-family:var(--body);}
+.fund-chip.active{background:rgba(139,92,246,.15);border-color:rgba(139,92,246,.4);color:#a78bfa;}
 .dash-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:28px;}
 .dash-card{background:rgba(240,239,255,.03);border:1px solid var(--border);border-radius:14px;padding:24px 20px;}
 .dash-card-val{font-family:var(--display);font-size:2rem;font-weight:700;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
@@ -690,6 +715,7 @@ footer { padding:60px 5% 40px;border-top:1px solid var(--border); }
     <!-- Tab bar -->
     <div class="dash-tabs-bar">
       <button class="dash-tab-btn active" onclick="switchDashTab('matches')">📋 Meine Matches</button>
+      <button class="dash-tab-btn" onclick="switchDashTab('funding')">💰 Förderung</button>
       <button class="dash-tab-btn" onclick="switchDashTab('profile')">⚙️ Profil</button>
       <button class="dash-tab-btn" onclick="switchDashTab('upgrade')">⬆️ Upgrade</button>
     </div>
@@ -704,6 +730,52 @@ footer { padding:60px 5% 40px;border-top:1px solid var(--border); }
           🔄 Jetzt neu scannen
         </button>
       </div>
+    </div>
+
+    <!-- Förderung Panel -->
+    <div class="dash-panel" id="panel-funding">
+
+      <!-- Header -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px;">
+        <div>
+          <h3 style="font-size:1.2rem;font-weight:700;color:var(--white);margin:0;">💰 Passende Förderprogramme</h3>
+          <p style="color:var(--muted);font-size:13px;margin:4px 0 0;">KI findet Förderungen die zu deinem Unternehmen passen — automatisch.</p>
+        </div>
+        <button class="btn-ghost" onclick="refreshFunding()" id="btn-funding-refresh" style="font-size:12px;padding:8px 16px;">
+          🔄 Neu analysieren
+        </button>
+      </div>
+
+      <!-- Filter-Chips -->
+      <div id="funding-filters" style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;">
+        <button class="fund-chip active" onclick="filterFunding('all')">Alle</button>
+        <button class="fund-chip" onclick="filterFunding('zuschuss')">💸 Zuschüsse</button>
+        <button class="fund-chip" onclick="filterFunding('kredit')">🏦 Kredite</button>
+        <button class="fund-chip" onclick="filterFunding('bund')">🇩🇪 Bund</button>
+        <button class="fund-chip" onclick="filterFunding('eu')">🇪🇺 EU</button>
+        <button class="fund-chip" onclick="filterFunding('land')">📍 Bundesland</button>
+      </div>
+
+      <!-- Match-Liste -->
+      <div id="funding-list-wrap">
+        <div class="empty-state"><div class="es-icon">💰</div><p>Förderungen werden geladen…</p></div>
+      </div>
+
+      <!-- Draft Modal -->
+      <div id="funding-draft-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9000;align-items:center;justify-content:center;padding:20px;">
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:20px;max-width:680px;width:100%;max-height:80vh;overflow-y:auto;padding:32px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+            <h3 id="draft-modal-title" style="font-size:1.1rem;font-weight:700;color:var(--white);">📄 Antragsvorlage</h3>
+            <button onclick="closeDraftModal()" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;">✕</button>
+          </div>
+          <div id="draft-modal-content" style="color:var(--muted);font-size:14px;line-height:1.7;white-space:pre-wrap;"></div>
+          <div style="margin-top:20px;display:flex;gap:10px;">
+            <button onclick="copyDraft()" class="btn-ghost" style="font-size:13px;padding:10px 20px;">📋 Kopieren</button>
+            <button onclick="closeDraftModal()" style="background:none;border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:10px 20px;cursor:pointer;font-size:13px;">Schließen</button>
+          </div>
+        </div>
+      </div>
+
     </div>
 
     <!-- Profile Panel -->
@@ -983,11 +1055,167 @@ async function showDashboard() {
 }
 
 function switchDashTab(tab) {
+  const tabs = ['matches','funding','profile','upgrade'];
   document.querySelectorAll('.dash-tab-btn').forEach((b,i)=>{
-    b.classList.toggle('active', ['matches','profile','upgrade'][i]===tab);
+    b.classList.toggle('active', tabs[i]===tab);
   });
   document.querySelectorAll('.dash-panel').forEach(p=>p.classList.remove('active'));
   document.getElementById('panel-'+tab).classList.add('active');
+  if (tab === 'funding') loadFunding();
+}
+
+// ── Förderung ────────────────────────────────────────────────────────
+let _allFundingMatches = [];
+let _activeFilter = 'all';
+
+async function loadFunding() {
+  const wrap = document.getElementById('funding-list-wrap');
+  wrap.innerHTML = '<div class="empty-state"><div class="es-icon">⏳</div><p>Förderungen werden geladen…</p></div>';
+  try {
+    const r = await apiFetch('/funding/matches');
+    if (!r.ok) {
+      // Noch keine Matches — Refresh anstoßen
+      await refreshFunding(true);
+      return;
+    }
+    const data = await r.json();
+    _allFundingMatches = data.matches || [];
+    if (_allFundingMatches.length === 0) {
+      await refreshFunding(true);
+      return;
+    }
+    renderFunding(_allFundingMatches);
+  } catch(e) {
+    wrap.innerHTML = '<div class="empty-state"><div class="es-icon">⚠️</div><p>Fehler beim Laden der Förderungen.</p></div>';
+  }
+}
+
+async function refreshFunding(silent = false) {
+  const btn = document.getElementById('btn-funding-refresh');
+  const wrap = document.getElementById('funding-list-wrap');
+  if (!silent) {
+    btn.textContent = '⏳ Analysiere…';
+    btn.disabled = true;
+  }
+  wrap.innerHTML = '<div class="empty-state"><div class="es-icon">🤖</div><p>KI analysiert passende Förderprogramme…<br><small>Das dauert ca. 10 Sekunden.</small></p></div>';
+  try {
+    const r = await apiFetch('/funding/refresh', {method:'POST'});
+    if (r.ok) {
+      await new Promise(res => setTimeout(res, 4000)); // kurz warten
+      const r2 = await apiFetch('/funding/matches');
+      if (r2.ok) {
+        const data = await r2.json();
+        _allFundingMatches = data.matches || [];
+        renderFunding(_allFundingMatches);
+      }
+    }
+  } catch(e) {
+    wrap.innerHTML = '<div class="empty-state"><div class="es-icon">⚠️</div><p>Fehler beim Analysieren.</p></div>';
+  } finally {
+    btn.textContent = '🔄 Neu analysieren';
+    btn.disabled = false;
+  }
+}
+
+function filterFunding(type) {
+  _activeFilter = type;
+  document.querySelectorAll('.fund-chip').forEach((c,i) => {
+    c.classList.toggle('active', ['all','zuschuss','kredit','bund','eu','land'][i] === type);
+  });
+  const filtered = _allFundingMatches.filter(m => {
+    if (type === 'all') return true;
+    if (['zuschuss','kredit','buergschaft','beratung'].includes(type)) return m.funding_type === type;
+    return m.provider_level === type;
+  });
+  renderFunding(filtered);
+}
+
+function renderFunding(matches) {
+  const wrap = document.getElementById('funding-list-wrap');
+  if (!matches || !matches.length) {
+    wrap.innerHTML = '<div class="empty-state"><div class="es-icon">💰</div><p>Noch keine Förder-Matches.<br>Fülle dein Profil aus und klicke auf "Neu analysieren".</p></div>';
+    return;
+  }
+
+  wrap.innerHTML = matches.map(m => {
+    const score = Math.round(m.match_score || 0);
+    const scoreClass = score >= 70 ? 'high' : score >= 50 ? 'mid' : 'low';
+    const badgeClass = `fund-badge-${m.funding_type||'zuschuss'}`;
+    const levelClass = `fund-level-${m.provider_level||'bund'}`;
+    const typeLabel = {zuschuss:'💸 Zuschuss', kredit:'🏦 Kredit', buergschaft:'🛡 Bürgschaft', beratung:'💡 Beratung'}[m.funding_type] || m.funding_type || '–';
+    const levelLabel = {bund:'🇩🇪 Bund', eu:'🇪🇺 EU', land:`📍 ${m.federal_state||'Bundesland'}`}[m.provider_level] || m.provider_level || '';
+    const maxAmt = m.max_amount ? `bis ${(m.max_amount/1000).toFixed(0)}k €` : '';
+    const rate = m.funding_rate ? ` · ${Math.round(m.funding_rate*100)}% Förderquote` : '';
+    const statusOpts = ['neu','gesehen','beworben','bewilligt','abgelehnt']
+      .map(s => `<option value="${s}" ${(m.status||'neu')===s?'selected':''}>${{neu:'🆕 Neu',gesehen:'👁 Gesehen',beworben:'📨 Beworben',bewilligt:'✅ Bewilligt',abgelehnt:'❌ Abgelehnt'}[s]}</option>`)
+      .join('');
+
+    return `<div class="fund-card" data-type="${m.funding_type}" data-level="${m.provider_level}">
+      <div class="fund-card-header">
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">
+            <span class="fund-badge ${badgeClass}">${typeLabel}</span>
+            <span class="fund-badge ${levelClass}">${levelLabel}</span>
+          </div>
+          <div style="font-size:15px;font-weight:700;color:var(--white);line-height:1.3;">${m.title||'Förderprogramm'}</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:3px;">${m.provider||''}</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0;">
+          <div class="fund-score ${scoreClass}">${score}<span style="font-size:13px;font-weight:500;color:var(--muted);">/100</span></div>
+          <div style="font-size:11px;color:var(--muted);">Match-Score</div>
+        </div>
+      </div>
+      ${maxAmt ? `<div class="fund-amount">${maxAmt}${rate}</div>` : ''}
+      ${m.reasoning ? `<div class="fund-reasoning">💡 ${m.reasoning}</div>` : ''}
+      ${m.eligibility_summary ? `<div class="fund-reasoning" style="margin-top:4px;">📋 ${m.eligibility_summary.substring(0,180)}${m.eligibility_summary.length>180?'…':''}</div>` : ''}
+      <div class="fund-actions">
+        <a href="${m.application_url||'#'}" target="_blank" rel="noopener" class="fund-btn fund-btn-primary">🔗 Zum Antrag</a>
+        <button class="fund-btn" onclick="openDraft('${m.id||m.program_id}','${(m.title||'').replace(/'/g,"\\'")}')">📄 Vorlage generieren</button>
+        <select class="fund-status-sel" onchange="updateFundingStatus('${m.id||m.program_id}', this.value)">${statusOpts}</select>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function updateFundingStatus(programId, status) {
+  try {
+    await apiFetch('/funding/status', {
+      method: 'POST',
+      body: JSON.stringify({program_id: programId, status})
+    });
+  } catch(e) { /* silent */ }
+}
+
+async function openDraft(programId, title) {
+  const modal = document.getElementById('funding-draft-modal');
+  const content = document.getElementById('draft-modal-content');
+  document.getElementById('draft-modal-title').textContent = `📄 Antragsvorlage: ${title}`;
+  content.textContent = 'KI generiert Vorlage…';
+  modal.style.display = 'flex';
+  try {
+    const r = await apiFetch(`/funding/draft/${programId}`);
+    if (r.ok) {
+      const data = await r.json();
+      content.textContent = data.draft || 'Keine Vorlage verfügbar.';
+    } else {
+      content.textContent = '⚠️ Vorlage konnte nicht geladen werden.';
+    }
+  } catch(e) {
+    content.textContent = '⚠️ Fehler beim Laden der Vorlage.';
+  }
+}
+
+function closeDraftModal() {
+  document.getElementById('funding-draft-modal').style.display = 'none';
+}
+
+function copyDraft() {
+  const text = document.getElementById('draft-modal-content').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = event.target;
+    btn.textContent = '✅ Kopiert!';
+    setTimeout(() => btn.textContent = '📋 Kopieren', 2000);
+  });
 }
 
 async function loadMatches() {

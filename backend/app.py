@@ -25,11 +25,14 @@ import time
 from collections import defaultdict
 from typing import Optional, List
 
-from models import Base, User, Company, Subscription, Tender, Match, SearchQuery
+from models import Base, User, Company, Subscription, Tender, Match, SearchQuery, \
+                   FundingProgram, FundingMatch, FundingDraft
 from auth import (hash_password, verify_password, create_access_token,
                   get_current_user_id, generate_id)
 from scraper import ScraperOrchestrator
 from matcher import MatchingService
+from funding_scraper import FundingScraperOrchestrator
+from funding_matcher import FundingMatchingService, FundingDraftGenerator
 from email_service import send_welcome_email, send_payment_confirmation
 from stripe_service import (create_checkout_session, handle_webhook,
                              cancel_subscription, PLAN_INFO)
@@ -953,6 +956,285 @@ async def admin_tenders(
     }
 
 
+# ══════════════════════════════════════════════════════════════════════
+# ── FÖRDERANTRÄGE ─────────────────────────────────────────────────────
+# ══════════════════════════════════════════════════════════════════════
+
+class FundingStatusRequest(BaseModel):
+    program_id: str
+    status: str   # neu / gesehen / beworben / bewilligt / abgelehnt
+
+
+@app.get("/funding/programs")
+async def get_funding_programs(
+    topic: Optional[str] = None,
+    region: Optional[str] = None,
+    funding_type: Optional[str] = None,
+    provider_level: Optional[str] = None,
+    limit: int = 50,
+    db=Depends(get_db),
+    user_id: str = Depends(get_current_user_id),
+):
+    """Alle verfügbaren Förderprogramme (gefiltert)."""
+    q = db.query(FundingProgram).filter(FundingProgram.active == True)
+    if topic:
+        q = q.filter(FundingProgram.topics.ilike(f"%{topic}%"))
+    if region:
+        q = q.filter(or_(
+            FundingProgram.regions.ilike(f"%{region}%"),
+            FundingProgram.regions.ilike("%Deutschland%"),
+        ))
+    if funding_type:
+        q = q.filter(FundingProgram.funding_type == funding_type)
+    if provider_level:
+        q = q.filter(FundingProgram.provider_level == provider_level)
+
+    programs = q.order_by(FundingProgram.scraped_at.desc()).limit(limit).all()
+    return {"programs": [_program_to_dict(p) for p in programs], "total": len(programs)}
+
+
+@app.get("/funding/matches")
+async def get_funding_matches(
+    db=Depends(get_db),
+    user_id: str = Depends(get_current_user_id),
+):
+    """Gibt die KI-Matches des eingeloggten Nutzers zurück."""
+    company = db.query(Company).filter(Company.user_id == user_id).first()
+    if not company:
+        raise HTTPException(404, "Kein Unternehmensprofil gefunden. Bitte zuerst Profil ausfüllen.")
+
+    matches = (
+        db.query(FundingMatch)
+        .filter(FundingMatch.company_id == company.id)
+        .order_by(FundingMatch.match_score.desc())
+        .limit(30)
+        .all()
+    )
+
+    result = []
+    for m in matches:
+        prog = db.query(FundingProgram).filter(FundingProgram.id == m.program_id).first()
+        if prog:
+            result.append({
+                "match_id": m.id,
+                "match_score": m.match_score,
+                "reasoning": m.reasoning,
+                "status": m.status,
+                "matched_at": m.matched_at.isoformat() if m.matched_at else None,
+                **_program_to_dict(prog),
+            })
+
+    return {"matches": result, "total": len(result)}
+
+
+@app.post("/funding/refresh")
+async def refresh_funding_matches(
+    background_tasks: BackgroundTasks,
+    db=Depends(get_db),
+    user_id: str = Depends(get_current_user_id),
+):
+    """Startet neues Scraping + Matching für den Nutzer."""
+    company = db.query(Company).filter(Company.user_id == user_id).first()
+    if not company:
+        raise HTTPException(404, "Bitte zuerst das Unternehmensprofil ausfüllen.")
+
+    background_tasks.add_task(_run_funding_match_for_company, company.id)
+    return {"message": "Förder-Matching gestartet. Ergebnisse in ca. 10 Sekunden verfügbar."}
+
+
+@app.post("/funding/status")
+async def update_funding_status(
+    req: FundingStatusRequest,
+    db=Depends(get_db),
+    user_id: str = Depends(get_current_user_id),
+):
+    """Aktualisiert den Status eines Förder-Matches (beworben, bewilligt, etc.)."""
+    company = db.query(Company).filter(Company.user_id == user_id).first()
+    if not company:
+        raise HTTPException(404, "Profil nicht gefunden.")
+
+    match = db.query(FundingMatch).filter(
+        FundingMatch.company_id == company.id,
+        FundingMatch.program_id == req.program_id,
+    ).first()
+
+    valid_statuses = {"neu", "gesehen", "beworben", "bewilligt", "abgelehnt"}
+    if req.status not in valid_statuses:
+        raise HTTPException(400, f"Ungültiger Status. Erlaubt: {valid_statuses}")
+
+    if match:
+        match.status = req.status
+        db.commit()
+        return {"message": f"Status aktualisiert: {req.status}"}
+
+    raise HTTPException(404, "Match nicht gefunden.")
+
+
+@app.get("/funding/draft/{program_id}")
+async def get_funding_draft(
+    program_id: str,
+    db=Depends(get_db),
+    user_id: str = Depends(get_current_user_id),
+):
+    """Gibt einen bestehenden oder neu generierten Antrags-Entwurf zurück."""
+    company = db.query(Company).filter(Company.user_id == user_id).first()
+    if not company:
+        raise HTTPException(404, "Bitte zuerst das Profil ausfüllen.")
+
+    program = db.query(FundingProgram).filter(FundingProgram.id == program_id).first()
+    if not program:
+        raise HTTPException(404, "Förderprogramm nicht gefunden.")
+
+    # Bestehenden Draft laden oder neu generieren
+    existing = db.query(FundingDraft).filter(
+        FundingDraft.company_id == company.id,
+        FundingDraft.program_id == program_id,
+    ).first()
+
+    if existing:
+        return {"draft": existing.draft_text, "program_title": program.title, "cached": True}
+
+    # Neu generieren
+    generator = FundingDraftGenerator()
+    company_dict = {
+        "id": company.id,
+        "industry": company.industry,
+        "experience_keywords": company.experience_keywords,
+        "company_size": company.company_size,
+        "regions": company.regions,
+        "founded_year": company.founded_year,
+        "description": company.description,
+    }
+    prog_dict = _program_to_dict(program)
+    draft_text = generator.generate_draft(company_dict, prog_dict)
+
+    # Speichern
+    draft = FundingDraft(
+        company_id=company.id,
+        program_id=program_id,
+        draft_text=draft_text,
+    )
+    db.add(draft)
+    db.commit()
+
+    return {"draft": draft_text, "program_title": program.title, "cached": False}
+
+
+# ── Interne Hilfsfunktionen ───────────────────────────────────────────
+
+def _program_to_dict(p: FundingProgram) -> dict:
+    return {
+        "id": p.id,
+        "title": p.title,
+        "provider": p.provider,
+        "provider_level": p.provider_level,
+        "federal_state": p.federal_state,
+        "description": p.description,
+        "funding_type": p.funding_type,
+        "max_amount": p.max_amount,
+        "funding_rate": p.funding_rate,
+        "industries": p.industries,
+        "company_sizes": p.company_sizes,
+        "regions": p.regions,
+        "topics": p.topics,
+        "eligibility_summary": p.eligibility_summary,
+        "application_url": p.application_url,
+        "deadline": p.deadline.isoformat() if p.deadline else None,
+        "is_ongoing": p.is_ongoing,
+    }
+
+
+def _run_funding_match_for_company(company_id: str):
+    """Background-Task: Förder-Scraping + Matching für ein Unternehmen."""
+    db = SessionLocal()
+    try:
+        company = db.query(Company).filter(Company.id == company_id).first()
+        if not company:
+            return
+
+        # 1. Programme scrapen / DB befüllen
+        orchestrator = FundingScraperOrchestrator()
+        programs_data = orchestrator.scrape_all()
+
+        for pd in programs_data:
+            existing = db.query(FundingProgram).filter(
+                FundingProgram.source_url == pd.get("source_url")
+            ).first()
+            if not existing:
+                prog = FundingProgram(**{
+                    k: v for k, v in pd.items()
+                    if k in FundingProgram.__table__.columns.keys()
+                })
+                db.add(prog)
+        db.commit()
+
+        # 2. Matching durchführen
+        all_programs = db.query(FundingProgram).filter(FundingProgram.active == True).all()
+        company_dict = {
+            "id": company.id,
+            "industry": company.industry,
+            "experience_keywords": company.experience_keywords,
+            "company_size": company.company_size,
+            "regions": company.regions,
+            "founded_year": company.founded_year,
+            "description": company.description,
+        }
+        programs_list = [_program_to_dict(p) for p in all_programs]
+
+        service = FundingMatchingService()
+        matches = service.match_single_company(company_dict, programs_list, min_score=35.0)
+
+        # 3. Matches speichern (nur neue)
+        existing_ids = {
+            m.program_id for m in db.query(FundingMatch)
+            .filter(FundingMatch.company_id == company_id).all()
+        }
+        new_count = 0
+        for m in matches:
+            if m["program_id"] not in existing_ids:
+                fm = FundingMatch(
+                    company_id=company_id,
+                    program_id=m["program_id"],
+                    match_score=m["match_score"],
+                    reasoning=m["reasoning"],
+                )
+                db.add(fm)
+                new_count += 1
+        db.commit()
+        logger.info(f"✅ Förder-Matching fertig: {new_count} neue Matches für {company_id[:8]}")
+
+    except Exception as e:
+        logger.error(f"❌ Förder-Matching Fehler: {e}")
+        db.rollback()
+    finally:
+        db.close()
+
+
+# ── Startup-Seed: Programme beim ersten Start laden ───────────────────
+def _seed_funding_programs():
+    """Lädt Seed-Programme beim Start falls DB leer ist."""
+    db = SessionLocal()
+    try:
+        count = db.query(FundingProgram).count()
+        if count == 0:
+            logger.info("🌱 Förder-Seed: Lade initiale Programme...")
+            orchestrator = FundingScraperOrchestrator()
+            programs_data = orchestrator.scrape_all()
+            for pd in programs_data:
+                prog = FundingProgram(**{
+                    k: v for k, v in pd.items()
+                    if k in FundingProgram.__table__.columns.keys()
+                })
+                db.add(prog)
+            db.commit()
+            logger.info(f"✅ {len(programs_data)} Förderprogramme in DB gespeichert")
+    except Exception as e:
+        logger.error(f"Förder-Seed Fehler: {e}")
+        db.rollback()
+    finally:
+        db.close()
+
+
 # ── Startup / Shutdown ────────────────────────────────────────────────
 
 @app.on_event("startup")
@@ -972,6 +1254,9 @@ async def startup():
         logger.info("✅ Datenbank-Region: keine offensichtliche US-Region erkannt")
     else:
         logger.warning("⚠️  DATABASE_URL nicht gesetzt!")
+
+    # Förder-Seed in Background laden
+    threading.Thread(target=_seed_funding_programs, daemon=True).start()
 
     start_scheduler(engine)
 

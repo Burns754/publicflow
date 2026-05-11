@@ -110,3 +110,56 @@ class SearchQuery(Base):
     filters = Column(Text)    # JSON: budget, region, cpv, deadline
     created_at = Column(DateTime, default=datetime.utcnow)
     result_count = Column(Integer, default=0)
+
+
+class FundingProgram(Base):
+    """Öffentliches Förderprogramm (Bund, Länder, EU)"""
+    __tablename__ = "funding_programs"
+
+    id = Column(String, primary_key=True)           # uuid
+    title = Column(String, nullable=False)
+    provider = Column(String)                        # z.B. KfW, BAFA, EU-Kommission
+    provider_level = Column(String)                  # bund / land / eu
+    federal_state = Column(String)                   # Bayern, NRW ... (nur bei Länder-Programmen)
+    description = Column(Text)
+    funding_type = Column(String)                    # zuschuss / kredit / buergschaft / beratung
+    max_amount = Column(Float)                       # maximale Fördersumme €
+    funding_rate = Column(Float)                     # Förderquote 0.0-1.0 (z.B. 0.5 = 50%)
+    industries = Column(String)                      # kommasepariert: IT,Handwerk,Produktion
+    company_sizes = Column(String)                   # Kleinstunternehmen,KMU,Alle
+    regions = Column(String)                         # Deutschland / Bayern / EU / ...
+    topics = Column(String)                          # Digitalisierung,Energie,Gründung,Export
+    eligibility_summary = Column(Text)               # Kurz-Erklärung wer antragsberechtigt ist
+    application_url = Column(String)
+    deadline = Column(DateTime)                      # None = laufend / kein Stichtag
+    is_ongoing = Column(Boolean, default=True)       # Dauerhaftes Programm ohne Stichtag
+    source_url = Column(String, unique=True)
+    scraped_at = Column(DateTime, default=datetime.utcnow)
+    active = Column(Boolean, default=True)
+
+
+class FundingMatch(Base):
+    """KI-Matching Ergebnis: Unternehmen ↔ Förderprogramm"""
+    __tablename__ = "funding_matches"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    company_id = Column(String, ForeignKey("companies.id"), nullable=False)
+    program_id = Column(String, ForeignKey("funding_programs.id"), nullable=False)
+    match_score = Column(Float)                      # 0-100
+    reasoning = Column(Text)                         # KI-Begründung
+    matched_at = Column(DateTime, default=datetime.utcnow)
+    notified = Column(Boolean, default=False)
+    notified_at = Column(DateTime)
+    status = Column(String, default="neu")           # neu / gesehen / beworben / bewilligt / abgelehnt
+
+
+class FundingDraft(Base):
+    """KI-generierter Antrags-Entwurf"""
+    __tablename__ = "funding_drafts"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    company_id = Column(String, ForeignKey("companies.id"), nullable=False)
+    program_id = Column(String, ForeignKey("funding_programs.id"), nullable=False)
+    draft_text = Column(Text)                        # KI-generierter Antragstext
+    created_at = Column(DateTime, default=datetime.utcnow)
+    user_notes = Column(Text)                        # Manuelle Ergänzungen des Nutzers
