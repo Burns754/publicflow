@@ -142,7 +142,7 @@ h2.sh{font-family:'Syne',sans-serif;font-size:clamp(34px,4.5vw,60px);font-weight
 
 <div id="progress"></div>
 <nav id="dots"></nav>
-<div id="counter">01 / 10</div>
+<div id="counter">01 / 11</div>
 <div id="timer"><span class="timer-dot"></span><span id="timer-val">00:00</span></div>
 
 
@@ -453,9 +453,94 @@ h2.sh{font-family:'Syne',sans-serif;font-size:clamp(34px,4.5vw,60px);font-weight
 
 
 <!-- ══════════════════════════════════
-     S6 — PREISE  (17–21 Min)
+     S6 — DIE 3 SÄULEN  (17–20 Min)
 ══════════════════════════════════ -->
 <section class="slide" id="s6">
+  <div class="blob blob-blue" style="top:-100px;left:-150px;opacity:.12"></div>
+  <div class="blob blob-purple" style="bottom:-150px;right:-100px;opacity:.1"></div>
+
+  <div style="position:relative;z-index:2;width:100%;max-width:1100px" class="slide-content">
+    <div class="stagger">
+      <div class="time-badge">⏱ 17–20 Min · Was bekommen Sie</div>
+      <div class="tag tag-blue">Drei Leistungen. Ein Abo.</div>
+      <h2 class="sh">Was PublicFlow<br><span class="grad-text">für Sie tut.</span></h2>
+    </div>
+
+    <div class="three-col" style="margin-top:36px">
+
+      <!-- Säule 1 -->
+      <div class="card stagger" style="border-color:rgba(43,110,255,.25);background:rgba(43,110,255,.04);position:relative;overflow:hidden">
+        <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#2B6EFF,#5B8FFF)"></div>
+        <div style="font-size:32px;margin-bottom:16px">📧</div>
+        <div style="font-size:11px;font-weight:700;color:var(--blue-l);letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px">Säule 1</div>
+        <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;margin-bottom:14px;line-height:1.15">Automatische<br>Match-Mails</div>
+        <div style="font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:20px">
+          Jeden Morgen um <strong style="color:var(--white)">7:00 Uhr</strong> landen nur die wirklich relevanten Ausschreibungen in Ihrem Postfach — gefiltert per KI, priorisiert nach Score. Kein Login nötig.
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="font-size:12px;color:var(--blue-l);display:flex;align-items:center;gap:8px"><span>✓</span> KI-Match-Score 0–100 je Treffer</div>
+          <div style="font-size:12px;color:var(--blue-l);display:flex;align-items:center;gap:8px"><span>✓</span> Direkt-Link zur Ausschreibung</div>
+          <div style="font-size:12px;color:var(--blue-l);display:flex;align-items:center;gap:8px"><span>✓</span> Fristangabe & Auftragswert</div>
+          <div style="font-size:12px;color:var(--blue-l);display:flex;align-items:center;gap:8px"><span>✓</span> KI-Begründung warum es passt</div>
+        </div>
+        <div style="margin-top:20px;padding:10px 14px;background:rgba(43,110,255,.1);border-radius:8px;font-size:12px;color:var(--muted)">
+          Enthalten ab <strong style="color:var(--white)">Starter 249 €/Monat</strong>
+        </div>
+      </div>
+
+      <!-- Säule 2 -->
+      <div class="card stagger" style="border-color:rgba(124,58,237,.25);background:rgba(124,58,237,.04);position:relative;overflow:hidden">
+        <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#7C3AED,#a78bfa)"></div>
+        <div style="font-size:32px;margin-bottom:16px">🌍</div>
+        <div style="font-size:11px;font-weight:700;color:var(--purple-l);letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px">Säule 2</div>
+        <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;margin-bottom:14px;line-height:1.15">Deutschland<br>& EU-Monitoring</div>
+        <div style="font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:20px">
+          Zwei Monitoring-Ebenen: <strong style="color:var(--white)">Deutschland</strong> (Bund.de + alle 16 Bundesländer-Portale) und <strong style="color:var(--white)">EU-weit</strong> (TED Europa + EU-Förderdatenbanken). Getrennt konfigurierbar.
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="font-size:12px;color:var(--purple-l);display:flex;align-items:center;gap:8px"><span>✓</span> Bund.de + alle 16 Länderportale</div>
+          <div style="font-size:12px;color:var(--purple-l);display:flex;align-items:center;gap:8px"><span>✓</span> TED Europa (EU-weite Vergabe)</div>
+          <div style="font-size:12px;color:var(--purple-l);display:flex;align-items:center;gap:8px"><span>✓</span> 500+ Förderprogramme indexiert</div>
+          <div style="font-size:12px;color:var(--purple-l);display:flex;align-items:center;gap:8px"><span>✓</span> Regional filterbar nach Bundesland</div>
+        </div>
+        <div style="margin-top:20px;padding:10px 14px;background:rgba(124,58,237,.1);border-radius:8px;font-size:12px;color:var(--muted)">
+          DE: ab <strong style="color:var(--white)">Starter</strong> · DE+EU: ab <strong style="color:var(--white)">Professional 499 €/Monat</strong>
+        </div>
+      </div>
+
+      <!-- Säule 3 -->
+      <div class="card stagger" style="border-color:rgba(16,185,129,.25);background:rgba(16,185,129,.04);position:relative;overflow:hidden">
+        <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#10b981,#34d399)"></div>
+        <div style="font-size:32px;margin-bottom:16px">✍️</div>
+        <div style="font-size:11px;font-weight:700;color:var(--green);letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px">Säule 3</div>
+        <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;margin-bottom:14px;line-height:1.15">Automatisches<br>Ausfüllen</div>
+        <div style="font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:20px">
+          Die KI liest Ihre <strong style="color:var(--white)">Unternehmensdaten</strong> und befüllt Förderanträge & Förderbescheide automatisch vor. Sie prüfen, passen an — und reichen ein.
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="font-size:12px;color:var(--green);display:flex;align-items:center;gap:8px"><span>✓</span> Anträge vorausgefüllt aus Ihrem Profil</div>
+          <div style="font-size:12px;color:var(--green);display:flex;align-items:center;gap:8px"><span>✓</span> Förderbescheide automatisch erkannt</div>
+          <div style="font-size:12px;color:var(--green);display:flex;align-items:center;gap:8px"><span>✓</span> KfW, BAFA, Länder-Formulare</div>
+          <div style="font-size:12px;color:var(--green);display:flex;align-items:center;gap:8px"><span>✓</span> Spart 5–20 Std. pro Antrag</div>
+        </div>
+        <div style="margin-top:20px;padding:10px 14px;background:rgba(16,185,129,.1);border-radius:8px;font-size:12px;color:var(--muted)">
+          Enthalten ab <strong style="color:var(--white)">Professional 499 €/Monat</strong>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="note">
+    <strong>Hier innehalten:</strong> „Welche der drei Leistungen ist für Sie gerade am wertvollsten?" → Antwort bestimmt welches Paket Sie empfehlen.
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════
+     S7 — PREISE  (20–24 Min)
+══════════════════════════════════ -->
+<section class="slide" id="s6b">
   <div class="blob blob-purple" style="bottom:-200px;left:-100px;opacity:.1"></div>
 
   <div style="position:relative;z-index:2;width:100%;max-width:1000px" class="slide-content">
@@ -470,11 +555,15 @@ h2.sh{font-family:'Syne',sans-serif;font-size:clamp(34px,4.5vw,60px);font-weight
         <div class="plan-name">Starter</div>
         <div class="plan-price">249<span style="font-size:22px;font-weight:400;color:var(--muted)">€</span></div>
         <div class="plan-per">/ Monat · monatlich kündbar</div>
+        <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px">
+          <div style="font-size:10px;font-weight:700;color:var(--blue-l);letter-spacing:.08em;text-transform:uppercase">Enthalten:</div>
+          <div style="font-size:11px;padding:4px 10px;background:rgba(43,110,255,.1);border-radius:6px;color:var(--blue-l)">📧 Säule 1 — Automatische Match-Mails</div>
+          <div style="font-size:11px;padding:4px 10px;background:rgba(124,58,237,.08);border-radius:6px;color:var(--purple-l)">🇩🇪 Säule 2 — Deutschland-Monitoring</div>
+        </div>
         <div class="plan-feats">
-          <div class="pf">Ausschreibungs-Monitoring täglich</div>
-          <div class="pf">30+ Plattformen (Bund, Länder, EU)</div>
-          <div class="pf">KI-Match-Score 0–100</div>
-          <div class="pf">Täglicher E-Mail-Digest</div>
+          <div class="pf">Täglicher E-Mail-Digest um 7:00 Uhr</div>
+          <div class="pf">Bund.de + alle 16 Bundesländer</div>
+          <div class="pf">KI-Match-Score 0–100 je Treffer</div>
           <div class="pf">1 Unternehmensprofil</div>
         </div>
       </div>
@@ -484,13 +573,18 @@ h2.sh{font-family:'Syne',sans-serif;font-size:clamp(34px,4.5vw,60px);font-weight
         <div class="plan-name">Professional</div>
         <div class="plan-price" style="background:var(--grad2);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">499<span style="font-size:22px;font-weight:400;-webkit-text-fill-color:var(--muted)">€</span></div>
         <div class="plan-per">/ Monat · monatlich kündbar</div>
+        <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px">
+          <div style="font-size:10px;font-weight:700;color:var(--blue-l);letter-spacing:.08em;text-transform:uppercase">Enthalten:</div>
+          <div style="font-size:11px;padding:4px 10px;background:rgba(43,110,255,.1);border-radius:6px;color:var(--blue-l)">📧 Säule 1 — Automatische Match-Mails</div>
+          <div style="font-size:11px;padding:4px 10px;background:rgba(124,58,237,.1);border-radius:6px;color:var(--purple-l)">🌍 Säule 2 — Deutschland + EU-Monitoring</div>
+          <div style="font-size:11px;padding:4px 10px;background:rgba(16,185,129,.1);border-radius:6px;color:var(--green)">✍️ Säule 3 — Automatisches Ausfüllen</div>
+        </div>
         <div class="plan-feats">
           <div class="pf">Alles aus Starter</div>
-          <div class="pf">💰 Förder-Radar (25+ Programme)</div>
-          <div class="pf">KI-Antragsvorlagen</div>
+          <div class="pf">TED Europa + EU-Förderdatenbanken</div>
+          <div class="pf">Anträge & Förderbescheide auto-ausgefüllt</div>
+          <div class="pf">25+ Förderprogramme (KfW, BAFA, EU)</div>
           <div class="pf">3 Unternehmensprofile</div>
-          <div class="pf">Wöchentlicher Marktreport</div>
-          <div class="pf">Priority Support</div>
         </div>
       </div>
 
@@ -498,10 +592,13 @@ h2.sh{font-family:'Syne',sans-serif;font-size:clamp(34px,4.5vw,60px);font-weight
         <div class="plan-name">Enterprise</div>
         <div class="plan-price">1.499<span style="font-size:18px;font-weight:400;color:var(--muted)">€</span></div>
         <div class="plan-per">/ Monat · Jahresvertrag</div>
+        <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px">
+          <div style="font-size:10px;font-weight:700;color:var(--blue-l);letter-spacing:.08em;text-transform:uppercase">Alle 3 Säulen +</div>
+        </div>
         <div class="plan-feats">
-          <div class="pf">Alles aus Professional</div>
-          <div class="pf">Unbegrenzte Profile</div>
-          <div class="pf">API-Zugang</div>
+          <div class="pf">Alle Features aus Professional</div>
+          <div class="pf">Unbegrenzte Profile & Nutzer</div>
+          <div class="pf">API-Zugang für eigene Systeme</div>
           <div class="pf">White-Label Option</div>
           <div class="pf">Dedicated Account Manager</div>
           <div class="pf">SLA 99,9%</div>
