@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PublicFlow — Kundenpräsentation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Inter:wght@300;400;500;600;700&display=swap">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#06060f;
+  --blue:#2B6EFF;
+  --blue-l:#5B8FFF;
+  --purple:#7C3AED;
+  --purple-l:#a78bfa;
+  --green:#10b981;
+  --orange:#f59e0b;
+  --red:#ef4444;
+  --white:#f0efff;
+  --muted:rgba(240,239,255,.5);
+  --dim:rgba(240,239,255,.2);
+  --border:rgba(255,255,255,.07);
+  --border2:rgba(255,255,255,.13);
+  --card:rgba(255,255,255,.03);
+  --grad:linear-gradient(135deg,#2B6EFF,#7C3AED);
+  --grad2:linear-gradient(135deg,#5B8FFF,#a78bfa);
+}
+html{scroll-snap-type:y mandatory;overflow-y:scroll;height:100%}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--white);height:100%;overflow-x:hidden}
+
+/* noise */
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='250' height='250'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='250' height='250' filter='url(%23n)'/%3E%3C/svg%3E");opacity:.022}
+
+#progress{position:fixed;top:0;left:0;height:2px;background:var(--grad);z-index:1000;transition:width .4s}
+#dots{position:fixed;right:28px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:10px;z-index:1000}
+.dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.2);cursor:pointer;transition:all .3s;border:none;padding:0}
+.dot.active{background:var(--white);transform:scale(1.4)}
+#counter{position:fixed;bottom:28px;right:36px;font-size:12px;color:var(--dim);font-weight:500;letter-spacing:.08em;z-index:1000}
+#timer{position:fixed;bottom:28px;left:36px;font-size:12px;color:var(--dim);font-weight:500;letter-spacing:.04em;z-index:1000;display:flex;align-items:center;gap:8px}
+.timer-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:blink 1s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+.slide{height:100vh;scroll-snap-align:start;display:flex;align-items:center;justify-content:center;padding:0 7%;position:relative;overflow:hidden}
+.blob{position:absolute;border-radius:50%;filter:blur(120px);pointer-events:none;opacity:.15;animation:pulse 6s ease-in-out infinite}
+.blob-blue{width:600px;height:600px;background:#2B6EFF}
+.blob-purple{width:500px;height:500px;background:#7C3AED}
+@keyframes pulse{0%,100%{opacity:.15}50%{opacity:.25}}
+
+/* Slide-Zeit-Badge */
+.time-badge{display:inline-flex;align-items:center;gap:7px;padding:5px 14px;border-radius:20px;border:1px solid rgba(16,185,129,.3);background:rgba(16,185,129,.07);color:#10b981;font-size:11px;font-weight:600;letter-spacing:.08em;margin-bottom:22px}
+
+.tag{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;padding:5px 14px;border-radius:20px;border:1px solid rgba(255,255,255,.12);color:var(--muted);margin-bottom:24px}
+.tag-blue{border-color:rgba(43,110,255,.4);color:var(--blue-l);background:rgba(43,110,255,.08)}
+.tag-green{border-color:rgba(16,185,129,.4);color:#10b981;background:rgba(16,185,129,.08)}
+.tag-orange{border-color:rgba(245,158,11,.4);color:#f59e0b;background:rgba(245,158,11,.08)}
+.tag-red{border-color:rgba(239,68,68,.4);color:#ef4444;background:rgba(239,68,68,.08)}
+
+h1.hero{font-family:'Syne',sans-serif;font-size:clamp(56px,7vw,100px);font-weight:800;line-height:1;letter-spacing:-.03em}
+h2.sh{font-family:'Syne',sans-serif;font-size:clamp(34px,4.5vw,60px);font-weight:800;line-height:1.08;letter-spacing:-.025em}
+.sub{font-size:clamp(14px,1.5vw,18px);color:var(--muted);font-weight:300;line-height:1.7;max-width:580px}
+.grad-text{background:var(--grad2);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hr{width:40px;height:2px;background:var(--grad);border-radius:2px;margin:20px 0}
+
+/* Sprechnotiz */
+.note{position:absolute;bottom:38px;left:7%;right:200px;background:rgba(43,110,255,.08);border:1px solid rgba(43,110,255,.2);border-radius:10px;padding:11px 18px;font-size:12px;color:rgba(240,239,255,.45);line-height:1.5}
+.note strong{color:rgba(43,110,255,.8);font-weight:600}
+
+/* Layouts */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center;width:100%;max-width:1100px}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;width:100%;max-width:1100px}
+
+/* Cards */
+.card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:28px 24px}
+.card-blue{border-color:rgba(43,110,255,.25);background:rgba(43,110,255,.05)}
+.card-green{border-color:rgba(16,185,129,.25);background:rgba(16,185,129,.05)}
+.card-orange{border-color:rgba(245,158,11,.25);background:rgba(245,158,11,.05)}
+
+/* Schmerz-Karten */
+.pain-num{font-family:'Syne',sans-serif;font-size:56px;font-weight:800;color:rgba(239,68,68,.3);line-height:1;margin-bottom:14px}
+.pain-label{font-size:15px;font-weight:600;color:var(--white);margin-bottom:8px}
+.pain-desc{font-size:13px;color:var(--muted);line-height:1.6}
+
+/* Preis-Karten */
+.plan{background:var(--card);border:1px solid var(--border);border-radius:24px;padding:32px 28px;position:relative}
+.plan.featured{background:rgba(43,110,255,.06);border-color:rgba(43,110,255,.4)}
+.plan-badge{position:absolute;top:-13px;left:50%;transform:translateX(-50%);background:var(--grad);font-size:11px;font-weight:700;padding:4px 18px;border-radius:20px;white-space:nowrap;letter-spacing:.05em}
+.plan-name{font-size:12px;font-weight:600;color:var(--muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:.1em}
+.plan-price{font-family:'Syne',sans-serif;font-size:48px;font-weight:800;line-height:1;margin-bottom:4px}
+.plan-per{font-size:13px;color:var(--muted);margin-bottom:22px}
+.plan-feats{display:flex;flex-direction:column;gap:10px}
+.pf{font-size:13px;color:var(--muted);display:flex;align-items:flex-start;gap:9px}
+.pf::before{content:'✓';color:var(--green);font-weight:700;flex-shrink:0;margin-top:1px}
+
+/* ROI Tabelle */
+.roi-table{width:100%;border-collapse:collapse;margin-top:20px}
+.roi-table th{font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;padding:10px 16px;border-bottom:1px solid var(--border);text-align:left}
+.roi-table td{padding:14px 16px;border-bottom:1px solid var(--border);font-size:14px}
+.roi-table tr:last-child td{border-bottom:none}
+.roi-table .highlight td{background:rgba(16,185,129,.05);color:var(--green);font-weight:600}
+
+/* Einwand-Box */
+.objection{background:rgba(245,158,11,.05);border:1px solid rgba(245,158,11,.2);border-radius:14px;padding:18px 20px;margin-bottom:14px}
+.objection-q{font-size:13px;font-weight:600;color:#f59e0b;margin-bottom:6px}
+.objection-a{font-size:13px;color:var(--muted);line-height:1.6}
+
+/* Timeline */
+.steps{display:flex;flex-direction:column;gap:0}
+.step{display:flex;gap:24px;padding:18px 0;position:relative}
+.step:not(:last-child)::before{content:'';position:absolute;left:16px;top:46px;bottom:0;width:2px;background:linear-gradient(to bottom,var(--blue),transparent)}
+.step-num{width:34px;height:34px;border-radius:50%;background:var(--grad);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0}
+.step-body{padding-top:6px}
+.step-t{font-size:15px;font-weight:600;margin-bottom:4px}
+.step-d{font-size:13px;color:var(--muted);line-height:1.5}
+
+/* Animations */
+@keyframes fadein{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.slide.visible .slide-content{animation:fadein .6s cubic-bezier(.4,0,.2,1) forwards}
+.slide:not(.visible) .slide-content{opacity:0}
+.slide.visible .stagger>*{opacity:0;animation:fadein .55s cubic-bezier(.4,0,.2,1) forwards}
+.slide.visible .stagger>*:nth-child(1){animation-delay:.05s}
+.slide.visible .stagger>*:nth-child(2){animation-delay:.15s}
+.slide.visible .stagger>*:nth-child(3){animation-delay:.25s}
+.slide.visible .stagger>*:nth-child(4){animation-delay:.35s}
+.slide.visible .stagger>*:nth-child(5){animation-delay:.45s}
+.slide.visible .stagger>*:nth-child(6){animation-delay:.55s}
+
+.logo-mark{display:inline-flex;align-items:center;gap:12px;margin-bottom:48px}
+.logo-icon{width:44px;height:44px;background:var(--grad);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.logo-name{font-family:'Syne',sans-serif;font-size:22px;font-weight:700;background:var(--grad2);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+
+@media(max-width:768px){
+  .two-col,.three-col{grid-template-columns:1fr}
+  h1.hero{font-size:48px}
+  h2.sh{font-size:32px}
+}
+</style>
+</head>
+<body>
+
+<div id="progress"></div>
+<nav id="dots"></nav>
+<div id="counter">01 / 10</div>
+<div id="timer"><span class="timer-dot"></span><span id="timer-val">00:00</span></div>
+
+
+<!-- ══════════════════════════════════
+     S1 — COVER  (0–2 Min)
+══════════════════════════════════ -->
+<section class="slide" id="s1">
+  <div class="blob blob-blue" style="top:-200px;left:-150px"></div>
+  <div class="blob blob-purple" style="bottom:-150px;right:-100px"></div>
+
+  <div style="position:relative;z-index:2;max-width:900px;width:100%" class="slide-content">
+    <div class="stagger">
+      <div class="logo-mark">
+        <div class="logo-icon">⚡</div>
+        <span class="logo-name">PublicFlow</span>
+      </div>
+
+      <div class="time-badge">⏱ 0–2 Min · Einstieg</div>
+
+      <h1 class="hero">
+        Mehr Aufträge.<br>
+        <span class="grad-text">Mehr Förderung.</span><br>
+        Weniger Aufwand.
+      </h1>
+      <div class="hr"></div>
+      <p class="sub" style="margin-top:10px">
+        Heute zeigen wir Ihnen, wie PublicFlow dafür sorgt, dass Sie keine relevante Ausschreibung und kein Förderprogramm mehr verpassen — vollautomatisch, jeden Tag.
+      </p>
+    </div>
+  </div>
+
+  <div class="note">
+    <strong>Gesprächseinstieg:</strong> „Bevor wir starten — kurze Frage: Haben Sie schon mal an einer öffentlichen Ausschreibung teilgenommen? Oder Fördergelder beantragt?" → Antwort abholen, Ausgangslage verstehen.
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════
+     S2 — QUALIFIZIERUNG  (2–6 Min)
+══════════════════════════════════ -->
+<section class="slide" id="s2">
+  <div class="blob blob-purple" style="top:-100px;right:-200px;opacity:.1"></div>
+
+  <div class="two-col slide-content" style="max-width:1050px">
+    <div class="stagger">
+      <div class="time-badge">⏱ 2–6 Min · Qualifizierung</div>
+      <div class="tag tag-red">Kennen Sie das?</div>
+      <h2 class="sh">Sie haben keine Zeit<br><span class="grad-text">für 20 Portale täglich.</span></h2>
+      <p class="sub" style="margin-top:16px">
+        Kein KMU kann Bund.de, alle 16 Bundesländer-Portale, TED Europa und alle Förderbanken täglich manuell prüfen. Das Ergebnis: lukrative Aufträge werden schlicht nie gesehen.
+      </p>
+    </div>
+
+    <div class="stagger">
+      <div class="card" style="margin-bottom:16px">
+        <div style="font-size:13px;color:var(--muted);margin-bottom:12px;font-weight:600">🎯 Typische Situation unserer Kunden</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;align-items:center;gap:12px;font-size:14px">
+            <span style="color:var(--red)">✗</span>
+            <span style="color:var(--muted)">Ausschreibungen zu spät gesehen</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;font-size:14px">
+            <span style="color:var(--red)">✗</span>
+            <span style="color:var(--muted)">Förderprogramme nicht bekannt</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;font-size:14px">
+            <span style="color:var(--red)">✗</span>
+            <span style="color:var(--muted)">Mitarbeiter verliert Stunden mit Suche</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;font-size:14px">
+            <span style="color:var(--red)">✗</span>
+            <span style="color:var(--muted)">Antragsverfahren zu komplex</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card card-blue">
+        <div style="font-size:12px;color:var(--blue-l);font-weight:600;margin-bottom:10px">FRAGE AN SIE</div>
+        <div style="font-size:14px;color:var(--white);line-height:1.6">
+          „Wie viele Stunden investiert Ihr Team aktuell pro Woche in die Suche nach Ausschreibungen und Förderungen?"
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="note">
+    <strong>Ziel dieser Folie:</strong> Schmerz bestätigen lassen. Nicht reden — fragen. Wenn der Kunde sagt „gar nicht" → perfekt, da liegt das Potenzial. Wenn er sagt „2-3 Stunden" → ROI-Rechnung kommt auf S8.
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════
+     S3 — DAS PROBLEM IN ZAHLEN  (6–9 Min)
+══════════════════════════════════ -->
+<section class="slide" id="s3">
+  <div style="position:relative;z-index:2;width:100%;max-width:1100px" class="slide-content">
+    <div class="stagger">
+      <div class="time-badge">⏱ 6–9 Min · Marktkontext</div>
+      <div class="tag tag-red">Das entgeht dem deutschen Mittelstand</div>
+      <h2 class="sh">Milliarden bleiben<br><span class="grad-text">jedes Jahr liegen.</span></h2>
+    </div>
+
+    <div class="three-col" style="margin-top:36px">
+      <div class="card stagger">
+        <div class="pain-num">500<span style="font-size:28px"> Mrd.</span></div>
+        <div class="pain-label">€ öffentliche Aufträge / Jahr</div>
+        <div class="pain-desc">Allein in Deutschland und der EU werden jährlich Aufträge in dieser Größenordnung ausgeschrieben — für IT, Bau, Beratung, Dienstleistungen.</div>
+      </div>
+      <div class="card stagger">
+        <div class="pain-num">80<span style="font-size:28px"> Mrd.</span></div>
+        <div class="pain-label">€ Fördermittel nicht abgerufen</div>
+        <div class="pain-desc">KMUs lassen jährlich 80 Milliarden Euro Fördermittel von KfW, BAFA, EU-Fonds und Ländern ungenutzt — weil die Informationen fehlen.</div>
+      </div>
+      <div class="card stagger">
+        <div class="pain-num">17<span style="font-size:28px">%</span></div>
+        <div class="pain-label">der EU-Aufträge gehen an KMUs</div>
+        <div class="pain-desc">Obwohl KMUs 99% aller Unternehmen in Deutschland stellen, erhalten sie nur einen Bruchteil der öffentlichen Aufträge. Der Hauptgrund: fehlende Sichtbarkeit.</div>
+      </div>
+    </div>
+
+    <div class="stagger" style="margin-top:28px;padding:18px 24px;background:rgba(43,110,255,.06);border:1px solid rgba(43,110,255,.2);border-radius:14px;display:flex;align-items:center;gap:16px">
+      <span style="font-size:24px">💡</span>
+      <div style="font-size:14px;color:var(--white)">
+        Das Geld ist da. Die Aufträge sind da. <strong style="color:var(--blue-l)">Was fehlt, ist die Sichtbarkeit — und genau dafür gibt es PublicFlow.</strong>
+      </div>
+    </div>
+  </div>
+
+  <div class="note">
+    <strong>Gesprächspunkt:</strong> „Wissen Sie, wie viele Ausschreibungen allein heute in Ihrer Branche ausgeschrieben wurden?" → Pause lassen. Die meisten Kunden wissen es nicht.
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════
+     S4 — WIE ES FUNKTIONIERT  (9–14 Min)
+══════════════════════════════════ -->
+<section class="slide" id="s4">
+  <div class="blob blob-blue" style="bottom:-150px;left:-100px;opacity:.12"></div>
+
+  <div class="two-col slide-content" style="max-width:1100px">
+    <div class="stagger">
+      <div class="time-badge">⏱ 9–14 Min · Produkterklärung</div>
+      <div class="tag tag-blue">So funktioniert PublicFlow</div>
+      <h2 class="sh">3 Schritte.<br><span class="grad-text">Täglich automatisch.</span></h2>
+
+      <div class="steps" style="margin-top:28px">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-t">Profil einmal anlegen</div>
+            <div class="step-d">Sie beschreiben Ihr Unternehmen: Branche, Kompetenzen, Region, Unternehmensgröße. Einmalig, dauert 5 Minuten.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-t">KI analysiert täglich 30+ Plattformen</div>
+            <div class="step-d">Claude AI durchsucht Bund.de, TED Europa, alle Landesportale und 25+ Förderdatenbanken — und bewertet jeden Treffer gegen Ihr Profil mit einem Score von 0–100.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-t">7 Uhr: Ihr täglicher Digest</div>
+            <div class="step-d">Jeden Morgen bekommen Sie per Mail nur die wirklich relevanten Treffer — priorisiert nach Score, mit direktem Link und Fristangabe.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dashboard Mockup -->
+    <div class="stagger">
+      <div style="background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:20px;padding:24px">
+        <div style="display:flex;gap:6px;margin-bottom:18px">
+          <div style="width:8px;height:8px;border-radius:50%;background:#ef4444"></div>
+          <div style="width:8px;height:8px;border-radius:50%;background:#f59e0b"></div>
+          <div style="width:8px;height:8px;border-radius:50%;background:#10b981"></div>
+          <div style="flex:1;background:rgba(255,255,255,.06);border-radius:4px;height:8px;margin-left:8px;align-self:center;font-size:10px;color:var(--dim);display:flex;align-items:center;padding-left:8px">publicflow.io/app</div>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:16px">📋 Meine Matches heute — <strong style="color:var(--green)">4 neue Treffer</strong></div>
+
+        <!-- Match Cards -->
+        <div style="background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+            <div>
+              <div style="font-size:12px;font-weight:600">IT-Infrastruktur Rathaus München</div>
+              <div style="font-size:10px;color:var(--muted)">Stadtwerke München · 340.000 € · noch 18 Tage</div>
+            </div>
+            <span style="background:rgba(167,139,250,.15);color:#a78bfa;font-size:11px;padding:3px 10px;border-radius:12px;font-weight:700">98</span>
+          </div>
+          <div style="font-size:11px;color:var(--blue-l)">„Passt perfekt zu Ihrer Cloud-Infrastruktur Expertise"</div>
+        </div>
+        <div style="background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+            <div>
+              <div style="font-size:12px;font-weight:600">Digitalisierung Bürgeramt Nürnberg</div>
+              <div style="font-size:10px;color:var(--muted)">Stadt Nürnberg · 180.000 € · noch 24 Tage</div>
+            </div>
+            <span style="background:rgba(91,143,255,.15);color:#5B8FFF;font-size:11px;padding:3px 10px;border-radius:12px;font-weight:700">91</span>
+          </div>
+        </div>
+        <div style="background:rgba(43,110,255,.05);border:1px solid rgba(43,110,255,.2);border-radius:12px;padding:14px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+            <div>
+              <div style="font-size:12px;font-weight:600">💰 KfW-Digitalisierungskredit</div>
+              <div style="font-size:10px;color:var(--muted)">bis 25 Mio. € · laufend · KI-Antragsvorlage verfügbar</div>
+            </div>
+            <span style="background:rgba(91,143,255,.15);color:#5B8FFF;font-size:11px;padding:3px 10px;border-radius:12px;font-weight:700">95</span>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:10px;margin-top:16px;padding-top:14px;border-top:1px solid var(--border);text-align:center">
+          <div style="flex:1">
+            <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;background:var(--grad2);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">12</div>
+            <div style="font-size:10px;color:var(--muted)">Matches</div>
+          </div>
+          <div style="flex:1">
+            <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;background:var(--grad2);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">87%</div>
+            <div style="font-size:10px;color:var(--muted)">Ø Score</div>
+          </div>
+          <div style="flex:1">
+            <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:#10b981">23</div>
+            <div style="font-size:10px;color:var(--muted)">Förderungen</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="note">
+    <strong>Hier Demo zeigen:</strong> Wenn möglich Laptop aufklappen und live durch das Dashboard navigieren. publicflow.io/app → Förderungs-Tab zeigen → einen echten Match öffnen.
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════
+     S5 — FÖRDER-RADAR  (14–17 Min)
+══════════════════════════════════ -->
+<section class="slide" id="s5">
+  <div class="blob blob-blue" style="top:-100px;right:-150px;opacity:.12"></div>
+
+  <div class="two-col slide-content" style="max-width:1100px">
+    <div class="stagger">
+      <div class="time-badge">⏱ 14–17 Min · Förder-Feature</div>
+      <div class="tag tag-blue">💰 Förder-Radar — Exklusiv im Professional-Paket</div>
+      <h2 class="sh">Fördermittel die<br><span class="grad-text">zu Ihnen kommen.</span></h2>
+      <p class="sub" style="margin-top:16px">
+        PublicFlow gleicht Ihr Unternehmensprofil automatisch mit 25+ Förderprogrammen ab — von KfW über BAFA bis zu allen Landesförderungen.
+      </p>
+      <div style="margin-top:24px;display:flex;flex-direction:column;gap:12px">
+        <div style="display:flex;align-items:center;gap:14px;font-size:14px">
+          <span style="color:var(--green);font-size:18px">✓</span>
+          <span>KfW-Förderprogramme (Digitalisierung, Energie, Gründung)</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:14px;font-size:14px">
+          <span style="color:var(--green);font-size:18px">✓</span>
+          <span>BAFA (Energieberatung, Außenwirtschaft, go-digital)</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:14px;font-size:14px">
+          <span style="color:var(--green);font-size:18px">✓</span>
+          <span>EU-Fonds (EFRE, Horizon Europe, COSME)</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:14px;font-size:14px">
+          <span style="color:var(--green);font-size:18px">✓</span>
+          <span>Alle 16 Bundesländer (Digitalbonus Bayern, NRWBank, SAB…)</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:14px;font-size:14px">
+          <span style="color:var(--purple-l);font-size:18px">★</span>
+          <span style="color:var(--purple-l)"><strong>NEU:</strong> KI-generierte Antragsvorlage — direkt ausfüllbar</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="stagger">
+      <!-- Förder-Beispiel-Karte -->
+      <div class="card card-blue" style="border-radius:16px;margin-bottom:16px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px">
+          <div>
+            <div style="font-size:10px;color:var(--blue-l);font-weight:600;letter-spacing:.08em;margin-bottom:6px">ZUSCHUSS · BUND</div>
+            <div style="font-size:15px;font-weight:600">KfW-Digitalisierungskredit</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:var(--blue-l)">95</div>
+            <div style="font-size:10px;color:var(--muted)">/100</div>
+          </div>
+        </div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:14px">bis 25 Mio. € · bis 50% Förderquote · laufend</div>
+        <div style="font-size:12px;color:var(--white);background:rgba(43,110,255,.1);border-radius:8px;padding:10px 12px;line-height:1.5">
+          „Passt zu Ihrer Branche (IT-Dienstleistungen) und Unternehmensgröße. Besonders geeignet für Digitalisierungsprojekte ab 25.000 €."
+        </div>
+        <div style="margin-top:12px;display:flex;gap:10px">
+          <div style="flex:1;padding:8px 12px;background:var(--blue);border-radius:8px;font-size:12px;font-weight:600;text-align:center;cursor:pointer">📝 Antragsvorlage</div>
+          <div style="flex:1;padding:8px 12px;border:1px solid var(--border2);border-radius:8px;font-size:12px;text-align:center;color:var(--muted);cursor:pointer">🔗 Zum Programm</div>
+        </div>
+      </div>
+
+      <div style="padding:14px 18px;background:rgba(16,185,129,.06);border:1px solid rgba(16,185,129,.2);border-radius:12px;font-size:13px;line-height:1.6;color:var(--muted)">
+        <strong style="color:var(--green)">Zeitersparnis:</strong> Ein Förderantrag kostet ohne Unterstützung 5–20 Stunden Recherchezeit. PublicFlow liefert die passenden Programme + fertige Vorlage in Sekunden.
+      </div>
+    </div>
+  </div>
+
+  <div class="note">
+    <strong>Frage stellen:</strong> „Haben Sie aktuell Investitionsvorhaben geplant — Digitalisierung, Energie, neue Mitarbeiter?" → Konkrete Förderung live heraussuchen und zeigen.
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════
+     S6 — PREISE  (17–21 Min)
+══════════════════════════════════ -->
+<section class="slide" id="s6">
+  <div class="blob blob-purple" style="bottom:-200px;left:-100px;opacity:.1"></div>
+
+  <div style="position:relative;z-index:2;width:100%;max-width:1000px" class="slide-content">
+    <div class="stagger">
+      <div class="time-badge">⏱ 17–21 Min · Preise</div>
+      <div class="tag tag-green">Transparent. Kündbar. Ohne Risiko.</div>
+      <h2 class="sh">Was Sie investieren.<br><span class="grad-text">Was Sie zurückbekommen.</span></h2>
+    </div>
+
+    <div class="three-col" style="margin-top:36px">
+      <div class="plan stagger">
+        <div class="plan-name">Starter</div>
+        <div class="plan-price">249<span style="font-size:22px;font-weight:400;color:var(--muted)">€</span></div>
+        <div class="plan-per">/ Monat · monatlich kündbar</div>
+        <div class="plan-feats">
+          <div class="pf">Ausschreibungs-Monitoring täglich</div>
+          <div class="pf">30+ Plattformen (Bund, Länder, EU)</div>
+          <div class="pf">KI-Match-Score 0–100</div>
+          <div class="pf">Täglicher E-Mail-Digest</div>
+          <div class="pf">1 Unternehmensprofil</div>
+        </div>
+      </div>
+
+      <div class="plan featured stagger">
+        <div class="plan-badge">EMPFOHLEN</div>
+        <div class="plan-name">Professional</div>
+        <div class="plan-price" style="background:var(--grad2);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">499<span style="font-size:22px;font-weight:400;-webkit-text-fill-color:var(--muted)">€</span></div>
+        <div class="plan-per">/ Monat · monatlich kündbar</div>
+        <div class="plan-feats">
+          <div class="pf">Alles aus Starter</div>
+          <div class="pf">💰 Förder-Radar (25+ Programme)</div>
+          <div class="pf">KI-Antragsvorlagen</div>
+          <div class="pf">3 Unternehmensprofile</div>
+          <div class="pf">Wöchentlicher Marktreport</div>
+          <div class="pf">Priority Support</div>
+        </div>
+      </div>
+
+      <div class="plan stagger">
+        <div class="plan-name">Enterprise</div>
+        <div class="plan-price">1.499<span style="font-size:18px;font-weight:400;color:var(--muted)">€</span></div>
+        <div class="plan-per">/ Monat · Jahresvertrag</div>
+        <div class="plan-feats">
+          <div class="pf">Alles aus Professional</div>
+          <div class="pf">Unbegrenzte Profile</div>
+          <div class="pf">API-Zugang</div>
+          <div class="pf">White-Label Option</div>
+          <div class="pf">Dedicated Account Manager</div>
+          <div class="pf">SLA 99,9%</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="stagger" style="margin-top:24px;padding:16px 22px;background:rgba(16,185,129,.05);border:1px solid rgba(16,185,129,.15);border-radius:12px;display:flex;gap:32px;flex-wrap:wrap;align-items:center">
+      <div style="font-size:13px;color:var(--green);font-weight:600">✓ Kein Jahresvertrag nötig</div>
+      <div style="font-size:13px;color:var(--green);font-weight:600">✓ Monatlich kündbar</div>
+      <div style="font-size:13px;color:var(--green);font-weight:600">✓ Setup in unter 5 Minuten</div>
+      <div style="font-size:13px;color:var(--green);font-weight:600">✓ Keine versteckten Kosten</div>
+    </div>
+  </div>
+
+  <div class="note">
+    <strong>Empfehlung aussprechen:</strong> „Für die meisten unserer Kunden in Ihrer Größe ist Professional die richtige Wahl — wegen des Förder-Radars. Ein einziges genutztes Förderprogramm amortisiert das Jahresabo."
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════
+     S7 — ROI-RECHNUNG  (21–24 Min)
+══════════════════════════════════ -->
+<section class="slide" id="s7">
+  <div class="blob blob-blue" style="top:-100px;right:-200px;opacity:.1"></div>
+
+  <div class="two-col slide-content" style="max-width:1050px">
+    <div class="stagger">
+      <div class="time-badge">⏱ 21–24 Min · ROI</div>
+      <div class="tag tag-green">Was bringt es konkret?</div>
+      <h2 class="sh">Ein Auftrag deckt<br><span class="grad-text">Jahre ab.</span></h2>
+      <p class="sub" style="margin-top:16px">
+        Öffentliche Aufträge beginnen oft bei 50.000 €. Der durchschnittliche Auftragswert für IT-Dienstleister liegt bei 180.000–400.000 €.
+      </p>
+      <div style="margin-top:24px;padding:18px 20px;background:rgba(16,185,129,.06);border:1px solid rgba(16,185,129,.2);border-radius:14px">
+        <div style="font-size:12px;color:var(--green);font-weight:600;margin-bottom:10px">BEISPIELRECHNUNG — IT-UNTERNEHMEN</div>
+        <div style="font-size:24px;font-family:'Syne',sans-serif;font-weight:800;color:var(--green);margin-bottom:4px">1 Auftrag à 180.000 €</div>
+        <div style="font-size:13px;color:var(--muted)">÷ Professional-Abo 499 € × 12 Monate = 5.988 €</div>
+        <div style="margin-top:10px;font-size:15px;font-weight:600;color:var(--white)">= ROI 3.000% im ersten Jahr</div>
+      </div>
+    </div>
+
+    <div class="stagger">
+      <table class="roi-table">
+        <thead>
+          <tr>
+            <th>Szenario</th>
+            <th>Auftragswert</th>
+            <th>Jahresabo</th>
+            <th>ROI</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="color:var(--muted)">1 kleiner Auftrag</td>
+            <td>50.000 €</td>
+            <td>2.988 €</td>
+            <td style="color:var(--green);font-weight:600">+1.574%</td>
+          </tr>
+          <tr class="highlight">
+            <td>1 mittlerer Auftrag</td>
+            <td>180.000 €</td>
+            <td>5.988 €</td>
+            <td>+2.906%</td>
+          </tr>
+          <tr>
+            <td style="color:var(--muted)">1 Förderprogramm</td>
+            <td>25.000 €</td>
+            <td>5.988 €</td>
+            <td style="color:var(--blue-l);font-weight:600">+317%</td>
+          </tr>
+          <tr>
+            <td style="color:var(--muted)">Zeitersparnis (2h/Woche)</td>
+            <td>~4.800 € / Jahr</td>
+            <td>5.988 €</td>
+            <td style="color:var(--muted)">+ Aufträge oben drauf</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div style="margin-top:16px;padding:14px 18px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:12px;font-size:13px;color:var(--muted);line-height:1.6">
+        <strong style="color:var(--white)">Klartext:</strong> PublicFlow kostet Sie weniger als eine Arbeitsstunde eines Mitarbeiters pro Woche. Und findet dabei täglich Aufträge, die kein Mensch manuell finden würde.
+      </div>
+    </div>
+  </div>
+
+  <div class="note">
+    <strong>Individuelle Rechnung:</strong> „Was wäre für Sie ein realistischer Auftragswert wenn Sie erfolgreich submittieren?" → Zahl vom Kunden abholen und live in die Rechnung einsetzen.
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════
+     S8 — EINWÄNDE  (24–27 Min)
+══════════════════════════════════ -->
+<section class="slide" id="s8">
+  <div class="blob blob-purple" style="bottom:-100px;right:-150px;opacity:.1"></div>
+
+  <div class="two-col slide-content" style="max-width:1050px">
+    <div class="stagger">
+      <div class="time-badge">⏱ 24–27 Min · Einwände</div>
+      <div class="tag tag-orange">Häufige Fragen</div>
+      <h2 class="sh">Was Kunden<br><span class="grad-text">uns fragen.</span></h2>
+      <p class="sub" style="margin-top:16px">Die ehrlichen Antworten.</p>
+    </div>
+
+    <div class="stagger" style="display:flex;flex-direction:column;gap:14px">
+      <div class="objection">
+        <div class="objection-q">„Wir haben keine Zeit für neue Tools."</div>
+        <div class="objection-a">Setup dauert 5 Minuten. Danach läuft alles automatisch. Kein Login nötig — die Ergebnisse kommen täglich per Mail ins Postfach.</div>
+      </div>
+      <div class="objection">
+        <div class="objection-q">„Wir haben das noch nie gemacht — öffentliche Aufträge."</div>
+        <div class="objection-a">Perfekt. Wir zeigen Ihnen die passenden Einstiegsaufträge, die KI erklärt warum Sie qualifiziert sind, und die Antragsvorlage hilft beim ersten Schritt. Viele unserer Kunden haben mit ihrem ersten Auftrag angefangen.</div>
+      </div>
+      <div class="objection">
+        <div class="objection-q">„Wie gut sind die Matches wirklich?"</div>
+        <div class="objection-a">Die KI gibt jedem Match einen Score von 0–100 und erklärt konkret warum. Sie sehen nur Treffer über 35/100 — kein Rauschen. Unsere Kunden berichten von einem Ø Score von 85+.</div>
+      </div>
+      <div class="objection">
+        <div class="objection-q">„Und wenn es nicht funktioniert?"</div>
+        <div class="objection-a">Monatlich kündbar, kein Risiko. Sie können jederzeit aufhören. Aber wir sind zuversichtlich: Wer das Dashboard eine Woche nutzt, verlängert.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="note">
+    <strong>Nicht warten bis Einwände kommen</strong> — proaktiv ansprechen. „Was ist das, was Sie noch zögern lässt?" Dann ehrlich antworten, nicht wegmoderieren.
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════
+     S9 — ONBOARDING / NEXT STEPS  (27–29 Min)
+══════════════════════════════════ -->
+<section class="slide" id="s9">
+  <div class="blob blob-blue" style="top:-150px;left:-100px;opacity:.12"></div>
+
+  <div class="two-col slide-content" style="max-width:1050px">
+    <div class="stagger">
+      <div class="time-badge">⏱ 27–29 Min · Nächste Schritte</div>
+      <div class="tag tag-blue">So starten Sie heute noch</div>
+      <h2 class="sh">Morgen früh<br><span class="grad-text">erste Matches.</span></h2>
+      <p class="sub" style="margin-top:16px">
+        Von der Anmeldung bis zum ersten Digest: weniger als 24 Stunden.
+      </p>
+    </div>
+
+    <div class="stagger">
+      <div class="steps">
+        <div class="step">
+          <div class="step-num" style="background:var(--green)">1</div>
+          <div class="step-body">
+            <div class="step-t">Heute: Account erstellen</div>
+            <div class="step-d">publicflow.io → Registrieren → Unternehmensprofil ausfüllen (5 Minuten). Branche, Kompetenzen, Region, Größe.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num" style="background:var(--green)">2</div>
+          <div class="step-body">
+            <div class="step-t">Heute Nacht: KI analysiert</div>
+            <div class="step-d">PublicFlow durchsucht automatisch alle 30+ Plattformen und matcht gegen Ihr Profil. Keine Aktion nötig.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num" style="background:var(--green)">3</div>
+          <div class="step-body">
+            <div class="step-t">Morgen 7:00 Uhr: Ihr erster Digest</div>
+            <div class="step-d">Alle relevanten Ausschreibungen + passende Förderprogramme in einem Mail. Priorisiert nach Score.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <div class="step-t">In 30 Tagen: Ergebnis bewerten</div>
+            <div class="step-d">Schauen wir gemeinsam was gefunden wurde. Profil anpassen falls nötig. Weiter oder kündigen — Sie entscheiden.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="note">
+    <strong>Kaufentscheidung herbeiführen:</strong> „Welches Paket passt für Sie — sollen wir das gleich heute anlegen?" Laptop rausziehen und gemeinsam registrieren. Live-Onboarding ist der stärkste Close.
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════
+     S10 — CLOSE  (29–30 Min)
+══════════════════════════════════ -->
+<section class="slide" id="s10">
+  <div class="blob blob-blue" style="top:-100px;left:-200px"></div>
+  <div class="blob blob-purple" style="bottom:-200px;right:-150px"></div>
+
+  <div style="position:relative;z-index:2;text-align:center;max-width:820px" class="slide-content">
+    <div class="stagger">
+      <div class="logo-mark" style="justify-content:center">
+        <div class="logo-icon" style="width:52px;height:52px;font-size:24px">⚡</div>
+        <span class="logo-name" style="font-size:26px">PublicFlow</span>
+      </div>
+
+      <div class="time-badge" style="justify-content:center">⏱ 29–30 Min · Abschluss</div>
+
+      <h2 class="sh" style="text-align:center">
+        Kein Auftrag mehr verpassen.<br>
+        <span class="grad-text">Kein Fördergeld liegen lassen.</span>
+      </h2>
+
+      <p class="sub" style="text-align:center;margin:20px auto 0;max-width:640px">
+        Täglich automatisch. Kein Aufwand. Monatlich kündbar. Die erste Ausschreibung die Sie dadurch gewinnen, rechnet das Jahresabo in Minuten zurück.
+      </p>
+
+      <div style="display:flex;justify-content:center;gap:16px;flex-wrap:wrap;margin-top:44px">
+        <a href="/app/" class="cta-btn" style="padding:14px 36px;border-radius:10px;font-size:15px;font-weight:600;text-decoration:none;background:var(--grad);color:#fff;display:inline-flex;align-items:center;gap:8px">
+          🚀 Jetzt starten — publicflow.io
+        </a>
+      </div>
+
+      <div style="display:flex;justify-content:center;gap:44px;margin-top:52px;flex-wrap:wrap">
+        <div style="text-align:center">
+          <div style="font-family:'Syne',sans-serif;font-size:32px;font-weight:800;background:var(--grad2);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">249€</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:4px">ab / Monat</div>
+        </div>
+        <div style="text-align:center">
+          <div style="font-family:'Syne',sans-serif;font-size:32px;font-weight:800;color:var(--green)">5 Min</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:4px">Setup-Zeit</div>
+        </div>
+        <div style="text-align:center">
+          <div style="font-family:'Syne',sans-serif;font-size:32px;font-weight:800;color:var(--orange)">30+</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:4px">Plattformen täglich</div>
+        </div>
+        <div style="text-align:center">
+          <div style="font-family:'Syne',sans-serif;font-size:32px;font-weight:800;background:var(--grad2);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">0</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:4px">Risiko (monatl. kündbar)</div>
+        </div>
+      </div>
+
+      <div style="margin-top:44px;padding-top:28px;border-top:1px solid var(--border);display:flex;justify-content:center;gap:28px;flex-wrap:wrap">
+        <span style="font-size:13px;color:var(--dim)">publicflow.io</span>
+        <span style="font-size:13px;color:var(--dim)">Fragen? support@publicflow.io</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<script>
+const slides = document.querySelectorAll('.slide');
+const dots   = document.getElementById('dots');
+const prog   = document.getElementById('progress');
+const ctr    = document.getElementById('counter');
+const timerEl= document.getElementById('timer-val');
+let current  = 0;
+let startTime= Date.now();
+
+// Dots erstellen
+slides.forEach((_,i) => {
+  const btn = document.createElement('button');
+  btn.className = 'dot' + (i===0?' active':'');
+  btn.onclick = () => goTo(i);
+  dots.appendChild(btn);
+});
+
+function update() {
+  const pct = (current / (slides.length - 1)) * 100;
+  prog.style.width = pct + '%';
+  ctr.textContent = String(current+1).padStart(2,'0') + ' / ' + String(slides.length).padStart(2,'0');
+  document.querySelectorAll('.dot').forEach((d,i) => d.classList.toggle('active', i===current));
+  slides.forEach((s,i) => {
+    const was = s.classList.contains('visible');
+    s.classList.toggle('visible', i===current);
+    if (i===current && !was) {
+      s.querySelectorAll('.stagger > *').forEach(el => {
+        el.style.animation = 'none'; el.offsetHeight; el.style.animation = '';
+      });
+    }
+  });
+}
+
+function goTo(idx) {
+  current = Math.max(0, Math.min(slides.length-1, idx));
+  slides[current].scrollIntoView({behavior:'smooth'});
+  update();
+}
+
+document.addEventListener('keydown', e => {
+  if (['ArrowDown','PageDown',' '].includes(e.key)) { e.preventDefault(); goTo(current+1); }
+  if (['ArrowUp','PageUp'].includes(e.key))          { e.preventDefault(); goTo(current-1); }
+  const n = parseInt(e.key);
+  if (n >= 1 && n <= slides.length) goTo(n-1);
+});
+
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) { current = Array.from(slides).indexOf(e.target); update(); }
+  });
+}, {threshold:0.6});
+slides.forEach(s => obs.observe(s));
+
+// Timer
+setInterval(() => {
+  const s = Math.floor((Date.now() - startTime) / 1000);
+  const m = Math.floor(s / 60);
+  const sec = s % 60;
+  timerEl.textContent = String(m).padStart(2,'0') + ':' + String(sec).padStart(2,'0');
+}, 1000);
+
+update();
+slides[0].classList.add('visible');
+</script>
+</body>
+</html>
